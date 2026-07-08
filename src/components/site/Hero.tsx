@@ -9,7 +9,7 @@ const STATS = [
   { value: "5 лет", label: "гарантии" },
 ];
 
-export function Hero() {
+export function Hero({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <section id="top" className="relative overflow-hidden gradient-hero">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-24">
@@ -21,14 +21,12 @@ export function Hero() {
           </Reveal>
           <Reveal delay={80}>
             <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              Электрик в СПб — монтаж проводки и сборка электрощитов
+              {title}
             </h1>
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
-              Профессиональный электромонтаж под ключ: монтаж электропроводки,
-              сборка и подключение электрощитов, освещение. Работаем по договору
-              с гарантией по всему Санкт-Петербургу и области.
+              {subtitle}
             </p>
           </Reveal>
           <Reveal delay={240}>
