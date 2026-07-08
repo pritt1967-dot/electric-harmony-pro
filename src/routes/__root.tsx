@@ -89,15 +89,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "электрик Санкт-Петербург, электромонтаж СПб, сборка электрощитов, монтаж электропроводки, услуги электрика спб",
       },
       { name: "author", content: "ВольтПро" },
-      { property: "og:title", content: "ВольтПро — электромонтаж в Санкт-Петербурге" },
+      { property: "og:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | ВольтПро" },
       {
         property: "og:description",
         content:
-          "Профессиональный электромонтаж в СПб: проводка, электрощиты, освещение. Гарантия и договор.",
+          "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт.",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "ВольтПро" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | ВольтПро" },
+      { name: "twitter:description", content: "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
