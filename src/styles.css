@@ -2,6 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
