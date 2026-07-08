@@ -10,7 +10,7 @@ export function FloatingActions() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Написать в WhatsApp"
-        className="grid size-13 place-items-center rounded-full bg-[oklch(0.72_0.18_150)] text-white shadow-lg transition-transform hover:scale-110"
+        className="grid size-14 place-items-center rounded-full bg-[oklch(0.72_0.18_150)] text-white shadow-lg transition-transform hover:scale-110"
       >
         <MessageCircle className="size-6" />
       </a>
@@ -19,14 +19,14 @@ export function FloatingActions() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Написать в Telegram"
-        className="grid size-13 place-items-center rounded-full bg-[oklch(0.62_0.16_240)] text-white shadow-lg transition-transform hover:scale-110"
+        className="grid size-14 place-items-center rounded-full bg-[oklch(0.62_0.16_240)] text-white shadow-lg transition-transform hover:scale-110"
       >
         <Send className="size-6" />
       </a>
       <a
         href={CONTACTS.phoneHref}
         aria-label="Позвонить"
-        className="grid size-13 place-items-center rounded-full gradient-brand text-brand-foreground shadow-lg transition-transform hover:scale-110"
+        className="grid size-14 place-items-center rounded-full gradient-brand text-brand-foreground shadow-lg transition-transform hover:scale-110"
       >
         <Phone className="size-6" />
       </a>
