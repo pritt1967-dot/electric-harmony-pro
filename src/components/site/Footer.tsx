@@ -69,9 +69,12 @@ export function Footer() {
       </div>
 
       <div className="border-t border-border py-5">
-        <p className="mx-auto max-w-6xl px-4 text-center text-xs text-muted-foreground sm:px-6">
+        <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-2 px-4 text-center text-xs text-muted-foreground sm:px-6">
           © {new Date().getFullYear()} ВольтПро — электрик и электромонтаж в
           Санкт-Петербурге. Все права защищены.
+          <a href="/admin" className="hover:text-brand">
+            Вход для администратора
+          </a>
         </p>
       </div>
     </footer>
