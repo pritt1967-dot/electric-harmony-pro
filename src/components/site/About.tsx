@@ -15,7 +15,7 @@ const FEATURES = [
   { icon: Timer, title: "Точно в срок", text: "Соблюдаем сроки по договору" },
 ];
 
-export function About() {
+export function About({ title, text }: { title: string; text: string }) {
   return (
     <section id="about" className="scroll-mt-20 bg-secondary/50 py-16 lg:py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
@@ -24,14 +24,9 @@ export function About() {
             О компании
           </span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            ВольтПро — электромонтаж в Санкт-Петербурге с 2012 года
+            {title}
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            Мы специализируемся на электромонтаже в СПб: монтаж электропроводки,
-            сборка электрощитов, установка освещения и электрика под ключ. За
-            12 лет выполнили более 3500 объектов — от квартир до коммерческих
-            помещений.
-          </p>
+          <p className="mt-4 whitespace-pre-line text-muted-foreground">{text}</p>
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {POINTS.map((point) => (
               <li key={point} className="flex items-start gap-2 text-sm">

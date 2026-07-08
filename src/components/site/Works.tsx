@@ -2,26 +2,29 @@ import workWiring from "@/assets/work-wiring.jpg";
 import workPanel from "@/assets/work-panel.jpg";
 import workLighting from "@/assets/work-lighting.jpg";
 import { Reveal } from "./Reveal";
+import type { WorkRow } from "@/lib/content.functions";
 
-const WORKS = [
-  {
-    img: workPanel,
-    title: "Сборка электрощита",
-    text: "Квартира 3-комнатная, ЖК «Приморский», СПб",
-  },
-  {
-    img: workWiring,
-    title: "Монтаж электропроводки",
-    text: "Полная замена проводки, Петроградский район",
-  },
-  {
-    img: workLighting,
-    title: "Монтаж освещения",
-    text: "Гостиная с LED-подсветкой и умным светом",
-  },
+export const WORK_IMAGES: { key: string; label: string; src: string }[] = [
+  { key: "panel", label: "Электрощит", src: workPanel },
+  { key: "wiring", label: "Проводка", src: workWiring },
+  { key: "lighting", label: "Освещение", src: workLighting },
 ];
 
-export function Works() {
+const IMAGE_MAP = new Map(WORK_IMAGES.map((w) => [w.key, w.src]));
+
+export function imageFor(key: string): string {
+  return IMAGE_MAP.get(key) ?? workPanel;
+}
+
+export function Works({
+  works,
+  title,
+  subtitle,
+}: {
+  works: WorkRow[];
+  title: string;
+  subtitle: string;
+}) {
   return (
     <section id="works" className="scroll-mt-20 bg-secondary/50 py-16 lg:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -30,21 +33,18 @@ export function Works() {
             Наши работы
           </span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Реализованные объекты в Санкт-Петербурге
+            {title}
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Каждый проект — аккуратный монтаж, подписанный акт и гарантия на
-            выполненные работы.
-          </p>
+          <p className="mt-3 text-muted-foreground">{subtitle}</p>
         </Reveal>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {WORKS.map((work, i) => (
-            <Reveal as="article" key={work.title} delay={i * 90}>
+          {works.map((work, i) => (
+            <Reveal as="article" key={work.id} delay={i * 90}>
               <div className="group overflow-hidden rounded-2xl border border-border bg-card">
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={work.img}
+                    src={imageFor(work.image_key)}
                     alt={work.title + " — пример работ электрика в СПб"}
                     loading="lazy"
                     width={1200}
