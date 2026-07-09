@@ -184,13 +184,26 @@ export function Contact() {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full gradient-brand px-6 py-3.5 text-base font-semibold text-brand-foreground shadow-brand transition-transform hover:scale-[1.02]"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full gradient-brand px-6 py-3.5 text-base font-semibold text-brand-foreground shadow-brand transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Получить расчёт <Send className="size-4" />
+                  {submitting ? (
+                    <>
+                      Отправляем… <Loader2 className="size-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Получить расчёт <Send className="size-4" />
+                    </>
+                  )}
                 </button>
+                {submitError && (
+                  <p className="text-center text-xs text-destructive">{submitError}</p>
+                )}
                 <p className="text-center text-xs text-muted-foreground">
                   Нажимая кнопку, вы соглашаетесь на обработку персональных данных.
                 </p>
+
               </form>
             )}
           </div>
