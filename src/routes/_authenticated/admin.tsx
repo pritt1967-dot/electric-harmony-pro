@@ -120,13 +120,17 @@ function AdminPage() {
               Изменения появляются на сайте сразу после сохранения.
             </p>
 
-            <Tabs defaultValue="texts" className="mt-6">
+            <Tabs defaultValue="submissions" className="mt-6">
               <TabsList className="flex-wrap">
+                <TabsTrigger value="submissions">Заявки</TabsTrigger>
                 <TabsTrigger value="texts">Тексты</TabsTrigger>
                 <TabsTrigger value="services">Услуги</TabsTrigger>
                 <TabsTrigger value="works">Работы</TabsTrigger>
                 <TabsTrigger value="reviews">Отзывы</TabsTrigger>
               </TabsList>
+              <TabsContent value="submissions" className="mt-6">
+                <SubmissionsEditor />
+              </TabsContent>
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
               </TabsContent>
