@@ -25,8 +25,11 @@ const schema = z.object({
 export function Contact() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submit = useServerFn(createSubmission);
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = {
@@ -44,9 +47,21 @@ export function Contact() {
       return;
     }
     setErrors({});
-    setSent(true);
-    form.reset();
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      await submit({ data: result.data });
+      setSent(true);
+      form.reset();
+    } catch {
+      setSubmitError(
+        "Не удалось отправить заявку. Попробуйте ещё раз или позвоните нам.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
+
 
   return (
     <section id="contacts" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:py-24">
