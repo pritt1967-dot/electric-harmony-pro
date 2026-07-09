@@ -132,7 +132,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             addressLocality: "Санкт-Петербург",
             addressCountry: "RU",
           },
-          telephone: "+7 (812) 000-00-00",
+          telephone: "+79117335567",
         }),
       },
     ],

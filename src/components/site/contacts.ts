@@ -1,9 +1,9 @@
 export const CONTACTS = {
-  phoneDisplay: "+7 (812) 320-45-67",
-  phoneHref: "tel:+78123204567",
-  whatsapp: "https://wa.me/79210000000",
+  phoneDisplay: "+7 (911) 733-55-67",
+  phoneHref: "tel:+79117335567",
+  whatsapp: "https://wa.me/79117335567",
   telegram: "https://t.me/voltpro",
-  email: "info@voltpro-spb.ru",
+  email: "9117335567@mail.ru",
   address: "Санкт-Петербург, Лиговский пр., 50",
-  hours: "Ежедневно с 8:00 до 22:00",
+  hours: "С 9:00 до 18:00",
 };
