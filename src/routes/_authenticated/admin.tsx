@@ -13,6 +13,7 @@ import { TextsEditor } from "@/components/admin/TextsEditor";
 import { ServicesEditor } from "@/components/admin/ServicesEditor";
 import { WorksEditor } from "@/components/admin/WorksEditor";
 import { ReviewsEditor } from "@/components/admin/ReviewsEditor";
+import { SubmissionsEditor } from "@/components/admin/SubmissionsEditor";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
