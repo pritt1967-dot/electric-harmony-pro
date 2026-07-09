@@ -2,17 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { notifyTelegram } from "./submissions.server";
-
-export type SubmissionRow = {
-  id: string;
-  name: string;
-  phone: string;
-  comment: string;
-  status: string;
-  created_at: string;
-};
 
 const submissionSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -55,46 +45,5 @@ export const createSubmission = createServerFn({ method: "POST" })
       comment: data.comment ?? "",
     });
 
-    return { ok: true };
-  });
-
-/** Admin only: lists all requests, newest first. */
-export const getSubmissions = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<SubmissionRow[]> => {
-    const { data, error } = await context.supabase
-      .from("submissions")
-      .select("id, name, phone, comment, status, created_at")
-      .order("created_at", { ascending: false });
-
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
-/** Admin only: updates a request status (new / done). */
-export const updateSubmissionStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string; status: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("submissions")
-      .update({ status: data.status })
-      .eq("id", data.id);
-
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
-/** Admin only: deletes a request. */
-export const deleteSubmission = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("submissions")
-      .delete()
-      .eq("id", data.id);
-
-    if (error) throw new Error(error.message);
     return { ok: true };
   });
