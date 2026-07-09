@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
-import { Phone, MapPin, Clock, Mail, Send, CheckCircle2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Phone, MapPin, Clock, Mail, Send, CheckCircle2, Loader2 } from "lucide-react";
 
 import { CONTACTS } from "./contacts";
 import { Reveal } from "./Reveal";
+import { createSubmission } from "@/lib/submissions.functions";
 
 const schema = z.object({
   name: z
@@ -23,8 +25,11 @@ const schema = z.object({
 export function Contact() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submit = useServerFn(createSubmission);
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = {
@@ -42,9 +47,21 @@ export function Contact() {
       return;
     }
     setErrors({});
-    setSent(true);
-    form.reset();
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      await submit({ data: result.data });
+      setSent(true);
+      form.reset();
+    } catch {
+      setSubmitError(
+        "Не удалось отправить заявку. Попробуйте ещё раз или позвоните нам.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
+
 
   return (
     <section id="contacts" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:py-24">
@@ -167,13 +184,26 @@ export function Contact() {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full gradient-brand px-6 py-3.5 text-base font-semibold text-brand-foreground shadow-brand transition-transform hover:scale-[1.02]"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full gradient-brand px-6 py-3.5 text-base font-semibold text-brand-foreground shadow-brand transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Получить расчёт <Send className="size-4" />
+                  {submitting ? (
+                    <>
+                      Отправляем… <Loader2 className="size-4 animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Получить расчёт <Send className="size-4" />
+                    </>
+                  )}
                 </button>
+                {submitError && (
+                  <p className="text-center text-xs text-destructive">{submitError}</p>
+                )}
                 <p className="text-center text-xs text-muted-foreground">
                   Нажимая кнопку, вы соглашаетесь на обработку персональных данных.
                 </p>
+
               </form>
             )}
           </div>
