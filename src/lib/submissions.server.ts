@@ -10,7 +10,16 @@ export async function notifyTelegram(submission: {
 }): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  if (!token || !chatId) {
+    console.error(
+      "[notifyTelegram] missing env",
+      "token:",
+      Boolean(token),
+      "chatId:",
+      Boolean(chatId),
+    );
+    return;
+  }
 
   const lines = [
     "🔔 <b>Новая заявка с сайта ВольтПро</b>",
