@@ -32,7 +32,7 @@ export async function notifyTelegram(submission: {
   }
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -42,8 +42,12 @@ export async function notifyTelegram(submission: {
         disable_web_page_preview: true,
       }),
     });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("[notifyTelegram] Telegram API error", res.status, body);
+    }
   } catch (error) {
-    console.error("Telegram notification failed", error);
+    console.error("[notifyTelegram] request failed", error);
   }
 }
 
