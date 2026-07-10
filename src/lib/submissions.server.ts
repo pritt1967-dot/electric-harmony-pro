@@ -10,7 +10,16 @@ export async function notifyTelegram(submission: {
 }): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  if (!token || !chatId) {
+    console.error(
+      "[notifyTelegram] missing env",
+      "token:",
+      Boolean(token),
+      "chatId:",
+      Boolean(chatId),
+    );
+    return;
+  }
 
   const lines = [
     "🔔 <b>Новая заявка с сайта ВольтПро</b>",
@@ -23,7 +32,7 @@ export async function notifyTelegram(submission: {
   }
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -33,8 +42,12 @@ export async function notifyTelegram(submission: {
         disable_web_page_preview: true,
       }),
     });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("[notifyTelegram] Telegram API error", res.status, body);
+    }
   } catch (error) {
-    console.error("Telegram notification failed", error);
+    console.error("[notifyTelegram] request failed", error);
   }
 }
 
