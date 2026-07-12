@@ -1,6 +1,7 @@
 import workWiring from "@/assets/work-wiring.jpg";
 import workPanel from "@/assets/work-panel.jpg";
 import workLighting from "@/assets/work-lighting.jpg";
+import workEvCharger from "@/assets/work-ev-charger.jpg";
 import { Reveal } from "./Reveal";
 import type { WorkRow } from "@/lib/content.functions";
 
@@ -8,6 +9,7 @@ export const WORK_IMAGES: { key: string; label: string; src: string }[] = [
   { key: "panel", label: "Электрощит", src: workPanel },
   { key: "wiring", label: "Проводка", src: workWiring },
   { key: "lighting", label: "Освещение", src: workLighting },
+  { key: "ev_charger", label: "Зарядные станции", src: workEvCharger },
 ];
 
 const IMAGE_MAP = new Map(WORK_IMAGES.map((w) => [w.key, w.src]));
