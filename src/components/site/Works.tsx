@@ -59,7 +59,9 @@ export function Works({
                     loading="lazy"
                     width={1200}
                     height={900}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                      work.image_key === "grounding" ? "object-top" : ""
+                    }`}
                   />
                 </div>
                 <div className="p-5">
