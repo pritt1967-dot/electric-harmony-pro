@@ -4,6 +4,8 @@ import workLighting from "@/assets/work-lighting.jpg";
 import workEvCharger from "@/assets/work-ev-charger.jpg";
 import workEvRealAsset from "@/assets/work-ev-real.jpg.asset.json";
 import workEvTesla from "@/assets/work-ev-tesla.jpg";
+import workGroundingAsset from "@/assets/work-grounding.jpg.asset.json";
+import workGroundingTestAsset from "@/assets/work-grounding-test.jpg.asset.json";
 import { Reveal } from "./Reveal";
 import type { WorkRow } from "@/lib/content.functions";
 
@@ -14,6 +16,8 @@ export const WORK_IMAGES: { key: string; label: string; src: string }[] = [
   { key: "ev_charger", label: "Зарядные станции", src: workEvCharger },
   { key: "ev_real", label: "Зарядная станция (фото)", src: workEvRealAsset.url },
   { key: "ev_tesla", label: "Зарядка Tesla (фото)", src: workEvTesla },
+  { key: "grounding", label: "Заземление (фото)", src: workGroundingAsset.url },
+  { key: "grounding_test", label: "Замер заземления (фото)", src: workGroundingTestAsset.url },
 ];
 
 const IMAGE_MAP = new Map(WORK_IMAGES.map((w) => [w.key, w.src]));
