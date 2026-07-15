@@ -7,7 +7,6 @@ import workEvRealAsset from "@/assets/work-ev-real.jpg.asset.json";
 import workEvTesla from "@/assets/work-ev-tesla.jpg";
 import workGroundingAsset from "@/assets/work-grounding.jpg.asset.json";
 import workGroundingTestAsset from "@/assets/work-grounding-test.jpg.asset.json";
-import workGroundingFlukeAsset from "@/assets/work-grounding-fluke.jpg.asset.json";
 import workGroundingRodAsset from "@/assets/work-grounding-rod.jpg.asset.json";
 import workGroundingPasteAsset from "@/assets/work-grounding-paste.jpg.asset.json";
 import { Reveal } from "./Reveal";
@@ -23,7 +22,6 @@ export const WORK_IMAGES: { key: string; label: string; src: string }[] = [
   { key: "ev_tesla", label: "Зарядка Tesla (фото)", src: workEvTesla },
   { key: "grounding", label: "Заземление (фото)", src: workGroundingAsset.url },
   { key: "grounding_test", label: "Замер заземления (фото)", src: workGroundingTestAsset.url },
-  { key: "grounding_fluke", label: "Замер Fluke (фото)", src: workGroundingFlukeAsset.url },
   { key: "grounding_rod", label: "Штырь заземления (фото)", src: workGroundingRodAsset.url },
   { key: "grounding_paste", label: "Паста для заземления (фото)", src: workGroundingPasteAsset.url },
 ];
@@ -38,10 +36,9 @@ export function imageFor(key: string): string {
 const GALLERY_MAP: Record<string, string[]> = {
   ev_real: ["ev_real", "ev_tesla", "ev_charger"],
   ev_tesla: ["ev_tesla", "ev_real"],
-  grounding: ["grounding", "grounding_rod", "grounding_paste", "grounding_fluke", "grounding_test"],
+  grounding: ["grounding", "grounding_rod", "grounding_paste", "grounding_test"],
   grounding_rod: ["grounding_rod", "grounding_paste"],
   grounding_paste: ["grounding_paste", "grounding_rod"],
-  grounding_fluke: ["grounding_fluke", "grounding_test"],
 };
 
 function galleryFor(key: string): string[] {
