@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://csqqjrbuajcymwhwaxva.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "elektro-site",
+      "version": "0.1.0",
+      "title": "Электро Site"
+    },
+    "tools": [
+      {
+        "name": "list_content",
+        "title": "Список контента сайта",
+        "description": "List site content: services, works (portfolio), reviews, or the site_content text blocks.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "section": {
+              "type": "string",
+              "enum": [
+                "services",
+                "works",
+                "reviews",
+                "texts"
+              ],
+              "description": "Which content section to list."
+            }
+          },
+          "required": [
+            "section"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_submissions",
+        "title": "Заявки с сайта",
+        "description": "List lead submissions sent from the site contact form (admin access required).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "new",
+                "in_progress",
+                "done"
+              ],
+              "description": "Filter by submission status."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Max rows."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_submission_status",
+        "title": "Обновить статус заявки",
+        "description": "Update the status of a lead submission (admin access required).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Submission id."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "new",
+                "in_progress",
+                "done"
+              ],
+              "description": "New status."
+            }
+          },
+          "required": [
+            "id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_site_text",
+        "title": "Изменить текст сайта",
+        "description": "Create or update a site_content text block by key (admin access required).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Content key, e.g. hero_title."
+            },
+            "value": {
+              "type": "string",
+              "description": "New text value."
+            }
+          },
+          "required": [
+            "key",
+            "value"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
