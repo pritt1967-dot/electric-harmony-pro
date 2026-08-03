@@ -77,7 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Электрик СПб — Электромонтаж, сборка электрощитов | ВольтПро" },
+      { title: "Электрик СПб — Электромонтаж, сборка электрощитов | S&M electric" },
       {
         name: "description",
         content:
@@ -88,17 +88,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "электрик Санкт-Петербург, электромонтаж СПб, сборка электрощитов, монтаж электропроводки, услуги электрика спб",
       },
-      { name: "author", content: "ВольтПро" },
-      { property: "og:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | ВольтПро" },
+      { name: "author", content: "S&M electric" },
+      { property: "og:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | S&M electric" },
       {
         property: "og:description",
         content:
           "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "ВольтПро" },
+      { property: "og:site_name", content: "S&M electric" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | ВольтПро" },
+      { name: "twitter:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | S&M electric" },
       { name: "twitter:description", content: "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
@@ -123,7 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Electrician",
-          name: "ВольтПро",
+          name: "S&M electric",
           description:
             "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика.",
           areaServed: "Санкт-Петербург",
