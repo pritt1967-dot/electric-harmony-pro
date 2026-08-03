@@ -20,7 +20,7 @@ export function Footer() {
               <Zap className="size-5" />
             </span>
             <span className="text-lg font-extrabold tracking-tight">
-              Вольт<span className="text-brand">Про</span>
+              S&M electric
             </span>
           </div>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
@@ -70,7 +70,7 @@ export function Footer() {
 
       <div className="border-t border-border py-5">
         <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-2 px-4 text-center text-xs text-muted-foreground sm:px-6">
-          © {new Date().getFullYear()} ВольтПро — электрик и электромонтаж в
+          © {new Date().getFullYear()} S&M electric — электрик и электромонтаж в
           Санкт-Петербурге. Все права защищены.
           <a href="/admin" className="hover:text-brand">
             Вход для администратора
