@@ -29,7 +29,7 @@ export function Header() {
             />
           </span>
           <span className="truncate text-lg font-extrabold tracking-tight">
-            Вольт<span className="text-brand">Про</span>
+            S&M electric
           </span>
         </a>
 

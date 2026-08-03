@@ -98,7 +98,7 @@ function Consent() {
             <Zap className="size-5" />
           </span>
           <span className="text-lg font-extrabold tracking-tight">
-            Вольт<span className="text-brand">Про</span>
+            S&M electric
           </span>
         </div>
         <h1 className="mt-6 text-center text-2xl font-extrabold">
