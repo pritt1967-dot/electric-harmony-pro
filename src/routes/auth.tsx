@@ -86,7 +86,7 @@ function AuthPage() {
             <Zap className="size-5" />
           </span>
           <span className="text-lg font-extrabold tracking-tight">
-            Вольт<span className="text-brand">Про</span>
+            S&M electric
           </span>
         </Link>
 

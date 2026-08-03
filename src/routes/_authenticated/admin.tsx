@@ -73,7 +73,7 @@ function AdminPage() {
               <Zap className="size-4" />
             </span>
             <span className="font-extrabold tracking-tight">
-              Вольт<span className="text-brand">Про</span>{" "}
+              S&M electric{" "}
               <span className="font-medium text-muted-foreground">/ Админка</span>
             </span>
           </div>
