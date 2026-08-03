@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Menu, X, Phone, Zap } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { CONTACTS } from "./contacts";
 
 const NAV = [
