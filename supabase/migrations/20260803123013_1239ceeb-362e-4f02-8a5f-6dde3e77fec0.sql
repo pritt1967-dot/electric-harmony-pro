@@ -1,0 +1,1 @@
+DELETE FROM public.works WHERE image_key = 'grounding_fluke';
