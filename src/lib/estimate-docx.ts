@@ -49,7 +49,8 @@ function cell(text: string, opts: { bold?: boolean; align?: (typeof AlignmentTyp
 }
 
 export async function downloadEstimateDocx(estimate: Estimate) {
-  const { lineTotal, money, formatDate, subtotal, grandTotal } = estimateLineHelpers;
+  const sub0 = 0;
+  void sub0;
   const sub = subtotal(estimate.items);
   const disc = discountAmount(estimate.items, estimate.discount_type, estimate.discount_value);
   const total = grandTotal(estimate.items, estimate.discount_type, estimate.discount_value);
