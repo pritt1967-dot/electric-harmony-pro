@@ -1,5 +1,6 @@
-import { Zap, Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { CONTACTS } from "./contacts";
 
 const NAV = [
