@@ -1,0 +1,1 @@
+update public.site_content set value = replace(value, 'ВольтПро', 'S&M electric') where value ilike '%ВольтПро%';
