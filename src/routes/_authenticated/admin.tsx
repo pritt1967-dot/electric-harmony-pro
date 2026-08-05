@@ -15,6 +15,8 @@ import { ServicesEditor } from "@/components/admin/ServicesEditor";
 import { WorksEditor } from "@/components/admin/WorksEditor";
 import { ReviewsEditor } from "@/components/admin/ReviewsEditor";
 import { SubmissionsEditor } from "@/components/admin/SubmissionsEditor";
+import { PriceEditor } from "@/components/admin/PriceEditor";
+import { EstimatesList } from "@/components/admin/EstimatesList";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -130,6 +132,8 @@ function AdminPage() {
             <Tabs defaultValue="submissions" className="mt-6">
               <TabsList className="flex-wrap">
                 <TabsTrigger value="submissions">Заявки</TabsTrigger>
+                <TabsTrigger value="estimates">Сметы</TabsTrigger>
+                <TabsTrigger value="price">Прайс</TabsTrigger>
                 <TabsTrigger value="texts">Тексты</TabsTrigger>
                 <TabsTrigger value="services">Услуги</TabsTrigger>
                 <TabsTrigger value="works">Работы</TabsTrigger>
@@ -137,6 +141,12 @@ function AdminPage() {
               </TabsList>
               <TabsContent value="submissions" className="mt-6">
                 <SubmissionsEditor />
+              </TabsContent>
+              <TabsContent value="estimates" className="mt-6">
+                <EstimatesList />
+              </TabsContent>
+              <TabsContent value="price" className="mt-6">
+                <PriceEditor />
               </TabsContent>
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />

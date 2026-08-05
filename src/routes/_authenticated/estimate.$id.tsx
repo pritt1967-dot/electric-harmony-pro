@@ -1,0 +1,613 @@
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  Copy,
+  Download,
+  FileDown,
+  Image as ImageIcon,
+  Loader2,
+  Plus,
+  Printer,
+  Save,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { Toaster, toast } from "sonner";
+
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { fetchPriceItems, type PriceRow } from "@/components/admin/PriceEditor";
+import {
+  STATUS_LABEL,
+  UNITS,
+  type DiscountType,
+  type Estimate,
+  type EstimateItem,
+  type EstimateStatus,
+  discountAmount,
+  emptyEstimate,
+  grandTotal,
+  lineTotal,
+  money,
+  nextNumber,
+  subtotal,
+} from "@/lib/estimates";
+import { downloadEstimatePdf, printEstimatePdf } from "@/lib/estimate-pdf";
+import { downloadEstimateDocx } from "@/lib/estimate-docx";
+
+export const Route = createFileRoute("/_authenticated/estimate/$id")({
+  component: EstimateEditor,
+});
+
+const LOGO_KEY = "sm-electric-custom-logo";
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function EstimateEditor() {
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const [estimate, setEstimate] = useState<Estimate | null>(null);
+  const [price, setPrice] = useState<PriceRow[]>([]);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    setLogo(localStorage.getItem(LOGO_KEY) ?? undefined);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [items, existing, all] = await Promise.all([
+        fetchPriceItems(),
+        id === "new"
+          ? Promise.resolve(null)
+          : supabase.from("estimates").select("*").eq("id", id).maybeSingle(),
+        supabase.from("estimates").select("number"),
+      ]);
+      if (!active) return;
+      setPrice(items);
+      if (existing?.data) {
+        const d = existing.data;
+        setEstimate({
+          ...d,
+          total: Number(d.total),
+          discount_value: Number(d.discount_value),
+          discount_type: d.discount_type as DiscountType,
+          status: d.status as EstimateStatus,
+          items: (d.items ?? []) as unknown as EstimateItem[],
+        } as Estimate);
+      } else {
+        setEstimate(emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const categories = useMemo(
+    () => Array.from(new Set(price.map((p) => p.category))).sort(),
+    [price],
+  );
+  const filteredPrice = useMemo(
+    () =>
+      price.filter(
+        (p) =>
+          (category === "all" || p.category === category) &&
+          p.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [price, query, category],
+  );
+
+  if (!estimate) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  const est = estimate;
+  const set = <K extends keyof Estimate>(key: K, value: Estimate[K]) =>
+    setEstimate((e) => (e ? { ...e, [key]: value } : e));
+
+  function addFromPrice(p: PriceRow) {
+    set("items", [
+      ...est.items,
+      { id: uid(), name: p.name, unit: p.unit, qty: 1, price: p.price, comment: "" },
+    ]);
+    toast.success("Добавлено: " + p.name);
+  }
+
+  function addCustom() {
+    set("items", [
+      ...est.items,
+      { id: uid(), name: "Своя позиция", unit: "шт", qty: 1, price: 0, comment: "" },
+    ]);
+  }
+
+  function patchItem(itemId: string, field: keyof EstimateItem, value: string | number) {
+    set(
+      "items",
+      est.items.map((i) => (i.id === itemId ? { ...i, [field]: value } : i)),
+    );
+  }
+
+  const sub = subtotal(est.items);
+  const disc = discountAmount(est.items, est.discount_type, est.discount_value);
+  const total = grandTotal(est.items, est.discount_type, est.discount_value);
+
+  async function save(silent = false) {
+    setSaving(true);
+    const payload = {
+      number: est.number,
+      doc_date: est.doc_date,
+      customer_name: est.customer_name,
+      address: est.address,
+      phone: est.phone,
+      email: est.email,
+      work_period: est.work_period,
+      valid_until: est.valid_until,
+      note: est.note,
+      discount_type: est.discount_type,
+      discount_value: est.discount_value,
+      status: est.status,
+      total,
+      items: est.items as never,
+    };
+    if (est.id) {
+      const { error } = await supabase.from("estimates").update(payload).eq("id", est.id);
+      setSaving(false);
+      if (error) return toast.error("Ошибка: " + error.message);
+    } else {
+      const { data, error } = await supabase
+        .from("estimates")
+        .insert(payload)
+        .select("id")
+        .single();
+      setSaving(false);
+      if (error) return toast.error("Ошибка: " + error.message);
+      if (data) {
+        setEstimate((e) => (e ? { ...e, id: data.id } : e));
+        navigate({ to: "/estimate/$id", params: { id: data.id }, replace: true });
+      }
+    }
+    if (!silent) toast.success("Смета сохранена");
+  }
+
+  async function duplicate() {
+    const { data: all } = await supabase.from("estimates").select("number");
+    const number = nextNumber((all ?? []).map((r) => r.number));
+    const { data, error } = await supabase
+      .from("estimates")
+      .insert({
+        number,
+        doc_date: est.doc_date,
+        customer_name: est.customer_name,
+        address: est.address,
+        phone: est.phone,
+        email: est.email,
+        work_period: est.work_period,
+        valid_until: est.valid_until,
+        note: est.note,
+        discount_type: est.discount_type,
+        discount_value: est.discount_value,
+        status: "draft",
+        total,
+        items: est.items as never,
+      })
+      .select("id")
+      .single();
+    if (error) return toast.error("Ошибка: " + error.message);
+    if (data) {
+      toast.success("Создана копия сметы");
+      navigate({ to: "/estimate/$id", params: { id: data.id } });
+    }
+  }
+
+  async function withBusy(key: string, fn: () => Promise<void>) {
+    setBusy(key);
+    try {
+      await fn();
+    } catch (e) {
+      toast.error("Не удалось сформировать документ");
+      console.error(e);
+    }
+    setBusy(null);
+  }
+
+  function onLogoUpload(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result);
+      localStorage.setItem(LOGO_KEY, url);
+      setLogo(url);
+      toast.success("Логотип обновлён");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="min-h-screen bg-secondary/30">
+      <Toaster richColors position="top-center" />
+      <header className="sticky top-0 z-10 border-b border-border bg-background">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/admin">
+              <ArrowLeft className="mr-2 size-4" /> В админку
+            </Link>
+          </Button>
+          <span className="font-bold">Смета № {est.number}</span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => save()} disabled={saving}>
+              {saving ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 size-4" />
+              )}
+              Сохранить
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo))}
+              disabled={busy === "pdf"}
+            >
+              {busy === "pdf" ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 size-4" />
+              )}
+              Скачать PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => withBusy("print", () => printEstimatePdf(est, logo))}
+              disabled={busy === "print"}
+            >
+              <Printer className="mr-2 size-4" /> Печать
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => withBusy("docx", () => downloadEstimateDocx(est))}
+              disabled={busy === "docx"}
+            >
+              <FileDown className="mr-2 size-4" /> Word
+            </Button>
+            <Button size="sm" variant="ghost" onClick={duplicate}>
+              <Copy className="mr-2 size-4" /> Дублировать
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_340px]">
+        <div className="space-y-6">
+          {/* Данные заказчика */}
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <h2 className="text-lg font-bold">Данные заказчика</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>ФИО заказчика</Label>
+                <Input
+                  value={est.customer_name}
+                  onChange={(e) => set("customer_name", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Адрес объекта</Label>
+                <Input value={est.address} onChange={(e) => set("address", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Телефон</Label>
+                <Input value={est.phone} onChange={(e) => set("phone", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email (необязательно)</Label>
+                <Input value={est.email} onChange={(e) => set("email", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Номер сметы</Label>
+                <Input value={est.number} onChange={(e) => set("number", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Дата</Label>
+                <Input
+                  type="date"
+                  value={est.doc_date}
+                  onChange={(e) => set("doc_date", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Срок выполнения работ</Label>
+                <Input
+                  placeholder="напр. 10 рабочих дней"
+                  value={est.work_period}
+                  onChange={(e) => set("work_period", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Срок действия предложения</Label>
+                <Input
+                  placeholder="напр. 14 дней"
+                  value={est.valid_until}
+                  onChange={(e) => set("valid_until", e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Позиции */}
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-bold">Работы в смете</h2>
+              <Button size="sm" variant="outline" onClick={addCustom}>
+                <Plus className="mr-2 size-4" /> Своя позиция
+              </Button>
+            </div>
+
+            {est.items.length === 0 && (
+              <p className="mt-4 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                Выберите работы из прайса справа или добавьте свою позицию.
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {est.items.map((item, i) => (
+                <div key={item.id} className="rounded-xl border border-border p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-2 w-5 text-sm text-muted-foreground">{i + 1}</span>
+                    <div className="grid flex-1 gap-3">
+                      <Input
+                        value={item.name}
+                        onChange={(e) => patchItem(item.id, "name", e.target.value)}
+                      />
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Ед.</Label>
+                          <Select
+                            value={item.unit}
+                            onValueChange={(v) => patchItem(item.id, "unit", v)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from(new Set([...UNITS, item.unit])).map((u) => (
+                                <SelectItem key={u} value={u}>
+                                  {u}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Кол-во</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={item.qty}
+                            onChange={(e) =>
+                              patchItem(item.id, "qty", Number(e.target.value))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Цена, ₽</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={item.price}
+                            onChange={(e) =>
+                              patchItem(item.id, "price", Number(e.target.value))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Стоимость</Label>
+                          <div className="flex h-9 items-center justify-end rounded-md bg-secondary px-3 text-sm font-semibold">
+                            {money(lineTotal(item))} ₽
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() =>
+                        set(
+                          "items",
+                          est.items.filter((x) => x.id !== item.id),
+                        )
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Итоги */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Скидка</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={est.discount_type}
+                      onValueChange={(v) => set("discount_type", v as DiscountType)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percent">Процент, %</SelectItem>
+                        <SelectItem value="fixed">Сумма, ₽</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={est.discount_value}
+                      onChange={(e) => set("discount_value", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Примечание</Label>
+                  <Textarea
+                    rows={3}
+                    value={est.note}
+                    onChange={(e) => set("note", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Статус</Label>
+                  <Select
+                    value={est.status}
+                    onValueChange={(v) => set("status", v as EstimateStatus)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(STATUS_LABEL) as EstimateStatus[]).map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {STATUS_LABEL[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="self-start rounded-xl border border-border bg-secondary/50 p-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Итого</span>
+                  <span>{money(sub)} ₽</span>
+                </div>
+                <div className="mt-2 flex justify-between text-sm">
+                  <span className="text-muted-foreground">Скидка</span>
+                  <span>− {money(disc)} ₽</span>
+                </div>
+                <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-extrabold text-brand">
+                  <span>К оплате</span>
+                  <span>{money(total)} ₽</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Прайс */}
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <h2 className="font-bold">Прайс работ</h2>
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Поиск работы…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="mt-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все категории</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto pr-1">
+              {filteredPrice.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => addFromPrice(p)}
+                  className="w-full rounded-lg border border-border p-2.5 text-left transition hover:border-brand hover:bg-secondary"
+                >
+                  <span className="block text-sm font-medium">{p.name}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {p.category} · {money(p.price)} ₽ / {p.unit}
+                  </span>
+                </button>
+              ))}
+              {filteredPrice.length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  Ничего не найдено
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <h2 className="font-bold">Логотип в PDF</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              По умолчанию используется логотип S&M Electric. Можно загрузить свой.
+            </p>
+            {logo && (
+              <img
+                src={logo}
+                alt="Загруженный логотип"
+                className="mt-3 h-16 w-16 rounded-lg object-contain"
+              />
+            )}
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border p-3 text-sm hover:bg-secondary">
+              <ImageIcon className="size-4" /> Загрузить логотип
+              <input
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onLogoUpload(f);
+                }}
+              />
+            </label>
+            {logo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={() => {
+                  localStorage.removeItem(LOGO_KEY);
+                  setLogo(undefined);
+                }}
+              >
+                Вернуть логотип по умолчанию
+              </Button>
+            )}
+          </div>
+        </aside>
+      </main>
+    </div>
+  );
+}
