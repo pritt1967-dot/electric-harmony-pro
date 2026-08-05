@@ -18,8 +18,12 @@ import {
   FOOTER_LINES,
   type Estimate,
   discountAmount,
-  estimateLineHelpers,
-} from "./estimate-docx-helpers";
+  formatDate,
+  grandTotal,
+  lineTotal,
+  money,
+  subtotal,
+} from "./estimates";
 import { estimateFileName } from "./estimate-pdf";
 
 const BORDER = { style: BorderStyle.SINGLE, size: 1, color: "D8DEE8" };
