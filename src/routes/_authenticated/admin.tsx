@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Zap, LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
+import { LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Toaster } from "sonner";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { claimAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
