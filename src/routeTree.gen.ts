@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -61,6 +62,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedEstimateIdRoute = AuthenticatedEstimateIdRouteImport.update({
+  id: '/estimate/$id',
+  path: '/estimate/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/estimate/$id': typeof AuthenticatedEstimateIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/estimate/$id': typeof AuthenticatedEstimateIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/estimate/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/estimate/$id'
   id:
     | '__root__'
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/estimate/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/estimate/$id': {
+      id: '/_authenticated/estimate/$id'
+      path: '/estimate/$id'
+      fullPath: '/estimate/$id'
+      preLoaderRoute: typeof AuthenticatedEstimateIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -234,10 +253,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedEstimateIdRoute: typeof AuthenticatedEstimateIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedEstimateIdRoute: AuthenticatedEstimateIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
