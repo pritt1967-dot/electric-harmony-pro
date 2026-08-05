@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      estimates: {
+        Row: {
+          address: string
+          created_at: string
+          customer_name: string
+          discount_type: string
+          discount_value: number
+          doc_date: string
+          email: string
+          id: string
+          items: Json
+          note: string
+          number: string
+          phone: string
+          status: string
+          total: number
+          updated_at: string
+          valid_until: string
+          work_period: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          customer_name?: string
+          discount_type?: string
+          discount_value?: number
+          doc_date?: string
+          email?: string
+          id?: string
+          items?: Json
+          note?: string
+          number?: string
+          phone?: string
+          status?: string
+          total?: number
+          updated_at?: string
+          valid_until?: string
+          work_period?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          customer_name?: string
+          discount_type?: string
+          discount_value?: number
+          doc_date?: string
+          email?: string
+          id?: string
+          items?: Json
+          note?: string
+          number?: string
+          phone?: string
+          status?: string
+          total?: number
+          updated_at?: string
+          valid_until?: string
+          work_period?: string
+        }
+        Relationships: []
+      }
+      price_items: {
+        Row: {
+          category: string
+          comment: string
+          created_at: string
+          id: string
+          name: string
+          price: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          name: string
+          price?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           created_at: string
