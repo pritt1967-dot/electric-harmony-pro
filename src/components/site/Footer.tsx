@@ -1,5 +1,6 @@
-import { Zap, Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { CONTACTS } from "./contacts";
 
 const NAV = [
@@ -16,8 +17,14 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-xl gradient-brand text-brand-foreground">
-              <Zap className="size-5" />
+            <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-foreground">
+              <img
+                src={logoAsset.url}
+                alt="S&M Electric — логотип электромонтажной компании"
+                width={40}
+                height={40}
+                className="size-10 object-contain"
+              />
             </span>
             <span className="text-lg font-extrabold tracking-tight">
               S&M electric

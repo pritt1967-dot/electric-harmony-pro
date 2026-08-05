@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Zap, LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
+import { LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Toaster } from "sonner";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { claimAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ function AdminPage() {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", search: { next: undefined }, replace: true });
   }
 
   return (
@@ -69,8 +70,14 @@ function AdminPage() {
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg gradient-brand text-brand-foreground">
-              <Zap className="size-4" />
+            <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-foreground">
+              <img
+                src={logoAsset.url}
+                alt="S&M Electric — логотип"
+                width={32}
+                height={32}
+                className="size-8 object-contain"
+              />
             </span>
             <span className="font-extrabold tracking-tight">
               S&M electric{" "}

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { Zap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
+import logoAsset from "@/assets/logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,8 +83,14 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center gradient-hero px-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-brand">
         <Link to="/" className="flex items-center justify-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl gradient-brand text-brand-foreground">
-            <Zap className="size-5" />
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-foreground">
+            <img
+              src={logoAsset.url}
+              alt="S&M Electric — логотип"
+              width={40}
+              height={40}
+              className="size-10 object-contain"
+            />
           </span>
           <span className="text-lg font-extrabold tracking-tight">
             S&M electric
