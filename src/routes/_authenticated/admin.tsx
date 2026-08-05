@@ -70,8 +70,14 @@ function AdminPage() {
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg gradient-brand text-brand-foreground">
-              <Zap className="size-4" />
+            <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-foreground">
+              <img
+                src={logoAsset.url}
+                alt="S&M Electric — логотип"
+                width={32}
+                height={32}
+                className="size-8 object-contain"
+              />
             </span>
             <span className="font-extrabold tracking-tight">
               S&M electric{" "}
