@@ -94,8 +94,14 @@ function Consent() {
     <main className="flex min-h-screen items-center justify-center gradient-hero px-4">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-brand">
         <div className="flex items-center justify-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl gradient-brand text-brand-foreground">
-            <Zap className="size-5" />
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-foreground">
+            <img
+              src={logoAsset.url}
+              alt="S&M Electric — логотип"
+              width={40}
+              height={40}
+              className="size-10 object-contain"
+            />
           </span>
           <span className="text-lg font-extrabold tracking-tight">
             S&M electric
