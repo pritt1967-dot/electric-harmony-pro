@@ -386,67 +386,17 @@ function EstimateEditor() {
             <div className="mt-4 space-y-3">
               {est.items.map((item, i) => (
                 <div key={item.id} className="rounded-xl border border-border p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-2 w-5 text-sm text-muted-foreground">{i + 1}</span>
-                    <div className="grid flex-1 gap-3">
-                      <Input
-                        value={item.name}
-                        onChange={(e) => patchItem(item.id, "name", e.target.value)}
-                      />
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Ед.</Label>
-                          <Select
-                            value={item.unit}
-                            onValueChange={(v) => patchItem(item.id, "unit", v)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from(new Set([...UNITS, item.unit])).map((u) => (
-                                <SelectItem key={u} value={u}>
-                                  {u}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Кол-во</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={item.qty}
-                            onChange={(e) =>
-                              patchItem(item.id, "qty", Number(e.target.value))
-                            }
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Цена, ₽</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={item.price}
-                            onChange={(e) =>
-                              patchItem(item.id, "price", Number(e.target.value))
-                            }
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Стоимость</Label>
-                          <div className="flex h-9 items-center justify-end rounded-md bg-secondary px-3 text-sm font-semibold">
-                            {money(lineTotal(item))} ₽
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                    <span className="w-4 text-sm text-muted-foreground">{i + 1}</span>
+                    <Input
+                      className="min-w-0"
+                      value={item.name}
+                      onChange={(e) => patchItem(item.id, "name", e.target.value)}
+                    />
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-destructive hover:text-destructive"
+                      className="shrink-0 text-destructive hover:text-destructive"
                       onClick={() =>
                         set(
                           "items",
@@ -457,7 +407,53 @@ function EstimateEditor() {
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="min-w-0 space-y-1.5">
+                      <Label className="text-xs">Ед.</Label>
+                      <Select
+                        value={item.unit}
+                        onValueChange={(v) => patchItem(item.id, "unit", v)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from(new Set([...UNITS, item.unit])).map((u) => (
+                            <SelectItem key={u} value={u}>
+                              {u}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="min-w-0 space-y-1.5">
+                      <Label className="text-xs">Кол-во</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={item.qty}
+                        onChange={(e) => patchItem(item.id, "qty", Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-1.5">
+                      <Label className="text-xs">Цена, ₽</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={item.price}
+                        onChange={(e) => patchItem(item.id, "price", Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-1.5">
+                      <Label className="text-xs">Стоимость</Label>
+                      <div className="flex h-9 items-center justify-end overflow-hidden rounded-md bg-secondary px-3 text-sm font-semibold">
+                        {money(lineTotal(item))} ₽
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
               ))}
             </div>
 
