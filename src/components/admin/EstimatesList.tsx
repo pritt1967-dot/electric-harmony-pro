@@ -125,11 +125,12 @@ export function EstimatesList() {
         {rows.map((row) => (
           <div
             key={row.id}
-            className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background p-4"
+            className="rounded-xl border border-border bg-background p-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
           >
-            <div className="min-w-52 flex-1">
-              <div className="flex items-center gap-2 font-semibold">
-                <FileText className="size-4 text-brand" />№ {row.number || "—"}
+            <div className="min-w-0 sm:min-w-52 sm:flex-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 font-semibold">
+                <FileText className="size-4 shrink-0 text-brand" />
+                <span>№ {row.number || "—"}</span>
                 <span className="text-sm font-normal text-muted-foreground">
                   от {formatDate(row.doc_date)}
                 </span>
@@ -139,48 +140,53 @@ export function EstimatesList() {
                 {row.address ? ` · ${row.address}` : ""}
               </p>
             </div>
-            <div className="text-right font-bold">{money(row.total)} ₽</div>
-            <Select
-              value={row.status}
-              onValueChange={(v) => setStatus(row.id, v as EstimateStatus)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(STATUS_LABEL) as EstimateStatus[]).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {STATUS_LABEL[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/estimate/$id" params={{ id: row.id }}>
-                  Открыть
-                </Link>
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => duplicate(row)}
-                disabled={busyId === row.id}
+            <div className="mt-2 font-bold sm:mt-0 sm:text-right">
+              {money(row.total)} ₽
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-0 sm:contents">
+              <Select
+                value={row.status}
+                onValueChange={(v) => setStatus(row.id, v as EstimateStatus)}
               >
-                <Copy className="size-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={() => remove(row.id)}
-                disabled={busyId === row.id}
-              >
-                <Trash2 className="size-4" />
-              </Button>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(STATUS_LABEL) as EstimateStatus[]).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/estimate/$id" params={{ id: row.id }}>
+                    Открыть
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => duplicate(row)}
+                  disabled={busyId === row.id}
+                >
+                  <Copy className="size-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => remove(row.id)}
+                  disabled={busyId === row.id}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
             </div>
           </div>
         ))}
+
       </div>
     </div>
   );
