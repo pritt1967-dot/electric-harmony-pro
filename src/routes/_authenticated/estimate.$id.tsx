@@ -379,7 +379,9 @@ function EstimateEditor() {
 
             {est.items.length === 0 && (
               <p className="mt-4 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Выберите работы из прайса справа или добавьте свою позицию.
+                Выберите работы из прайса (ниже на телефоне, справа на компьютере)
+                или добавьте свою позицию.
+
               </p>
             )}
 
