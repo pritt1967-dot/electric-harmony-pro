@@ -248,15 +248,23 @@ function EstimateEditor() {
     <div className="min-h-screen bg-secondary/30">
       <Toaster richColors position="top-center" />
       <header className="sticky top-0 z-10 border-b border-border bg-background">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin">
-              <ArrowLeft className="mr-2 size-4" /> В админку
-            </Link>
-          </Button>
-          <span className="font-bold">Смета № {est.number}</span>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => save()} disabled={saving}>
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+            <Button variant="ghost" size="sm" className="shrink-0 px-2" asChild>
+              <Link to="/admin">
+                <ArrowLeft className="size-4 sm:mr-2" />
+                <span className="hidden sm:inline">В админку</span>
+              </Link>
+            </Button>
+            <span className="truncate font-bold">Смета № {est.number}</span>
+          </div>
+          <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-3 sm:flex-wrap sm:overflow-visible sm:px-0">
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => save()}
+              disabled={saving}
+            >
               {saving ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
@@ -267,6 +275,7 @@ function EstimateEditor() {
             <Button
               size="sm"
               variant="outline"
+              className="shrink-0"
               onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo))}
               disabled={busy === "pdf"}
             >
@@ -275,11 +284,12 @@ function EstimateEditor() {
               ) : (
                 <Download className="mr-2 size-4" />
               )}
-              Скачать PDF
+              PDF
             </Button>
             <Button
               size="sm"
               variant="outline"
+              className="shrink-0"
               onClick={() => withBusy("print", () => printEstimatePdf(est, logo))}
               disabled={busy === "print"}
             >
@@ -288,17 +298,19 @@ function EstimateEditor() {
             <Button
               size="sm"
               variant="outline"
+              className="shrink-0"
               onClick={() => withBusy("docx", () => downloadEstimateDocx(est))}
               disabled={busy === "docx"}
             >
               <FileDown className="mr-2 size-4" /> Word
             </Button>
-            <Button size="sm" variant="ghost" onClick={duplicate}>
+            <Button size="sm" variant="ghost" className="shrink-0" onClick={duplicate}>
               <Copy className="mr-2 size-4" /> Дублировать
             </Button>
           </div>
         </div>
       </header>
+
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
