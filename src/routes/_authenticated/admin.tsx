@@ -130,14 +130,14 @@ function AdminPage() {
             </p>
 
             <Tabs defaultValue="submissions" className="mt-6">
-              <TabsList className="flex-wrap">
-                <TabsTrigger value="submissions">Заявки</TabsTrigger>
-                <TabsTrigger value="estimates">Сметы</TabsTrigger>
-                <TabsTrigger value="price">Прайс</TabsTrigger>
-                <TabsTrigger value="texts">Тексты</TabsTrigger>
-                <TabsTrigger value="services">Услуги</TabsTrigger>
-                <TabsTrigger value="works">Работы</TabsTrigger>
-                <TabsTrigger value="reviews">Отзывы</TabsTrigger>
+              <TabsList className="flex h-auto w-full flex-nowrap items-center justify-start gap-1 overflow-x-auto p-1 scrollbar-hide sm:inline-flex sm:h-9 sm:flex-wrap sm:justify-center">
+                <TabsTrigger value="submissions" className="shrink-0">Заявки</TabsTrigger>
+                <TabsTrigger value="estimates" className="shrink-0">Сметы</TabsTrigger>
+                <TabsTrigger value="price" className="shrink-0">Прайс</TabsTrigger>
+                <TabsTrigger value="texts" className="shrink-0">Тексты</TabsTrigger>
+                <TabsTrigger value="services" className="shrink-0">Услуги</TabsTrigger>
+                <TabsTrigger value="works" className="shrink-0">Работы</TabsTrigger>
+                <TabsTrigger value="reviews" className="shrink-0">Отзывы</TabsTrigger>
               </TabsList>
               <TabsContent value="submissions" className="mt-6">
                 <SubmissionsEditor />

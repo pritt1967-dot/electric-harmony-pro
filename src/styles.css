@@ -178,6 +178,15 @@
   text-wrap: balance;
 }
 
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Scroll reveal */
 .reveal {
   opacity: 0;
