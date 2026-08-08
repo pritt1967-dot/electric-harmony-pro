@@ -101,7 +101,7 @@ function AdminPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {status === "checking" && (
           <div className="flex justify-center py-24">
             <Loader2 className="size-8 animate-spin text-brand" />
@@ -124,23 +124,43 @@ function AdminPage() {
 
         {status === "admin" && (
           <>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="whitespace-nowrap text-xl font-extrabold tracking-tight sm:text-2xl">
               Управление контентом
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Изменения появляются на сайте сразу после сохранения.
             </p>
 
-            <Tabs defaultValue="submissions" className="mt-6">
-              <TabsList className="flex h-auto w-full flex-nowrap items-center justify-start gap-1 overflow-x-auto p-1 scrollbar-hide sm:inline-flex sm:h-9 sm:flex-wrap sm:justify-center">
-                <TabsTrigger value="submissions" className="shrink-0">Заявки</TabsTrigger>
-                <TabsTrigger value="estimates" className="shrink-0">Сметы</TabsTrigger>
-                <TabsTrigger value="price" className="shrink-0">Прайс</TabsTrigger>
-                <TabsTrigger value="texts" className="shrink-0">Тексты</TabsTrigger>
-                <TabsTrigger value="services" className="shrink-0">Услуги</TabsTrigger>
-                <TabsTrigger value="works" className="shrink-0">Работы</TabsTrigger>
-                <TabsTrigger value="reviews" className="shrink-0">Отзывы</TabsTrigger>
-              </TabsList>
+            <Tabs
+              value={tab}
+              onValueChange={(v) => {
+                setTab(v);
+                requestAnimationFrame(() => {
+                  tabsRef.current
+                    ?.querySelector(`[data-value="${v}"]`)
+                    ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                });
+              }}
+              className="mt-4 sm:mt-6"
+            >
+              <div
+                ref={tabsRef}
+                className="-mx-4 overflow-x-auto overflow-y-hidden px-4 scrollbar-hide sm:mx-0 sm:px-0"
+              >
+                <TabsList className="flex h-auto w-max flex-nowrap items-center justify-start gap-2 rounded-2xl p-1.5 sm:h-9 sm:gap-1 sm:rounded-lg sm:p-1">
+                  {TABS.map((t) => (
+                    <TabsTrigger
+                      key={t.value}
+                      value={t.value}
+                      data-value={t.value}
+                      className="min-h-9 shrink-0 whitespace-nowrap rounded-xl px-3.5 transition-colors sm:min-h-0 sm:rounded-md sm:px-3"
+                    >
+                      {t.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+
               <TabsContent value="submissions" className="mt-6">
                 <SubmissionsEditor />
               </TabsContent>
