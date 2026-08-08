@@ -115,13 +115,13 @@ export function SubmissionsEditor() {
       {rows.map((row) => (
         <div
           key={row.id}
-          className={`rounded-xl border bg-background p-4 ${
+          className={`rounded-2xl border bg-background p-4 ${
             row.status === "done" ? "border-border opacity-70" : "border-brand/40"
           }`}
         >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{row.name}</span>
                 {row.status === "done" ? (
                   <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
@@ -139,25 +139,26 @@ export function SubmissionsEditor() {
             </div>
             <a
               href={`tel:${row.phone.replace(/[^0-9+]/g, "")}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline"
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-semibold text-brand hover:underline"
             >
-              <Phone className="size-4" /> {row.phone}
+              <Phone className="size-4 shrink-0" /> {row.phone}
             </a>
           </div>
 
           {row.comment.trim() && (
-            <p className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
+            <p className="mt-3 flex items-start gap-2 break-words text-sm text-muted-foreground">
               <MessageSquare className="mt-0.5 size-4 shrink-0" />
-              <span>{row.comment}</span>
+              <span className="min-w-0">{row.comment}</span>
             </p>
           )}
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Button
               size="sm"
               variant={row.status === "done" ? "outline" : "default"}
               onClick={() => toggleStatus(row)}
               disabled={busyId === row.id}
+              className="min-h-11 w-full justify-center rounded-xl sm:w-auto"
             >
               {busyId === row.id ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -171,7 +172,7 @@ export function SubmissionsEditor() {
             <Button
               size="sm"
               variant="ghost"
-              className="text-destructive hover:text-destructive"
+              className="min-h-11 w-full justify-center rounded-xl text-destructive hover:text-destructive sm:w-auto"
               onClick={() => deleteRow(row.id)}
               disabled={busyId === row.id}
             >
