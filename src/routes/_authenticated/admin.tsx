@@ -22,10 +22,22 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+const TABS = [
+  { value: "submissions", label: "Заявки" },
+  { value: "estimates", label: "Сметы" },
+  { value: "price", label: "Прайс" },
+  { value: "texts", label: "Тексты" },
+  { value: "services", label: "Услуги" },
+  { value: "works", label: "Работы" },
+  { value: "reviews", label: "Отзывы" },
+];
+
 function AdminPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const claim = useServerFn(claimAdmin);
+  const [tab, setTab] = useState("submissions");
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"checking" | "admin" | "denied">(
     "checking",
   );
