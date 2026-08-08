@@ -67,11 +67,11 @@ function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/30">
+    <div className="min-h-screen overflow-x-hidden bg-secondary/30">
       <Toaster richColors position="top-center" />
       <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-foreground">
               <img
                 src={logoAsset.url}
@@ -81,19 +81,21 @@ function AdminPage() {
                 className="size-8 object-contain"
               />
             </span>
-            <span className="font-extrabold tracking-tight">
+            <span className="truncate text-sm font-extrabold tracking-tight sm:text-base">
               S&M electric{" "}
               <span className="font-medium text-muted-foreground">/ Админка</span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" className="px-2 sm:px-3" asChild>
               <Link to="/">
-                <ExternalLink className="mr-2 size-4" /> Сайт
+                <ExternalLink className="size-4 sm:mr-2" />
+                <span className="hidden sm:inline">Сайт</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="mr-2 size-4" /> Выйти
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={signOut}>
+              <LogOut className="size-4 sm:mr-2" />
+              <span className="hidden sm:inline">Выйти</span>
             </Button>
           </div>
         </div>
