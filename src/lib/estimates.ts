@@ -9,7 +9,7 @@ export type EstimateItem = {
 
 export type DiscountType = "percent" | "fixed";
 
-export type EstimateStatus = "draft" | "sent" | "done";
+export type EstimateStatus = "draft" | "sent" | "approved" | "done";
 
 export type Estimate = {
   id?: string;
@@ -27,13 +27,18 @@ export type Estimate = {
   status: EstimateStatus;
   total: number;
   items: EstimateItem[];
+  public_token?: string;
+  approved_at?: string | null;
+  approved_by_name?: string;
 };
 
 export const STATUS_LABEL: Record<EstimateStatus, string> = {
   draft: "Черновик",
   sent: "Отправлена",
+  approved: "Согласована",
   done: "Выполнена",
 };
+
 
 export const UNITS = ["шт", "м", "м²", "компл", "точка", "линия", "изм", "усл", "ч"];
 

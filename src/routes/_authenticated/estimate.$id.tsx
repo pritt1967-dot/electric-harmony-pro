@@ -44,6 +44,7 @@ import {
   subtotal,
 } from "@/lib/estimates";
 import { downloadEstimatePdf, printEstimatePdf } from "@/lib/estimate-pdf";
+import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimateDocx } from "@/lib/estimate-docx";
 
 export const Route = createFileRoute("/_authenticated/estimate/$id")({
@@ -66,6 +67,8 @@ function EstimateEditor() {
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [logo, setLogo] = useState<string | undefined>(undefined);
+  const [qr, setQr] = useState<string | null>(null);
+  const [publicUrl, setPublicUrl] = useState("");
 
   useEffect(() => {
     setLogo(localStorage.getItem(LOGO_KEY) ?? undefined);
@@ -101,6 +104,14 @@ function EstimateEditor() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    const token = estimate?.public_token;
+    if (!token) return;
+    const url = estimatePublicUrl(token);
+    setPublicUrl(url);
+    qrDataUrl(url, 220).then(setQr).catch(() => setQr(null));
+  }, [estimate?.public_token]);
 
   const categories = useMemo(
     () => Array.from(new Set(price.map((p) => p.category))).sort(),
@@ -155,6 +166,9 @@ function EstimateEditor() {
   const total = grandTotal(est.items, est.discount_type, est.discount_value);
 
   async function save(silent = false) {
+    if (est.approved_at) {
+      return toast.error("Смета согласована заказчиком и больше не редактируется");
+    }
     setSaving(true);
     const payload = {
       number: est.number,
@@ -276,7 +290,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo))}
+              onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo, publicUrl || undefined))}
               disabled={busy === "pdf"}
             >
               {busy === "pdf" ? (
@@ -290,7 +304,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("print", () => printEstimatePdf(est, logo))}
+              onClick={() => withBusy("print", () => printEstimatePdf(est, logo, publicUrl || undefined))}
               disabled={busy === "print"}
             >
               <Printer className="mr-2 size-4" /> Печать
@@ -311,6 +325,64 @@ function EstimateEditor() {
         </div>
       </header>
 
+
+      {publicUrl && (
+        <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-4">
+            {qr && (
+              <img
+                src={qr}
+                alt="QR-код сметы"
+                className="size-24 rounded-lg border border-border bg-white p-1"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">
+                {est.approved_at
+                  ? `Согласована заказчиком ${new Date(est.approved_at).toLocaleString("ru-RU")}`
+                  : "Ссылка для заказчика"}
+              </p>
+              <p className="mt-1 break-all text-xs text-muted-foreground">{publicUrl}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-10"
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(publicUrl)
+                      .then(() => toast.success("Ссылка скопирована"))
+                      .catch(() => toast.error(publicUrl));
+                  }}
+                >
+                  Копировать ссылку
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-10"
+                  onClick={() =>
+                    downloadQrPng(publicUrl, `QR-smeta-${est.number || "1"}.png`)
+                  }
+                >
+                  Скачать QR
+                </Button>
+                <Button size="sm" variant="outline" className="h-10" asChild>
+                  <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                    Открыть страницу
+                  </a>
+                </Button>
+              </div>
+              {est.approved_at && (
+                <p className="mt-2 text-xs text-brand">
+                  Смета зафиксирована: изменения заблокированы, заказ создан
+                  автоматически.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">

@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import logoAsset from "@/assets/logo.png.asset.json";
 import fontRegular from "@/assets/DejaVuSans.ttf.asset.json";
 import fontBold from "@/assets/DejaVuSans-Bold.ttf.asset.json";
+import { qrDataUrl } from "./estimate-qr";
 import {
   FOOTER_LINES,
   type Estimate,
@@ -47,8 +48,13 @@ async function loadAssets() {
   return { fonts: fontCache, logo: logoCache };
 }
 
-export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string) {
+export async function buildEstimatePdf(
+  estimate: Estimate,
+  logoDataUrl?: string,
+  publicUrl?: string,
+) {
   const { fonts, logo } = await loadAssets();
+  const qr = publicUrl ? await qrDataUrl(publicUrl, 640) : null;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
   doc.addFileToVFS("DejaVuSans.ttf", fonts.regular);
@@ -100,7 +106,7 @@ export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string)
   ];
   if (estimate.email) rows.push(["Email", estimate.email]);
   if (estimate.work_period) rows.push(["Срок выполнения", estimate.work_period]);
-  if (estimate.valid_until) rows.push(["Предложение действует до", estimate.valid_until]);
+  if (estimate.valid_until) rows.push(["Действует до", estimate.valid_until]);
 
   const blockH = rows.length * 5.6 + 8;
   doc.setFillColor(...LIGHT);
@@ -114,7 +120,7 @@ export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string)
     doc.text(`${label}:`, M + 5, y);
     doc.setTextColor(17, 17, 17);
     doc.setFont("DejaVu", "bold");
-    doc.text(String(value), M + 52, y);
+    doc.text(String(value), M + 48, y);
     doc.setFont("DejaVu", "normal");
   });
 
@@ -132,7 +138,7 @@ export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string)
     startY: blockY + blockH + 8,
     head: [["№", "Наименование работ", "Ед.", "Кол-во", "Цена", "Стоимость"]],
     body,
-    margin: { left: M, right: M, bottom: 32 },
+    margin: { left: M, right: M, bottom: qr ? 62 : 32 },
     styles: {
       font: "DejaVu",
       fontSize: 9,
@@ -172,6 +178,26 @@ export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string)
       doc.text(FOOTER_LINES.slice(4).join("  •  "), M, pageH - 12.5);
       const page = doc.getNumberOfPages();
       doc.text(`стр. ${page}`, pageW - M, pageH - 12.5, { align: "right" });
+      if (qr && page === 1) {
+        const qrSize = 30;
+        const qrY = pageH - 60;
+        doc.addImage(qr, "PNG", M, qrY, qrSize, qrSize);
+        doc.setFont("DejaVu", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(...BLUE);
+        doc.text(`Смета № ${estimate.number || "—"}`, M + qrSize + 6, qrY + 8);
+        doc.setFont("DejaVu", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(90, 98, 112);
+        const cap = doc.splitTextToSize(
+          "Отсканируйте QR-код для просмотра сметы и подтверждения заказа",
+          pageW - M * 2 - qrSize - 6,
+        );
+        doc.text(cap, M + qrSize + 6, qrY + 14);
+        doc.setFontSize(7.5);
+        doc.setTextColor(120, 128, 140);
+        doc.text(String(publicUrl), M + qrSize + 6, qrY + 26);
+      }
     },
   });
 
@@ -194,7 +220,7 @@ export async function buildEstimatePdf(estimate: Estimate, logoDataUrl?: string)
   const boxW = 86;
   const boxX = pageW - M - boxW;
   const boxH = 26;
-  if (y + boxH > pageH - 32) {
+  if (y + boxH > pageH - (qr ? 62 : 32)) {
     doc.addPage();
     y = 20;
   }
@@ -239,13 +265,21 @@ export function estimateFileName(estimate: Estimate, ext: string) {
   return `Smeta-${num}.${ext}`;
 }
 
-export async function downloadEstimatePdf(estimate: Estimate, logoDataUrl?: string) {
-  const doc = await buildEstimatePdf(estimate, logoDataUrl);
+export async function downloadEstimatePdf(
+  estimate: Estimate,
+  logoDataUrl?: string,
+  publicUrl?: string,
+) {
+  const doc = await buildEstimatePdf(estimate, logoDataUrl, publicUrl);
   doc.save(estimateFileName(estimate, "pdf"));
 }
 
-export async function printEstimatePdf(estimate: Estimate, logoDataUrl?: string) {
-  const doc = await buildEstimatePdf(estimate, logoDataUrl);
+export async function printEstimatePdf(
+  estimate: Estimate,
+  logoDataUrl?: string,
+  publicUrl?: string,
+) {
+  const doc = await buildEstimatePdf(estimate, logoDataUrl, publicUrl);
   const url = doc.output("bloburl");
   const win = window.open(url as unknown as string, "_blank");
   win?.addEventListener("load", () => win.print());
