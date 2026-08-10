@@ -62,6 +62,12 @@ export function Footer() {
               </a>
             </li>
             <li className="flex items-center gap-2">
+              <Phone className="size-4 text-brand" />
+              <a href={CONTACTS.secondaryPhoneHref} className="hover:text-brand">
+                {CONTACTS.secondaryPhoneDisplay}
+              </a>
+            </li>
+            <li className="flex items-center gap-2">
               <Mail className="size-4 text-brand" />
               <a href={`mailto:${CONTACTS.email}`} className="hover:text-brand">
                 {CONTACTS.email}
