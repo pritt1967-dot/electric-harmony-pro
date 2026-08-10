@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, MessageCircle, Phone, Send } from "lucide-react";
+import { CheckCircle2, CreditCard, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 import logoAsset from "@/assets/logo.png.asset.json";
@@ -20,16 +20,21 @@ import { CONTACTS } from "@/components/site/contacts";
 import {
   approvePublicEstimate,
   getPublicEstimate,
+  requestOrderPayment,
   type PublicEstimate,
 } from "@/lib/estimate-public.functions";
 import {
-  STATUS_LABEL,
   discountAmount,
   formatDate,
   lineTotal,
   money,
   subtotal,
 } from "@/lib/estimates";
+import {
+  orderStatusLabel,
+  paymentStatusLabel,
+  remainingAmount,
+} from "@/lib/orders";
 
 export const Route = createFileRoute("/smeta/$token")({
   head: () => ({
@@ -53,17 +58,44 @@ export const Route = createFileRoute("/smeta/$token")({
   component: PublicEstimatePage,
 });
 
+/** Single human-readable state for the whole estimate → order lifecycle. */
+function lifecycleLabel(est: PublicEstimate) {
+  if (!est.approved_at) return "На согласовании";
+  const order = est.order;
+  if (!order) return "Согласована";
+  if (order.status === "done") return "Завершено";
+  if (order.status === "in_progress") return "В работе";
+  if (order.payment_status === "paid") return "Оплачено";
+  if (order.payment_status === "partial") return "Оплачено частично";
+  if (order.status === "awaiting_payment") return "Ожидает оплаты";
+  return "Заказ создан";
+}
+
+function sessionId() {
+  if (typeof window === "undefined") return "";
+  const key = "sm-session-id";
+  let v = window.localStorage.getItem(key);
+  if (!v) {
+    v = crypto.randomUUID();
+    window.localStorage.setItem(key, v);
+  }
+  return v;
+}
+
 function PublicEstimatePage() {
   const { token } = Route.useParams();
   const fetchEstimate = useServerFn(getPublicEstimate);
   const approve = useServerFn(approvePublicEstimate);
+  const pay = useServerFn(requestOrderPayment);
 
   const [est, setEst] = useState<PublicEstimate | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -81,16 +113,42 @@ function PublicEstimatePage() {
   }, [token, fetchEstimate]);
 
   async function confirm() {
+    if (!name.trim()) {
+      toast.error("Укажите имя заказчика");
+      return;
+    }
     setSaving(true);
     try {
-      const r = await approve({ data: { token, name } });
+      const r = await approve({ data: { token, name, session: sessionId() } });
       setEst(r);
       setOpen(false);
-      toast.success("Спасибо! Смета согласована, мы свяжемся с вами.");
+      toast.success(
+        r?.order?.number
+          ? `Смета согласована. Заказ № ${r.order.number}`
+          : "Смета согласована",
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Не удалось согласовать смету");
     }
     setSaving(false);
+  }
+
+  async function requestPayment(kind: "full" | "prepay" | "rest") {
+    setPaying(true);
+    try {
+      const res = await pay({ data: { token, kind } });
+      if (res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+        return;
+      }
+      const fresh = await fetchEstimate({ data: { token } });
+      setEst(fresh);
+      setPayOpen(false);
+      toast.success("Заявка на оплату отправлена — мы пришлём счёт и реквизиты.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось отправить заявку");
+    }
+    setPaying(false);
   }
 
   if (loading) {
@@ -115,6 +173,9 @@ function PublicEstimatePage() {
   const sub = subtotal(est.items);
   const disc = discountAmount(est.items, est.discount_type, est.discount_value);
   const approved = Boolean(est.approved_at);
+  const order = est.order;
+  const paid = Number(order?.paid_amount ?? 0);
+  const rest = remainingAmount(est.total, paid);
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-16">
@@ -140,7 +201,7 @@ function PublicEstimatePage() {
                 Смета № {est.number || "—"}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                от {formatDate(est.doc_date)}
+                от {formatDate(est.doc_date)} · версия {est.version}
               </p>
             </div>
             <span
@@ -150,15 +211,18 @@ function PublicEstimatePage() {
                   : "bg-secondary text-muted-foreground"
               }`}
             >
-              {approved ? "Согласована" : STATUS_LABEL[est.status] ?? "Черновик"}
+              {lifecycleLabel(est)}
             </span>
           </div>
 
           <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
             <Row label="Заказчик" value={est.customer_name || "—"} />
-            <Row label="Адрес объекта" value={est.address || "—"} />
+            <Row label="Объект" value={est.object_name || est.address || "—"} />
+            <Row label="Адрес" value={est.address || "—"} />
+            <Row label="Дата" value={formatDate(est.doc_date)} />
             {est.work_period && <Row label="Срок выполнения" value={est.work_period} />}
             {est.valid_until && <Row label="Предложение действует" value={est.valid_until} />}
+            {order && <Row label="Заказ" value={`№ ${order.number}`} />}
             {approved && (
               <Row
                 label="Согласована"
@@ -195,7 +259,7 @@ function PublicEstimatePage() {
 
           <div className="mt-5 rounded-xl border border-border bg-secondary/50 p-4">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Итого</span>
+              <span className="text-muted-foreground">Стоимость работ</span>
               <span>{money(sub)} ₽</span>
             </div>
             <div className="mt-2 flex justify-between text-sm">
@@ -203,7 +267,7 @@ function PublicEstimatePage() {
               <span>− {money(disc)} ₽</span>
             </div>
             <div className="mt-3 flex justify-between border-t border-border pt-3 text-lg font-extrabold text-brand">
-              <span>К оплате</span>
+              <span>ИТОГО</span>
               <span>{money(est.total)} ₽</span>
             </div>
           </div>
@@ -216,22 +280,45 @@ function PublicEstimatePage() {
           )}
         </section>
 
+        {approved && order && (
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <h2 className="text-lg font-bold">Оплата</h2>
+            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <Row label="Статус заказа" value={orderStatusLabel(order.status)} />
+              <Row label="Статус оплаты" value={paymentStatusLabel(order.payment_status)} />
+              <Row label="Оплачено" value={`${money(paid)} ₽`} />
+              <Row label="Остаток к оплате" value={`${money(rest)} ₽`} />
+            </dl>
+            {order.payment_status !== "paid" && (
+              <Button
+                className="mt-4 h-12 w-full text-base"
+                onClick={() => setPayOpen(true)}
+              >
+                <CreditCard className="mr-2 size-5" /> Оплатить заказ
+              </Button>
+            )}
+          </section>
+        )}
+
         <section className="rounded-2xl border border-border bg-card p-5">
           {approved ? (
             <div className="flex items-start gap-3 rounded-xl bg-secondary/50 p-4">
               <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brand" />
               <div className="text-sm">
-                <p className="font-semibold">Смета согласована</p>
+                <p className="font-semibold">
+                  Смета согласована{order ? `. Заказ № ${order.number}` : ""}
+                </p>
                 <p className="mt-1 text-muted-foreground">
                   {est.approved_by_name ? `${est.approved_by_name}, ` : ""}
-                  {new Date(est.approved_at!).toLocaleString("ru-RU")}. Заказ передан в
-                  работу — мы свяжемся с вами для уточнения деталей.
+                  {new Date(est.approved_at!).toLocaleString("ru-RU")}. Согласованная
+                  версия зафиксирована и не изменяется — мы свяжемся с вами для уточнения
+                  деталей.
                 </p>
               </div>
             </div>
           ) : (
             <Button className="h-12 w-full text-base" onClick={() => setOpen(true)}>
-              Согласовать смету
+              СОГЛАСОВАТЬ СМЕТУ
             </Button>
           )}
           <Button
@@ -247,22 +334,68 @@ function PublicEstimatePage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Подтверждение заказа</DialogTitle>
+            <DialogTitle>Согласование сметы</DialogTitle>
             <DialogDescription>
-              Я согласен с указанной сметой на сумму {money(est.total)} ₽ и хочу оформить
-              заказ.
+              Подтверждая смету, вы соглашаетесь с указанным перечнем работ, материалов и
+              стоимостью заказа — {money(est.total)} ₽.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label>Ваше имя</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Label>Имя заказчика</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Иван Иванов"
+            />
           </div>
           <DialogFooter>
             <Button onClick={confirm} disabled={saving} className="h-11 w-full">
               {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Подтверждаю и оформляю заказ
+              Подтвердить согласование
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Оплата заказа{order ? ` № ${order.number}` : ""}</DialogTitle>
+            <DialogDescription>
+              Выберите вариант оплаты — мы пришлём счёт и реквизиты. Онлайн-эквайринг
+              будет подключён дополнительно.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Button
+              className="h-12 justify-between"
+              disabled={paying}
+              onClick={() => requestPayment("full")}
+            >
+              <span>Полная оплата</span>
+              <span>{money(est.total)} ₽</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-12 justify-between"
+              disabled={paying}
+              onClick={() => requestPayment("prepay")}
+            >
+              <span>Предоплата 30%</span>
+              <span>{money(Math.round(est.total * 30) / 100)} ₽</span>
+            </Button>
+            {paid > 0 && (
+              <Button
+                variant="outline"
+                className="h-12 justify-between"
+                disabled={paying}
+                onClick={() => requestPayment("rest")}
+              >
+                <span>Остаток к оплате</span>
+                <span>{money(rest)} ₽</span>
+              </Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
