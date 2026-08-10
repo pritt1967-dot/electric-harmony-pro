@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Save, Search, Trash2 } from "lucide-react";
+import { FileDown, Loader2, Plus, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -13,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { downloadPricePdf } from "@/lib/price-pdf";
 import { UNITS, money } from "@/lib/estimates";
 
 export type PriceRow = {
