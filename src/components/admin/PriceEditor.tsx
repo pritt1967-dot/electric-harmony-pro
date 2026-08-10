@@ -78,6 +78,47 @@ export function PriceEditor() {
     [rows, query, category],
   );
 
+  const allUnits = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.unit))).sort(),
+    [rows],
+  );
+
+  const exportRows = useMemo(
+    () =>
+      rows.filter(
+        (r) => pickedCats.includes(r.category) && pickedUnits.includes(r.unit),
+      ),
+    [rows, pickedCats, pickedUnits],
+  );
+
+  function openExport() {
+    setPickedCats(category === "all" ? categories : [category]);
+    setPickedUnits(allUnits);
+    setExportOpen(true);
+  }
+
+  function toggle(list: string[], value: string, set: (v: string[]) => void) {
+    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+  }
+
+  async function exportPdf() {
+    if (!exportRows.length) {
+      toast.error("Нет позиций для экспорта");
+      return;
+    }
+    setExporting(true);
+    try {
+      await downloadPricePdf(exportRows);
+      setExportOpen(false);
+    } catch (e) {
+      toast.error("Ошибка PDF: " + (e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+
+
   function patch(id: string, field: keyof PriceRow, value: string | number) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   }
