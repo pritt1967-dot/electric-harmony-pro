@@ -1,7 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
-import { Phone, MapPin, Clock, Mail, Send, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Phone,
+  MapPin,
+  Clock,
+  Mail,
+  Send,
+  CheckCircle2,
+  Loader2,
+  Printer,
+  Download,
+} from "lucide-react";
+
 
 import { CONTACTS } from "./contacts";
 import { Reveal } from "./Reveal";
@@ -126,21 +137,42 @@ export function Contact() {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-background p-4">
-            <img
-              src="/qr-site.png"
-              alt="QR-код сайта S&M Electric"
-              width={96}
-              height={96}
-              className="size-24 shrink-0 rounded-xl border border-border bg-white p-1"
-            />
-            <div>
-              <p className="text-sm font-semibold">Отсканируйте QR-код</p>
-              <p className="text-xs text-muted-foreground">
-                Быстрый переход на сайт с мобильного телефона
-              </p>
+          <div className="mt-8 rounded-2xl border border-border bg-background p-4">
+            <div className="flex items-center gap-4">
+              <img
+                src="/qr-site.png"
+                alt="QR-код сайта S&M Electric"
+                width={96}
+                height={96}
+                className="size-24 shrink-0 rounded-xl border border-border bg-white p-1"
+              />
+              <div>
+                <p className="text-sm font-semibold">Отсканируйте QR-код</p>
+                <p className="text-xs text-muted-foreground">
+                  Быстрый переход на сайт с мобильного телефона
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href="/contact-card?print=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground transition-transform hover:scale-[1.02]"
+              >
+                <Printer className="size-4" />
+                Печатная карточка
+              </a>
+              <a
+                href="/api/public/contact-card.pdf"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
+              >
+                <Download className="size-4" />
+                Скачать PDF
+              </a>
             </div>
           </div>
+
         </Reveal>
 
         <Reveal delay={120}>
