@@ -137,7 +137,6 @@ export function PanelDesigner() {
           unit: r.unit || match?.unit || "шт",
           qty: r.qty || 1,
           price: Number(match?.price ?? 0),
-          discount: 0,
           comment: "",
         } as EstimateItem;
       });
@@ -147,7 +146,6 @@ export function PanelDesigner() {
         unit: "шт",
         qty: 1,
         price: 0,
-        discount: 0,
         comment: design.summary?.enclosure ?? "",
       } as EstimateItem);
 
