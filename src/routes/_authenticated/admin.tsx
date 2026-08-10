@@ -18,6 +18,7 @@ import { SubmissionsEditor } from "@/components/admin/SubmissionsEditor";
 import { PriceEditor } from "@/components/admin/PriceEditor";
 import { EstimatesList } from "@/components/admin/EstimatesList";
 import { OrdersList } from "@/components/admin/OrdersList";
+import { PanelDesigner } from "@/components/admin/PanelDesigner";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -28,6 +29,7 @@ const TABS = [
   { value: "estimates", label: "Сметы" },
   { value: "orders", label: "Заказы" },
   { value: "price", label: "Прайс" },
+  { value: "panel", label: "Проектировщик щита" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
@@ -186,6 +188,9 @@ function AdminPage() {
               </TabsContent>
               <TabsContent value="price" className="mt-6">
                 <PriceEditor />
+              </TabsContent>
+              <TabsContent value="panel" className="mt-6">
+                <PanelDesigner />
               </TabsContent>
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
