@@ -398,6 +398,14 @@ function EstimateEditor() {
                 />
               </div>
               <div className="space-y-1.5">
+                <Label>Объект</Label>
+                <Input
+                  value={est.object_name ?? ""}
+                  onChange={(e) => set("object_name", e.target.value)}
+                  placeholder="Например: квартира 3-к, ЖК «Северный»"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label>Адрес объекта</Label>
                 <Input value={est.address} onChange={(e) => set("address", e.target.value)} />
               </div>
