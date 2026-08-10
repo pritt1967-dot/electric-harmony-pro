@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Copy, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Copy,
+  Download,
+  FileText,
+  Link2,
+  Loader2,
+  Plus,
+  QrCode,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +30,10 @@ import {
   money,
   nextNumber,
 } from "@/lib/estimates";
+import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
+import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 
-type Row = Estimate & { id: string };
+type Row = Estimate & { id: string; public_token: string };
 
 export async function fetchEstimates(): Promise<Row[]> {
   const { data } = await supabase
@@ -43,6 +54,7 @@ export function EstimatesList() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [qr, setQr] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchEstimates().then((r) => {
@@ -51,8 +63,30 @@ export function EstimatesList() {
     });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const entries = await Promise.all(
+        rows
+          .filter((r) => r.public_token)
+          .map(
+            async (r) =>
+              [r.id, await qrDataUrl(estimatePublicUrl(r.public_token), 160)] as const,
+          ),
+      );
+      if (active) setQr(Object.fromEntries(entries));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [rows]);
+
   async function setStatus(id: string, status: EstimateStatus) {
-    setRows((r) => r.map((row) => (row.id === id ? { ...row, status } : row)));
+    const row = rows.find((r) => r.id === id);
+    if (row?.approved_at && status !== "approved" && status !== "done") {
+      return toast.error("Смета согласована заказчиком — статус нельзя понизить");
+    }
+    setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
     const { error } = await supabase.from("estimates").update({ status }).eq("id", id);
     if (error) toast.error("Ошибка: " + error.message);
   }
@@ -60,11 +94,18 @@ export function EstimatesList() {
   async function duplicate(row: Row) {
     setBusyId(row.id);
     const number = nextNumber(rows.map((r) => r.number));
-    const { id: _id, ...rest } = row;
+    const {
+      id: _id,
+      public_token: _t,
+      approved_at: _a,
+      approved_by_name: _n,
+      ...rest
+    } = row;
     const { data, error } = await supabase
       .from("estimates")
       .insert({
         ...rest,
+        approved_snapshot: null,
         number,
         status: "draft",
         items: row.items as never,
@@ -98,6 +139,16 @@ export function EstimatesList() {
     }
   }
 
+  async function copyLink(row: Row) {
+    const url = estimatePublicUrl(row.public_token);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Ссылка скопирована");
+    } catch {
+      toast.error(url);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -108,7 +159,7 @@ export function EstimatesList() {
 
   return (
     <div className="space-y-4">
-      <Button asChild>
+      <Button asChild className="h-11">
         <Link to="/estimate/$id" params={{ id: "new" }}>
           <Plus className="mr-2 size-4" /> Новая смета
         </Link>
@@ -125,30 +176,42 @@ export function EstimatesList() {
         {rows.map((row) => (
           <div
             key={row.id}
-            className="rounded-xl border border-border bg-background p-4 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
+            className="rounded-xl border border-border bg-background p-4"
           >
-            <div className="min-w-0 sm:min-w-52 sm:flex-1">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 font-semibold">
-                <FileText className="size-4 shrink-0 text-brand" />
-                <span>№ {row.number || "—"}</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  от {formatDate(row.doc_date)}
-                </span>
+            <div className="flex flex-wrap items-start gap-4">
+              {qr[row.id] && (
+                <img
+                  src={qr[row.id]}
+                  alt={`QR-код сметы № ${row.number}`}
+                  className="size-20 shrink-0 rounded-lg border border-border bg-white p-1"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 font-semibold">
+                  <FileText className="size-4 shrink-0 text-brand" />
+                  <span>№ {row.number || "—"}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    от {formatDate(row.doc_date)}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm">
+                  {row.customer_name || "Без заказчика"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {row.address || "Объект не указан"}
+                </p>
+                <p className="mt-1 font-bold">{money(row.total)} ₽</p>
+                {row.approved_at && (
+                  <p className="mt-1 text-xs text-brand">
+                    Согласована {new Date(row.approved_at).toLocaleString("ru-RU")}
+                  </p>
+                )}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {row.customer_name || "Без заказчика"}
-                {row.address ? ` · ${row.address}` : ""}
-              </p>
-            </div>
-            <div className="mt-2 font-bold sm:mt-0 sm:text-right">
-              {money(row.total)} ₽
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-0 sm:contents">
               <Select
                 value={row.status}
                 onValueChange={(v) => setStatus(row.id, v as EstimateStatus)}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="h-11 w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,34 +222,70 @@ export function EstimatesList() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/estimate/$id" params={{ id: row.id }}>
-                    Открыть
-                  </Link>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => duplicate(row)}
-                  disabled={busyId === row.id}
-                >
-                  <Copy className="size-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => remove(row.id)}
-                  disabled={busyId === row.id}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="h-11" asChild>
+                <Link to="/estimate/$id" params={{ id: row.id }}>
+                  Открыть
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-11"
+                onClick={() =>
+                  downloadEstimatePdf(
+                    row,
+                    undefined,
+                    estimatePublicUrl(row.public_token),
+                  ).catch(() => toast.error("Не удалось сформировать PDF"))
+                }
+              >
+                <Download className="mr-2 size-4" /> PDF
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-11"
+                onClick={() => copyLink(row)}
+              >
+                <Link2 className="mr-2 size-4" /> Ссылка
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-11"
+                onClick={() =>
+                  downloadQrPng(
+                    estimatePublicUrl(row.public_token),
+                    `QR-smeta-${row.number || row.id}.png`,
+                  )
+                }
+              >
+                <QrCode className="mr-2 size-4" /> QR
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-11"
+                onClick={() => duplicate(row)}
+                disabled={busyId === row.id}
+              >
+                <Copy className="size-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-11 text-destructive hover:text-destructive"
+                onClick={() => remove(row.id)}
+                disabled={busyId === row.id}
+              >
+                <Trash2 className="size-4" />
+              </Button>
             </div>
           </div>
         ))}
-
       </div>
     </div>
   );
