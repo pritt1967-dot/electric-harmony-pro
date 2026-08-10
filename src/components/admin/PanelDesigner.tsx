@@ -289,6 +289,72 @@ export function PanelDesigner() {
           корпус и спецификацию.
         </p>
 
+        <div className="mt-4 rounded-lg border bg-muted/40 p-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+            <div className="space-y-1.5">
+              <Label>Название сессии</Label>
+              <Input
+                value={title}
+                placeholder="Например: Дом в Пушкине, щит 54 мод."
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Сохранённые сессии</Label>
+              <Select value={sessionId} onValueChange={openSession}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Открыть сессию…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessions.length === 0 && (
+                    <SelectItem value="none" disabled>
+                      Пока нет сохранённых
+                    </SelectItem>
+                  )}
+                  {sessions.map((x) => (
+                    <SelectItem key={x.id} value={x.id}>
+                      {x.title} ·{" "}
+                      {new Date(x.updated_at).toLocaleDateString("ru-RU")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => saveSession(false)}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Сохранить
+              </Button>
+              {sessionId && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => saveSession(true)}
+                    disabled={saving}
+                  >
+                    Копия
+                  </Button>
+                  <Button variant="ghost" onClick={deleteSession}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" onClick={newSession}>
+                <FolderOpen className="mr-2 h-4 w-4" /> Новая
+              </Button>
+            </div>
+          </div>
+        </div>
+
+
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1.5">
             <Label>Тип объекта</Label>
