@@ -125,6 +125,22 @@ export function Contact() {
               </span>
             </div>
           </div>
+
+          <div className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-background p-4">
+            <img
+              src="/qr-site.png"
+              alt="QR-код сайта S&M Electric"
+              width={96}
+              height={96}
+              className="size-24 shrink-0 rounded-xl border border-border bg-white p-1"
+            />
+            <div>
+              <p className="text-sm font-semibold">Отсканируйте QR-код</p>
+              <p className="text-xs text-muted-foreground">
+                Быстрый переход на сайт с мобильного телефона
+              </p>
+            </div>
+          </div>
         </Reveal>
 
         <Reveal delay={120}>
