@@ -267,6 +267,36 @@ export type Database = {
           },
         ]
       }
+      panel_designs: {
+        Row: {
+          created_at: string
+          design: Json | null
+          id: string
+          image: string
+          input: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          design?: Json | null
+          id?: string
+          image?: string
+          input?: Json
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          design?: Json | null
+          id?: string
+          image?: string
+          input?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_items: {
         Row: {
           category: string
