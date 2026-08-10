@@ -21,6 +21,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo/$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -84,6 +85,11 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
+  id: '/api/public/photo/$',
+  path: '/api/public/photo/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
+    | '/api/public/photo/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
+    | '/api/public/photo/$'
   id:
     | '__root__'
     | '/'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/estimate/$id'
+    | '/api/public/photo/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,6 +192,7 @@ export interface RootRouteChildren {
   SmetaTokenRoute: typeof SmetaTokenRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -268,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/photo/$': {
+      id: '/api/public/photo/$'
+      path: '/api/public/photo/$'
+      fullPath: '/api/public/photo/$'
+      preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -296,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   SmetaTokenRoute: SmetaTokenRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
