@@ -88,6 +88,15 @@ export function Contact() {
                 <span className="font-semibold">{CONTACTS.phoneDisplay}</span>
               </span>
             </a>
+            <a href={CONTACTS.secondaryPhoneHref} className="flex items-center gap-3 text-sm">
+              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
+                <Phone className="size-5" />
+              </span>
+              <span>
+                <span className="block text-xs text-muted-foreground">Дополнительный телефон</span>
+                <span className="font-semibold">{CONTACTS.secondaryPhoneDisplay}</span>
+              </span>
+            </a>
             <a href={`mailto:${CONTACTS.email}`} className="flex items-center gap-3 text-sm">
               <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
                 <Mail className="size-5" />
