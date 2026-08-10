@@ -9,6 +9,9 @@ import {
   Image as ImageIcon,
   ClipboardList,
   Download,
+  Save,
+  FolderOpen,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
