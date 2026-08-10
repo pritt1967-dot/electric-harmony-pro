@@ -217,6 +217,7 @@ function EstimateEditor() {
         doc_date: est.doc_date,
         customer_name: est.customer_name,
         address: est.address,
+        object_name: est.object_name ?? "",
         phone: est.phone,
         email: est.email,
         work_period: est.work_period,
