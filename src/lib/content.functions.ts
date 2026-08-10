@@ -26,9 +26,28 @@ export type ReviewRow = {
   sort_order: number;
 };
 
+export type ProjectImage = {
+  id: string;
+  image_url: string;
+  caption: string;
+  sort_order: number;
+};
+
+export type ProjectRow = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  work_date: string | null;
+  cover_image: string;
+  sort_order: number;
+  images: ProjectImage[];
+};
+
 export type SiteData = {
   services: ServiceRow[];
   works: WorkRow[];
+  projects: ProjectRow[];
   reviews: ReviewRow[];
   content: Record<string, string>;
 };
@@ -47,7 +66,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       },
     );
 
-    const [services, works, reviews, content] = await Promise.all([
+    const [services, works, reviews, content, projects] = await Promise.all([
       supabase
         .from("services")
         .select("id, icon, title, text, sort_order")
@@ -61,6 +80,13 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
         .select("id, name, role, text, sort_order")
         .order("sort_order", { ascending: true }),
       supabase.from("site_content").select("key, value"),
+      supabase
+        .from("projects")
+        .select(
+          "id, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
+        )
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true }),
     ]);
 
     const contentMap: Record<string, string> = {};
@@ -68,9 +94,23 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       contentMap[row.key] = row.value;
     }
 
+    const projectRows: ProjectRow[] = (projects.data ?? []).map((p) => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      location: p.location,
+      work_date: p.work_date,
+      cover_image: p.cover_image,
+      sort_order: p.sort_order,
+      images: [...(p.project_images ?? [])].sort(
+        (a, b) => a.sort_order - b.sort_order,
+      ),
+    }));
+
     return {
       services: services.data ?? [],
       works: works.data ?? [],
+      projects: projectRows,
       reviews: reviews.data ?? [],
       content: contentMap,
     };

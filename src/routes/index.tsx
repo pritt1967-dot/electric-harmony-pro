@@ -40,7 +40,7 @@ function Index() {
           subtitle={c.services_subtitle ?? ""}
         />
         <Works
-          works={data.works}
+          projects={data.projects}
           title={c.works_title ?? "Наши работы"}
           subtitle={c.works_subtitle ?? ""}
         />

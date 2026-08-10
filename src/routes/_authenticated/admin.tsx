@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TextsEditor } from "@/components/admin/TextsEditor";
 import { ServicesEditor } from "@/components/admin/ServicesEditor";
-import { WorksEditor } from "@/components/admin/WorksEditor";
+import { ProjectsEditor } from "@/components/admin/ProjectsEditor";
 import { ReviewsEditor } from "@/components/admin/ReviewsEditor";
 import { SubmissionsEditor } from "@/components/admin/SubmissionsEditor";
 import { PriceEditor } from "@/components/admin/PriceEditor";
@@ -194,7 +194,7 @@ function AdminPage() {
                 <ServicesEditor />
               </TabsContent>
               <TabsContent value="works" className="mt-6">
-                <WorksEditor />
+                <ProjectsEditor />
               </TabsContent>
               <TabsContent value="reviews" className="mt-6">
                 <ReviewsEditor />

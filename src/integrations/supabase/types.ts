@@ -300,6 +300,83 @@ export type Database = {
         }
         Relationships: []
       }
+      project_images: {
+        Row: {
+          caption: string
+          created_at: string
+          id: string
+          image_url: string
+          project_id: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          id?: string
+          image_url: string
+          project_id: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          project_id?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          cover_image: string
+          created_at: string
+          description: string
+          id: string
+          is_published: boolean
+          location: string
+          sort_order: number
+          title: string
+          updated_at: string
+          work_date: string | null
+        }
+        Insert: {
+          cover_image?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_published?: boolean
+          location?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          work_date?: string | null
+        }
+        Update: {
+          cover_image?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_published?: boolean
+          location?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          work_date?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           created_at: string
