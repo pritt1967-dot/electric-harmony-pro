@@ -60,6 +60,110 @@ export function PanelDesigner() {
   const set = <K extends keyof PanelInput>(key: K, value: PanelInput[K]) =>
     setInput((p) => ({ ...p, [key]: value }));
 
+  // ---- сессии проектировщика ----
+  type Session = {
+    id: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+  };
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionId, setSessionId] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadSessions = useCallback(async () => {
+    const { data } = await supabase
+      .from("panel_designs")
+      .select("id, title, created_at, updated_at")
+      .order("updated_at", { ascending: false });
+    setSessions((data ?? []) as Session[]);
+  }, []);
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  async function saveSession(asNew = false) {
+    setSaving(true);
+    try {
+      const name =
+        title.trim() ||
+        `${input.object_type || "Щит"} — ${new Date().toLocaleDateString("ru-RU")}`;
+      const payload = {
+        title: name,
+        input: input as never,
+        design: (design ?? null) as never,
+        image,
+      };
+      if (sessionId && !asNew) {
+        const { error } = await supabase
+          .from("panel_designs")
+          .update(payload)
+          .eq("id", sessionId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { data, error } = await supabase
+          .from("panel_designs")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        setSessionId(data.id);
+      }
+      setTitle(name);
+      await loadSessions();
+      toast.success("Сессия сохранена");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось сохранить");
+    }
+    setSaving(false);
+  }
+
+  async function openSession(id: string) {
+    if (!id) return;
+    const { data, error } = await supabase
+      .from("panel_designs")
+      .select("id, title, input, design, image")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("Не удалось открыть сессию");
+      return;
+    }
+    setSessionId(data.id);
+    setTitle(data.title);
+    setInput({ ...DEFAULT_PANEL_INPUT, ...((data.input ?? {}) as PanelInput) });
+    setDesign((data.design as PanelDesign | null) ?? null);
+    setImage(data.image ?? "");
+    toast.success("Сессия загружена");
+  }
+
+  async function deleteSession() {
+    if (!sessionId) return;
+    const { error } = await supabase
+      .from("panel_designs")
+      .delete()
+      .eq("id", sessionId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSessionId("");
+    setTitle("");
+    await loadSessions();
+    toast.success("Сессия удалена");
+  }
+
+  function newSession() {
+    setSessionId("");
+    setTitle("");
+    setInput(DEFAULT_PANEL_INPUT);
+    setDesign(null);
+    setImage("");
+  }
+
+
   const svg = useMemo(() => (design ? buildSchematicSvg(design) : ""), [design]);
 
   async function handleDesign() {
