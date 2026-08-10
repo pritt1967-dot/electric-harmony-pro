@@ -194,6 +194,10 @@ function AdminPage() {
               <TabsContent value="panel" className="mt-6">
                 <PanelDesigner />
               </TabsContent>
+              <TabsContent value="schematic" className="mt-6">
+                <SchematicEditor />
+              </TabsContent>
+
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
               </TabsContent>
