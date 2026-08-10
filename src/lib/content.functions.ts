@@ -26,9 +26,28 @@ export type ReviewRow = {
   sort_order: number;
 };
 
+export type ProjectImage = {
+  id: string;
+  image_url: string;
+  caption: string;
+  sort_order: number;
+};
+
+export type ProjectRow = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  work_date: string | null;
+  cover_image: string;
+  sort_order: number;
+  images: ProjectImage[];
+};
+
 export type SiteData = {
   services: ServiceRow[];
   works: WorkRow[];
+  projects: ProjectRow[];
   reviews: ReviewRow[];
   content: Record<string, string>;
 };
