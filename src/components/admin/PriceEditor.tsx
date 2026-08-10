@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Save, Search, Trash2 } from "lucide-react";
+import { FileDown, Loader2, Plus, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -13,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { downloadPricePdf } from "@/lib/price-pdf";
 import { UNITS, money } from "@/lib/estimates";
 
 export type PriceRow = {
@@ -39,6 +50,10 @@ export function PriceEditor() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [pickedCats, setPickedCats] = useState<string[]>([]);
+  const [pickedUnits, setPickedUnits] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPriceItems().then((r) => {
@@ -62,6 +77,47 @@ export function PriceEditor() {
       ),
     [rows, query, category],
   );
+
+  const allUnits = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.unit))).sort(),
+    [rows],
+  );
+
+  const exportRows = useMemo(
+    () =>
+      rows.filter(
+        (r) => pickedCats.includes(r.category) && pickedUnits.includes(r.unit),
+      ),
+    [rows, pickedCats, pickedUnits],
+  );
+
+  function openExport() {
+    setPickedCats(category === "all" ? categories : [category]);
+    setPickedUnits(allUnits);
+    setExportOpen(true);
+  }
+
+  function toggle(list: string[], value: string, set: (v: string[]) => void) {
+    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+  }
+
+  async function exportPdf() {
+    if (!exportRows.length) {
+      toast.error("Нет позиций для экспорта");
+      return;
+    }
+    setExporting(true);
+    try {
+      await downloadPricePdf(exportRows);
+      setExportOpen(false);
+    } catch (e) {
+      toast.error("Ошибка PDF: " + (e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+
 
   function patch(id: string, field: keyof PriceRow, value: string | number) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
@@ -143,6 +199,95 @@ export function PriceEditor() {
             ))}
           </SelectContent>
         </Select>
+        <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" onClick={openExport}>
+              <FileDown className="mr-2 size-4" /> Экспорт в PDF
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Экспорт прайса в PDF</DialogTitle>
+              <DialogDescription>
+                Выберите категории и единицы измерения для выгрузки.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <Label>Категории</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPickedCats(categories)}
+                    >
+                      Все
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setPickedCats([])}>
+                      Снять
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {categories.map((c) => (
+                    <label key={c} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={pickedCats.includes(c)}
+                        onCheckedChange={() => toggle(pickedCats, c, setPickedCats)}
+                      />
+                      <span className="truncate">{c}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <Label>Единицы измерения</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPickedUnits(allUnits)}
+                    >
+                      Все
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setPickedUnits([])}>
+                      Снять
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {allUnits.map((u) => (
+                    <label key={u} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={pickedUnits.includes(u)}
+                        onCheckedChange={() => toggle(pickedUnits, u, setPickedUnits)}
+                      />
+                      {u}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:justify-between">
+              <span className="text-sm text-muted-foreground">
+                Позиций к выгрузке: {exportRows.length}
+              </span>
+              <Button onClick={exportPdf} disabled={exporting}>
+                {exporting ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <FileDown className="mr-2 size-4" />
+                )}
+                Скачать PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Button onClick={addRow}>
           <Plus className="mr-2 size-4" /> Добавить работу
         </Button>
