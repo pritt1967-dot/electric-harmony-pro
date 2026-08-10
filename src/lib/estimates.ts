@@ -17,6 +17,7 @@ export type Estimate = {
   doc_date: string;
   customer_name: string;
   address: string;
+  object_name: string;
   phone: string;
   email: string;
   work_period: string;
@@ -27,6 +28,7 @@ export type Estimate = {
   status: EstimateStatus;
   total: number;
   items: EstimateItem[];
+  version?: number;
   public_token?: string;
   approved_at?: string | null;
   approved_by_name?: string;
