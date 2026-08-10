@@ -50,6 +50,10 @@ export function PriceEditor() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [pickedCats, setPickedCats] = useState<string[]>([]);
+  const [pickedUnits, setPickedUnits] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPriceItems().then((r) => {
