@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -9,6 +9,9 @@ import {
   Image as ImageIcon,
   ClipboardList,
   Download,
+  Save,
+  FolderOpen,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -56,6 +59,110 @@ export function PanelDesigner() {
 
   const set = <K extends keyof PanelInput>(key: K, value: PanelInput[K]) =>
     setInput((p) => ({ ...p, [key]: value }));
+
+  // ---- сессии проектировщика ----
+  type Session = {
+    id: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+  };
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionId, setSessionId] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadSessions = useCallback(async () => {
+    const { data } = await supabase
+      .from("panel_designs")
+      .select("id, title, created_at, updated_at")
+      .order("updated_at", { ascending: false });
+    setSessions((data ?? []) as Session[]);
+  }, []);
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  async function saveSession(asNew = false) {
+    setSaving(true);
+    try {
+      const name =
+        title.trim() ||
+        `${input.object_type || "Щит"} — ${new Date().toLocaleDateString("ru-RU")}`;
+      const payload = {
+        title: name,
+        input: input as never,
+        design: (design ?? null) as never,
+        image,
+      };
+      if (sessionId && !asNew) {
+        const { error } = await supabase
+          .from("panel_designs")
+          .update(payload)
+          .eq("id", sessionId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { data, error } = await supabase
+          .from("panel_designs")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        setSessionId(data.id);
+      }
+      setTitle(name);
+      await loadSessions();
+      toast.success("Сессия сохранена");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось сохранить");
+    }
+    setSaving(false);
+  }
+
+  async function openSession(id: string) {
+    if (!id) return;
+    const { data, error } = await supabase
+      .from("panel_designs")
+      .select("id, title, input, design, image")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("Не удалось открыть сессию");
+      return;
+    }
+    setSessionId(data.id);
+    setTitle(data.title);
+    setInput({ ...DEFAULT_PANEL_INPUT, ...((data.input ?? {}) as PanelInput) });
+    setDesign((data.design as PanelDesign | null) ?? null);
+    setImage(data.image ?? "");
+    toast.success("Сессия загружена");
+  }
+
+  async function deleteSession() {
+    if (!sessionId) return;
+    const { error } = await supabase
+      .from("panel_designs")
+      .delete()
+      .eq("id", sessionId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSessionId("");
+    setTitle("");
+    await loadSessions();
+    toast.success("Сессия удалена");
+  }
+
+  function newSession() {
+    setSessionId("");
+    setTitle("");
+    setInput(DEFAULT_PANEL_INPUT);
+    setDesign(null);
+    setImage("");
+  }
+
 
   const svg = useMemo(() => (design ? buildSchematicSvg(design) : ""), [design]);
 
@@ -181,6 +288,72 @@ export function PanelDesigner() {
           Опишите ввод и список линий — система подберёт защиту, компоновку,
           корпус и спецификацию.
         </p>
+
+        <div className="mt-4 rounded-lg border bg-muted/40 p-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+            <div className="space-y-1.5">
+              <Label>Название сессии</Label>
+              <Input
+                value={title}
+                placeholder="Например: Дом в Пушкине, щит 54 мод."
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Сохранённые сессии</Label>
+              <Select value={sessionId} onValueChange={openSession}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Открыть сессию…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessions.length === 0 && (
+                    <SelectItem value="none" disabled>
+                      Пока нет сохранённых
+                    </SelectItem>
+                  )}
+                  {sessions.map((x) => (
+                    <SelectItem key={x.id} value={x.id}>
+                      {x.title} ·{" "}
+                      {new Date(x.updated_at).toLocaleDateString("ru-RU")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => saveSession(false)}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Сохранить
+              </Button>
+              {sessionId && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => saveSession(true)}
+                    disabled={saving}
+                  >
+                    Копия
+                  </Button>
+                  <Button variant="ghost" onClick={deleteSession}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" onClick={newSession}>
+                <FolderOpen className="mr-2 h-4 w-4" /> Новая
+              </Button>
+            </div>
+          </div>
+        </div>
+
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1.5">
