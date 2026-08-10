@@ -20,8 +20,10 @@ const BLUE: [number, number, number] = [29, 78, 216];
 const LIGHT: [number, number, number] = [239, 244, 255];
 const LINE: [number, number, number] = [216, 222, 232];
 
-async function fetchBase64(url: string) {
-  const res = await fetch(url);
+async function fetchBase64(url: string, baseUrl?: string) {
+  const resolved =
+    baseUrl && url.startsWith("/") ? `${baseUrl}${url}` : url;
+  const res = await fetch(resolved);
   const buf = await res.arrayBuffer();
   let binary = "";
   const bytes = new Uint8Array(buf);
@@ -34,19 +36,23 @@ async function fetchBase64(url: string) {
 let fontCache: { regular: string; bold: string } | null = null;
 let logoCache: string | null = null;
 
-export async function loadAssets() {
+export async function loadAssets(baseUrl?: string) {
   if (!fontCache) {
     const [regular, bold] = await Promise.all([
-      fetchBase64(fontRegular.url),
-      fetchBase64(fontBold.url),
+      fetchBase64(fontRegular.url, baseUrl),
+      fetchBase64(fontBold.url, baseUrl),
     ]);
     fontCache = { regular, bold };
   }
   if (!logoCache) {
-    logoCache = `data:image/png;base64,${await fetchBase64(logoAsset.url)}`;
+    logoCache = `data:image/png;base64,${await fetchBase64(logoAsset.url, baseUrl)}`;
   }
   return { fonts: fontCache, logo: logoCache };
 }
+
+export { fetchBase64 };
+
+
 
 export async function buildEstimatePdf(
   estimate: Estimate,
