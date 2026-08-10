@@ -126,10 +126,11 @@ function ContactCardPage() {
             </div>
           </div>
 
-          <footer className="border-t border-border bg-brand-soft px-8 py-5 text-center text-sm font-medium text-brand-foreground print:bg-white">
+          <footer className="bg-brand px-8 py-5 text-center text-sm font-medium text-white print:bg-white print:text-black">
             Выезд электрика по Санкт-Петербургу и области. Договор, гарантия,
             смета.
           </footer>
+
         </article>
       </div>
     </div>
