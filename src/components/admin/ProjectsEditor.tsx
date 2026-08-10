@@ -100,7 +100,7 @@ export function ProjectsEditor() {
         description: "",
         location: "",
         sort_order: max + 1,
-        is_published: false,
+        is_published: true,
       });
       if (error) throw error;
     },
