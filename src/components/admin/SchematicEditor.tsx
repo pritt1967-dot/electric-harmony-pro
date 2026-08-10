@@ -197,7 +197,13 @@ export function SchematicEditor() {
 
   const addFromLibrary = (type: string) => {
     commit((d) => {
-      const el = createElement(type, snap(120 + d.elements.length * 12), snap(120 + d.elements.length * 8), d.elements);
+      const n = d.elements.length;
+      const el = createElement(
+        type,
+        snap(80 + (n % 6) * 140),
+        snap(100 + Math.floor(n / 6) * 110),
+        d.elements,
+      );
       setSel([el.id]);
       return { ...d, elements: [...d.elements, el] };
     });
