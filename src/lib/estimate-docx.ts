@@ -58,10 +58,12 @@ export async function downloadEstimateDocx(estimate: Estimate) {
   const info: Array<[string, string]> = [
     ["Смета №", estimate.number || "—"],
     ["Дата", formatDate(estimate.doc_date)],
+    ["Версия", String(estimate.version ?? 1)],
     ["Заказчик", estimate.customer_name || "—"],
-    ["Адрес объекта", estimate.address || "—"],
-    ["Телефон", estimate.phone || "—"],
   ];
+  if (estimate.object_name) info.push(["Объект", estimate.object_name]);
+  info.push(["Адрес объекта", estimate.address || "—"]);
+  info.push(["Телефон", estimate.phone || "—"]);
   if (estimate.email) info.push(["Email", estimate.email]);
   if (estimate.work_period) info.push(["Срок выполнения работ", estimate.work_period]);
   if (estimate.valid_until) info.push(["Предложение действует до", estimate.valid_until]);

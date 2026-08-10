@@ -17,6 +17,7 @@ export type Estimate = {
   doc_date: string;
   customer_name: string;
   address: string;
+  object_name: string;
   phone: string;
   email: string;
   work_period: string;
@@ -27,6 +28,7 @@ export type Estimate = {
   status: EstimateStatus;
   total: number;
   items: EstimateItem[];
+  version?: number;
   public_token?: string;
   approved_at?: string | null;
   approved_by_name?: string;
@@ -86,16 +88,20 @@ export function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** EST-2026-00125 — tolerant of the legacy "001/2026" numbering. */
 export function nextNumber(existing: string[]) {
   const year = new Date().getFullYear();
   const nums = existing
     .map((n) => {
-      const m = /^(\d+)\//.exec(n.trim());
-      return m ? Number(m[1]) : 0;
+      const t = n.trim();
+      const modern = /^EST-\d{4}-(\d+)$/i.exec(t);
+      if (modern) return Number(modern[1]);
+      const legacy = /^(\d+)\//.exec(t);
+      return legacy ? Number(legacy[1]) : 0;
     })
     .filter((n) => Number.isFinite(n));
   const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `${String(next).padStart(3, "0")}/${year}`;
+  return `EST-${year}-${String(next).padStart(5, "0")}`;
 }
 
 export function emptyEstimate(number: string): Estimate {
@@ -104,6 +110,7 @@ export function emptyEstimate(number: string): Estimate {
     doc_date: todayISO(),
     customer_name: "",
     address: "",
+    object_name: "",
     phone: "",
     email: "",
     work_period: "",
@@ -114,6 +121,7 @@ export function emptyEstimate(number: string): Estimate {
     status: "draft",
     total: 0,
     items: [],
+    version: 1,
   };
 }
 

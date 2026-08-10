@@ -175,6 +175,7 @@ function EstimateEditor() {
       doc_date: est.doc_date,
       customer_name: est.customer_name,
       address: est.address,
+      object_name: est.object_name ?? "",
       phone: est.phone,
       email: est.email,
       work_period: est.work_period,
@@ -216,6 +217,7 @@ function EstimateEditor() {
         doc_date: est.doc_date,
         customer_name: est.customer_name,
         address: est.address,
+        object_name: est.object_name ?? "",
         phone: est.phone,
         email: est.email,
         work_period: est.work_period,
@@ -395,6 +397,14 @@ function EstimateEditor() {
                 <Input
                   value={est.customer_name}
                   onChange={(e) => set("customer_name", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Объект</Label>
+                <Input
+                  value={est.object_name ?? ""}
+                  onChange={(e) => set("object_name", e.target.value)}
+                  placeholder="Например: квартира 3-к, ЖК «Северный»"
                 />
               </div>
               <div className="space-y-1.5">

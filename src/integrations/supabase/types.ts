@@ -14,11 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      estimate_versions: {
+        Row: {
+          created_at: string
+          estimate_id: string
+          id: string
+          is_approved: boolean
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          estimate_id: string
+          id?: string
+          is_approved?: boolean
+          snapshot?: Json
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          estimate_id?: string
+          id?: string
+          is_approved?: boolean
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_versions_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estimates: {
         Row: {
           address: string
           approved_at: string | null
           approved_by_name: string
+          approved_ip: string
+          approved_session: string
           approved_snapshot: Json | null
           created_at: string
           customer_name: string
@@ -30,18 +67,22 @@ export type Database = {
           items: Json
           note: string
           number: string
+          object_name: string
           phone: string
           public_token: string
           status: string
           total: number
           updated_at: string
           valid_until: string
+          version: number
           work_period: string
         }
         Insert: {
           address?: string
           approved_at?: string | null
           approved_by_name?: string
+          approved_ip?: string
+          approved_session?: string
           approved_snapshot?: Json | null
           created_at?: string
           customer_name?: string
@@ -53,18 +94,22 @@ export type Database = {
           items?: Json
           note?: string
           number?: string
+          object_name?: string
           phone?: string
           public_token?: string
           status?: string
           total?: number
           updated_at?: string
           valid_until?: string
+          version?: number
           work_period?: string
         }
         Update: {
           address?: string
           approved_at?: string | null
           approved_by_name?: string
+          approved_ip?: string
+          approved_session?: string
           approved_snapshot?: Json | null
           created_at?: string
           customer_name?: string
@@ -76,30 +121,92 @@ export type Database = {
           items?: Json
           note?: string
           number?: string
+          object_name?: string
           phone?: string
           public_token?: string
           status?: string
           total?: number
           updated_at?: string
           valid_until?: string
+          version?: number
           work_period?: string
         }
         Relationships: []
+      }
+      order_events: {
+        Row: {
+          actor: string
+          created_at: string
+          estimate_id: string | null
+          from_status: string
+          id: string
+          kind: string
+          message: string
+          meta: Json
+          order_id: string | null
+          to_status: string
+        }
+        Insert: {
+          actor?: string
+          created_at?: string
+          estimate_id?: string | null
+          from_status?: string
+          id?: string
+          kind?: string
+          message?: string
+          meta?: Json
+          order_id?: string | null
+          to_status?: string
+        }
+        Update: {
+          actor?: string
+          created_at?: string
+          estimate_id?: string | null
+          from_status?: string
+          id?: string
+          kind?: string
+          message?: string
+          meta?: Json
+          order_id?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_events_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
           address: string
           approved_at: string | null
+          approved_snapshot: Json | null
           created_at: string
           customer_name: string
           email: string
           estimate_id: string | null
           estimate_number: string
+          estimate_version: number
           id: string
           items: Json
           note: string
           number: string
+          object_name: string
+          paid_amount: number
+          payment_status: string
           phone: string
+          prepayment_percent: number
           status: string
           total: number
           updated_at: string
@@ -107,16 +214,22 @@ export type Database = {
         Insert: {
           address?: string
           approved_at?: string | null
+          approved_snapshot?: Json | null
           created_at?: string
           customer_name?: string
           email?: string
           estimate_id?: string | null
           estimate_number?: string
+          estimate_version?: number
           id?: string
           items?: Json
           note?: string
           number?: string
+          object_name?: string
+          paid_amount?: number
+          payment_status?: string
           phone?: string
+          prepayment_percent?: number
           status?: string
           total?: number
           updated_at?: string
@@ -124,16 +237,22 @@ export type Database = {
         Update: {
           address?: string
           approved_at?: string | null
+          approved_snapshot?: Json | null
           created_at?: string
           customer_name?: string
           email?: string
           estimate_id?: string | null
           estimate_number?: string
+          estimate_version?: number
           id?: string
           items?: Json
           note?: string
           number?: string
+          object_name?: string
+          paid_amount?: number
+          payment_status?: string
           phone?: string
+          prepayment_percent?: number
           status?: string
           total?: number
           updated_at?: string

@@ -100,10 +100,12 @@ export async function buildEstimatePdf(
   const rows: Array<[string, string]> = [
     [`Смета №`, estimate.number || "—"],
     ["Дата", formatDate(estimate.doc_date)],
+    ["Версия", String(estimate.version ?? 1)],
     ["Заказчик", estimate.customer_name || "—"],
-    ["Адрес объекта", estimate.address || "—"],
-    ["Телефон", estimate.phone || "—"],
   ];
+  if (estimate.object_name) rows.push(["Объект", estimate.object_name]);
+  rows.push(["Адрес объекта", estimate.address || "—"]);
+  rows.push(["Телефон", estimate.phone || "—"]);
   if (estimate.email) rows.push(["Email", estimate.email]);
   if (estimate.work_period) rows.push(["Срок выполнения", estimate.work_period]);
   if (estimate.valid_until) rows.push(["Действует до", estimate.valid_until]);
