@@ -34,7 +34,7 @@ async function fetchBase64(url: string) {
 let fontCache: { regular: string; bold: string } | null = null;
 let logoCache: string | null = null;
 
-async function loadAssets() {
+export async function loadAssets() {
   if (!fontCache) {
     const [regular, bold] = await Promise.all([
       fetchBase64(fontRegular.url),
