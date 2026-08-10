@@ -31,6 +31,7 @@ const TABS = [
   { value: "orders", label: "Заказы" },
   { value: "price", label: "Прайс" },
   { value: "panel", label: "Проектировщик щита" },
+  { value: "schematic", label: "Схема (Visio)" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
