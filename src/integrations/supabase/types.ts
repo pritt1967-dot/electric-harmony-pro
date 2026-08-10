@@ -297,6 +297,44 @@ export type Database = {
         }
         Relationships: []
       }
+      panel_schematics: {
+        Row: {
+          created_at: string
+          doc: Json
+          id: string
+          object_name: string
+          panel_design_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc?: Json
+          id?: string
+          object_name?: string
+          panel_design_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc?: Json
+          id?: string
+          object_name?: string
+          panel_design_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panel_schematics_panel_design_id_fkey"
+            columns: ["panel_design_id"]
+            isOneToOne: false
+            referencedRelation: "panel_designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_items: {
         Row: {
           category: string
