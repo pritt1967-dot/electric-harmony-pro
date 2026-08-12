@@ -1,4 +1,7 @@
+import { Link } from "@tanstack/react-router";
+
 import { Reveal } from "./Reveal";
+
 import { Eyebrow } from "./SectionHeading";
 import type { PriceHighlight } from "@/lib/content.functions";
 
