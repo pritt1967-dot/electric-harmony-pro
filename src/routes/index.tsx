@@ -75,7 +75,7 @@ function Index() {
         />
         <Process />
         <Advantages />
-        <Prices />
+        <Prices items={data.priceHighlights ?? []} />
         <Reviews reviews={data.reviews} title={c.reviews_title ?? "Отзывы"} />
 
         <About title={c.about_title ?? "О компании"} text={c.about_text ?? ""} />

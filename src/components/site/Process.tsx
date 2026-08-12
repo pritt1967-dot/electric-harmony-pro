@@ -1,44 +1,42 @@
 import { Reveal } from "./Reveal";
-import { SectionHeading } from "./SectionHeading";
+import { Eyebrow } from "./SectionHeading";
 
 const STEPS = [
-  { n: "01", title: "Заявка", text: "Принимаем обращение, уточняем задачу и объект." },
-  { n: "02", title: "Выезд", text: "Приезжаем на объект в согласованное время." },
-  { n: "03", title: "Осмотр", text: "Смотрим условия монтажа, замеряем, фиксируем детали." },
-  { n: "04", title: "Смета", text: "Готовим прозрачный расчёт по позициям и материалам." },
-  { n: "05", title: "Монтаж", text: "Выполняем работы по требованиям ПУЭ с маркировкой линий." },
-  { n: "06", title: "Проверка", text: "Тестируем линии и защиты, устраняем замечания." },
-  { n: "07", title: "Сдача объекта", text: "Передаём объект, схемы и документацию по работам." },
+  { n: "01", title: "Заявка", text: "Уточняем задачу, объект и сроки." },
+  { n: "02", title: "Осмотр", text: "Смотрим условия монтажа и замеряем." },
+  { n: "03", title: "Смета", text: "Готовим расчёт по позициям в PDF." },
+  {
+    n: "04",
+    title: "Монтаж и сдача",
+    text: "Выполняем работы, проверяем линии и передаём объект.",
+  },
 ];
 
 export function Process() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
-      <Reveal>
-        <SectionHeading
-          eyebrow="Как мы работаем"
-          title="Процесс работы — семь этапов"
-          subtitle="От первого звонка до сдачи объекта вы всегда знаете, что происходит и сколько это стоит."
-        />
-      </Reveal>
+    <section className="relative overflow-hidden bg-ink py-14 text-ink-foreground lg:py-20">
+      <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" aria-hidden />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <Reveal>
+          <Eyebrow tone="dark">Как мы работаем</Eyebrow>
+          <h2 className="mt-4 max-w-3xl text-[clamp(1.9rem,4vw,3.2rem)] font-extrabold uppercase leading-[1.02] tracking-[-0.03em]">
+            Четыре этапа
+          </h2>
+        </Reveal>
 
-      <ol className="relative mt-10 max-w-3xl border-l border-border pl-6 sm:pl-10">
-        {STEPS.map((s, i) => (
-          <Reveal as="li" key={s.n} delay={Math.min(i, 6) * 50} className="relative pb-8 last:pb-0">
-            <span
-              className="absolute -left-[calc(1.5rem+1px)] top-1.5 grid size-3 place-items-center rounded-full border-2 border-brand bg-background sm:-left-[calc(2.5rem+1px)]"
-              aria-hidden
-            />
-            <div className="group flex flex-col gap-1 border-b border-border/70 pb-6 transition-colors last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
-              <span className="font-mono text-xs font-bold text-brand">{s.n}</span>
-              <div className="min-w-0">
-                <h3 className="text-lg font-extrabold uppercase tracking-tight">{s.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+        <ol className="mt-8 grid gap-px bg-ink-border sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((s, i) => (
+            <Reveal as="li" key={s.n} delay={i * 60} className="bg-ink p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-sm font-bold text-ink-muted">{s.n}</span>
+                <span className="h-px flex-1 bg-ink-border" aria-hidden />
               </div>
-            </div>
-          </Reveal>
-        ))}
-      </ol>
+              <h3 className="mt-4 text-lg font-bold tracking-tight">{s.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{s.text}</p>
+            </Reveal>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }
