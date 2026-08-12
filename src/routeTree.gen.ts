@@ -14,9 +14,12 @@ import { Route as PricesRouteImport } from './routes/prices'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ContactCardRouteImport } from './routes/contact-card'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RabotyIndexRouteImport } from './routes/raboty.index'
 import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
+import { Route as RabotySlugRouteImport } from './routes/raboty.$slug'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -51,6 +54,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SlugRoute = SlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -60,9 +68,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RabotyIndexRoute = RabotyIndexRouteImport.update({
+  id: '/raboty/',
+  path: '/raboty/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SmetaTokenRoute = SmetaTokenRouteImport.update({
   id: '/smeta/$token',
   path: '/smeta/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RabotySlugRoute = RabotySlugRouteImport.update({
+  id: '/raboty/$slug',
+  path: '/raboty/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -112,6 +130,7 @@ const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
@@ -120,7 +139,9 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/raboty/': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
@@ -129,6 +150,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
@@ -137,7 +159,9 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/raboty': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
@@ -148,6 +172,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
@@ -156,7 +181,9 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/raboty/': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
@@ -167,6 +194,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$slug'
     | '/auth'
     | '/contact-card'
     | '/mcp'
@@ -175,7 +203,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/raboty/$slug'
     | '/smeta/$token'
+    | '/raboty/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
@@ -184,6 +214,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$slug'
     | '/auth'
     | '/contact-card'
     | '/mcp'
@@ -192,7 +223,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/raboty/$slug'
     | '/smeta/$token'
+    | '/raboty'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
@@ -202,6 +235,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$slug'
     | '/auth'
     | '/contact-card'
     | '/mcp'
@@ -210,7 +244,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/raboty/$slug'
     | '/smeta/$token'
+    | '/raboty/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/estimate/$id'
@@ -221,6 +257,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   ContactCardRoute: typeof ContactCardRoute
   McpRoute: typeof McpRoute
@@ -228,7 +265,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  RabotySlugRoute: typeof RabotySlugRoute
   SmetaTokenRoute: typeof SmetaTokenRoute
+  RabotyIndexRoute: typeof RabotyIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicContactCardDotpdfRoute: typeof ApiPublicContactCardDotpdfRoute
@@ -272,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$slug': {
+      id: '/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof SlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -286,11 +332,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/raboty/': {
+      id: '/raboty/'
+      path: '/raboty'
+      fullPath: '/raboty/'
+      preLoaderRoute: typeof RabotyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/smeta/$token': {
       id: '/smeta/$token'
       path: '/smeta/$token'
       fullPath: '/smeta/$token'
       preLoaderRoute: typeof SmetaTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/raboty/$slug': {
+      id: '/raboty/$slug'
+      path: '/raboty/$slug'
+      fullPath: '/raboty/$slug'
+      preLoaderRoute: typeof RabotySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -368,6 +428,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   ContactCardRoute: ContactCardRoute,
   McpRoute: McpRoute,
@@ -376,7 +437,9 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  RabotySlugRoute: RabotySlugRoute,
   SmetaTokenRoute: SmetaTokenRoute,
+  RabotyIndexRoute: RabotyIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicContactCardDotpdfRoute: ApiPublicContactCardDotpdfRoute,

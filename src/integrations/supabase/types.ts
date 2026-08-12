@@ -388,6 +388,7 @@ export type Database = {
       }
       project_images: {
         Row: {
+          alt: string
           caption: string
           created_at: string
           id: string
@@ -397,6 +398,7 @@ export type Database = {
           storage_path: string
         }
         Insert: {
+          alt?: string
           caption?: string
           created_at?: string
           id?: string
@@ -406,6 +408,7 @@ export type Database = {
           storage_path?: string
         }
         Update: {
+          alt?: string
           caption?: string
           created_at?: string
           id?: string
@@ -426,40 +429,73 @@ export type Database = {
       }
       projects: {
         Row: {
+          category: string
+          city: string
+          cost_text: string
           cover_image: string
           created_at: string
           description: string
+          equipment: string
           id: string
           is_published: boolean
           location: string
+          result_text: string
+          seo_description: string
+          seo_title: string
+          service_slug: string
+          slug: string | null
           sort_order: number
+          task: string
           title: string
           updated_at: string
           work_date: string | null
+          works_done: string
         }
         Insert: {
+          category?: string
+          city?: string
+          cost_text?: string
           cover_image?: string
           created_at?: string
           description?: string
+          equipment?: string
           id?: string
           is_published?: boolean
           location?: string
+          result_text?: string
+          seo_description?: string
+          seo_title?: string
+          service_slug?: string
+          slug?: string | null
           sort_order?: number
+          task?: string
           title?: string
           updated_at?: string
           work_date?: string | null
+          works_done?: string
         }
         Update: {
+          category?: string
+          city?: string
+          cost_text?: string
           cover_image?: string
           created_at?: string
           description?: string
+          equipment?: string
           id?: string
           is_published?: boolean
           location?: string
+          result_text?: string
+          seo_description?: string
+          seo_title?: string
+          service_slug?: string
+          slug?: string | null
           sort_order?: number
+          task?: string
           title?: string
           updated_at?: string
           work_date?: string | null
+          works_done?: string
         }
         Relationships: []
       }
