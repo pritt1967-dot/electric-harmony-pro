@@ -8,6 +8,8 @@ import { PanelBuild } from "@/components/site/PanelBuild";
 import { Works } from "@/components/site/Works";
 import { Process } from "@/components/site/Process";
 import { Advantages } from "@/components/site/Advantages";
+import { Prices } from "@/components/site/Prices";
+
 import { Reviews } from "@/components/site/Reviews";
 import { About } from "@/components/site/About";
 import { Contact } from "@/components/site/Contact";
