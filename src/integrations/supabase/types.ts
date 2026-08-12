@@ -340,9 +340,15 @@ export type Database = {
           category: string
           comment: string
           created_at: string
+          description: string
           id: string
+          in_calculator: boolean
+          is_public: boolean
           name: string
           price: number
+          price_from: boolean
+          public_category: string
+          sort_order: number
           unit: string
           updated_at: string
         }
@@ -350,9 +356,15 @@ export type Database = {
           category?: string
           comment?: string
           created_at?: string
+          description?: string
           id?: string
+          in_calculator?: boolean
+          is_public?: boolean
           name: string
           price?: number
+          price_from?: boolean
+          public_category?: string
+          sort_order?: number
           unit?: string
           updated_at?: string
         }
@@ -360,9 +372,15 @@ export type Database = {
           category?: string
           comment?: string
           created_at?: string
+          description?: string
           id?: string
+          in_calculator?: boolean
+          is_public?: boolean
           name?: string
           price?: number
+          price_from?: boolean
+          public_category?: string
+          sort_order?: number
           unit?: string
           updated_at?: string
         }
