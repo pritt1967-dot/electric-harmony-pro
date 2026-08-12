@@ -1,2 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /login
+Disallow: /estimate
+Disallow: /smeta
+Disallow: /contact-card
+Disallow: /api/
+Disallow: /mcp
+Disallow: /.lovable/
+
+Sitemap: https://electric-9117335567.lovable.app/sitemap.xml
