@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin, CalendarDays, X } from "lucide-react";
 
 import { Reveal } from "./Reveal";
+import { SectionHeading } from "./SectionHeading";
 import type { ProjectRow } from "@/lib/content.functions";
 
 function formatWorkDate(value: string | null) {
@@ -28,16 +29,13 @@ export function Works({
   const shown = projects.slice(0, visible);
 
   return (
-    <section id="works" className="scroll-mt-20 bg-secondary/50 py-16 lg:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <Reveal className="max-w-2xl">
-          <span className="text-sm font-semibold uppercase tracking-wide text-brand">
-            Наши работы
-          </span>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            {title}
-          </h2>
-          <p className="mt-3 text-muted-foreground">{subtitle}</p>
+    <section
+      id="works"
+      className="scroll-mt-20 border-y border-border bg-secondary/60 py-16 lg:py-24"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <Reveal>
+          <SectionHeading eyebrow="Наши работы" title={title} subtitle={subtitle} />
         </Reveal>
 
         <div className="mt-10 space-y-10 lg:space-y-14">
@@ -61,7 +59,7 @@ export function Works({
             <button
               type="button"
               onClick={() => setVisible((v) => v + 3)}
-              className="rounded-full border border-brand/30 bg-background px-6 py-3 text-sm font-semibold text-brand transition hover:bg-brand hover:text-brand-foreground"
+              className="rounded-md border border-border bg-background px-6 py-3.5 text-sm font-bold transition hover:border-brand hover:bg-brand hover:text-brand-foreground"
             >
               Показать ещё объекты ({projects.length - visible})
             </button>
@@ -101,7 +99,7 @@ function ProjectBlock({
 
   return (
     <Reveal as="article" delay={index * 60}>
-      <div className="overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-brand">
         {cover && (
           <button
             type="button"
@@ -113,13 +111,13 @@ function ProjectBlock({
               src={cover.image_url}
               alt={`${project.title} — электромонтажные работы`}
               loading={index === 0 ? "eager" : "lazy"}
-              className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] sm:aspect-[16/9]"
+              className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.04] sm:aspect-[16/9]"
             />
           </button>
         )}
 
         <div className="p-5 sm:p-7">
-          <h3 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+          <h3 className="text-xl font-extrabold leading-tight sm:text-2xl">
             {project.title}
           </h3>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -140,6 +138,16 @@ function ProjectBlock({
             <p className="mt-3 max-w-3xl text-muted-foreground">{project.description}</p>
           )}
 
+          {cover && (
+            <button
+              type="button"
+              onClick={() => onOpen(coverIdx)}
+              className="mt-5 inline-flex items-center gap-2 rounded-md bg-ink px-5 py-3 text-sm font-bold text-ink-foreground transition-colors hover:bg-brand hover:text-brand-foreground"
+            >
+              Смотреть объект
+            </button>
+          )}
+
           {rest.length > 0 && (
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {rest.map((img) => {
@@ -149,7 +157,7 @@ function ProjectBlock({
                     key={img.id}
                     type="button"
                     onClick={() => onOpen(realIndex)}
-                    className="group overflow-hidden rounded-xl border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="group overflow-hidden rounded-md border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
                   >
                     <img
