@@ -3,11 +3,12 @@ import { SectionHeading } from "./SectionHeading";
 
 const STEPS = [
   { n: "01", title: "Заявка", text: "Принимаем обращение, уточняем задачу и объект." },
-  { n: "02", title: "Выезд и осмотр", text: "Смотрим объект, замеряем и фиксируем условия монтажа." },
-  { n: "03", title: "Расчёт стоимости", text: "Готовим прозрачную смету по объёму работ и материалам." },
-  { n: "04", title: "Согласование", text: "Утверждаем смету, сроки и схему электроснабжения." },
-  { n: "05", title: "Выполнение работ", text: "Монтаж по требованиям ПУЭ с маркировкой линий." },
-  { n: "06", title: "Проверка и сдача", text: "Тестируем линии, передаём объект и документацию." },
+  { n: "02", title: "Выезд", text: "Приезжаем на объект в согласованное время." },
+  { n: "03", title: "Осмотр", text: "Смотрим условия монтажа, замеряем, фиксируем детали." },
+  { n: "04", title: "Смета", text: "Готовим прозрачный расчёт по позициям и материалам." },
+  { n: "05", title: "Монтаж", text: "Выполняем работы по требованиям ПУЭ с маркировкой линий." },
+  { n: "06", title: "Проверка", text: "Тестируем линии и защиты, устраняем замечания." },
+  { n: "07", title: "Сдача объекта", text: "Передаём объект, схемы и документацию по работам." },
 ];
 
 export function Process() {
@@ -16,20 +17,24 @@ export function Process() {
       <Reveal>
         <SectionHeading
           eyebrow="Как мы работаем"
-          title="Процесс работы — шесть понятных этапов"
+          title="Процесс работы — семь этапов"
           subtitle="От первого звонка до сдачи объекта вы всегда знаете, что происходит и сколько это стоит."
         />
       </Reveal>
 
-      <ol className="mt-10 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+      <ol className="relative mt-10 max-w-3xl border-l border-border pl-6 sm:pl-10">
         {STEPS.map((s, i) => (
-          <Reveal as="li" key={s.n} delay={Math.min(i, 5) * 60}>
-            <div className="group h-full bg-card p-6 transition-colors hover:bg-secondary sm:p-7">
-              <span className="text-3xl font-extrabold text-border transition-colors group-hover:text-brand">
-                {s.n}
-              </span>
-              <h3 className="mt-3 text-lg font-extrabold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+          <Reveal as="li" key={s.n} delay={Math.min(i, 6) * 50} className="relative pb-8 last:pb-0">
+            <span
+              className="absolute -left-[calc(1.5rem+1px)] top-1.5 grid size-3 place-items-center rounded-full border-2 border-brand bg-background sm:-left-[calc(2.5rem+1px)]"
+              aria-hidden
+            />
+            <div className="group flex flex-col gap-1 border-b border-border/70 pb-6 transition-colors last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
+              <span className="font-mono text-xs font-bold text-brand">{s.n}</span>
+              <div className="min-w-0">
+                <h3 className="text-lg font-extrabold uppercase tracking-tight">{s.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
+              </div>
             </div>
           </Reveal>
         ))}
