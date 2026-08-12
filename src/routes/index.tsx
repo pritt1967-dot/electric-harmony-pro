@@ -16,6 +16,8 @@ import { Contact } from "@/components/site/Contact";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
 import { siteDataQuery } from "@/lib/site-data";
+import { canonical } from "@/lib/seo";
+import { SERVICE_PAGES } from "@/lib/services-seo";
 
 const TITLE =
   "Электромонтаж под ключ в СПб и Ленобласти | S&M Electric";
