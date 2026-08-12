@@ -27,12 +27,24 @@ type ProjectImage = {
   image_url: string;
   storage_path: string;
   caption: string;
+  alt: string;
   sort_order: number;
 };
 
 type Project = {
   id: string;
+  slug: string;
   title: string;
+  city: string;
+  category: string;
+  task: string;
+  works_done: string;
+  equipment: string;
+  result_text: string;
+  cost_text: string;
+  service_slug: string;
+  seo_title: string;
+  seo_description: string;
   description: string;
   location: string;
   work_date: string | null;
@@ -43,6 +55,24 @@ type Project = {
 };
 
 const MAX_SIDE = 1600;
+
+const TRANSLIT: Record<string, string> = {
+  а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i",
+  й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t",
+  у: "u", ф: "f", х: "h", ц: "c", ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "",
+  э: "e", ю: "yu", я: "ya",
+};
+
+export function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .split("")
+    .map((ch) => TRANSLIT[ch] ?? ch)
+    .join("")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
 
 async function compressImage(file: File): Promise<Blob> {
   if (!file.type.startsWith("image/")) return file;
@@ -74,7 +104,7 @@ export function ProjectsEditor() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, location, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, sort_order)",
+          "id, slug, title, description, location, city, category, task, works_done, equipment, result_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
         )
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -97,6 +127,7 @@ export function ProjectsEditor() {
       const max = projects.reduce((m, p) => Math.max(m, p.sort_order), 0);
       const { error } = await supabase.from("projects").insert({
         title: "Новый объект",
+        slug: `obekt-${Date.now().toString(36)}`,
         description: "",
         location: "",
         sort_order: max + 1,
@@ -222,9 +253,20 @@ function ProjectCard({
   onChanged: () => void;
 }) {
   const [form, setForm] = useState({
+    slug: project.slug ?? "",
     title: project.title,
     description: project.description,
     location: project.location,
+    city: project.city ?? "",
+    category: project.category ?? "",
+    task: project.task ?? "",
+    works_done: project.works_done ?? "",
+    equipment: project.equipment ?? "",
+    result_text: project.result_text ?? "",
+    cost_text: project.cost_text ?? "",
+    service_slug: project.service_slug ?? "",
+    seo_title: project.seo_title ?? "",
+    seo_description: project.seo_description ?? "",
     work_date: project.work_date ?? "",
     is_published: project.is_published,
   });
@@ -239,9 +281,20 @@ function ProjectCard({
     const { error } = await supabase
       .from("projects")
       .update({
+        slug: slugify(form.slug || form.title),
         title: form.title,
         description: form.description,
         location: form.location,
+        city: form.city,
+        category: form.category,
+        task: form.task,
+        works_done: form.works_done,
+        equipment: form.equipment,
+        result_text: form.result_text,
+        cost_text: form.cost_text,
+        service_slug: form.service_slug,
+        seo_title: form.seo_title,
+        seo_description: form.seo_description,
         work_date: form.work_date || null,
         is_published: form.is_published,
       })
@@ -403,6 +456,104 @@ function ProjectCard({
         />
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Город</Label>
+          <Input
+            value={form.city}
+            placeholder="Санкт-Петербург"
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Категория работ</Label>
+          <Input
+            value={form.category}
+            placeholder="Электрощиты"
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Задача заказчика</Label>
+          <Textarea
+            rows={3}
+            value={form.task}
+            onChange={(e) => setForm({ ...form, task: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Что сделано (по строке на пункт)</Label>
+          <Textarea
+            rows={3}
+            value={form.works_done}
+            onChange={(e) => setForm({ ...form, works_done: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Оборудование (по строке на пункт)</Label>
+          <Textarea
+            rows={3}
+            value={form.equipment}
+            onChange={(e) => setForm({ ...form, equipment: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Результат</Label>
+          <Textarea
+            rows={3}
+            value={form.result_text}
+            onChange={(e) => setForm({ ...form, result_text: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Стоимость (текст)</Label>
+          <Input
+            value={form.cost_text}
+            placeholder="от 85 000 ₽"
+            onChange={(e) => setForm({ ...form, cost_text: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Связанная услуга (slug)</Label>
+          <Input
+            value={form.service_slug}
+            placeholder="sborka-elektroshchitov"
+            onChange={(e) => setForm({ ...form, service_slug: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-3 rounded-lg border border-dashed p-3 sm:grid-cols-2">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>URL страницы объекта (slug)</Label>
+          <Input
+            value={form.slug}
+            placeholder="elektroshchit-kvartira-primorskiy"
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            /raboty/{slugify(form.slug || form.title) || "…"}
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label>SEO Title</Label>
+          <Input
+            value={form.seo_title}
+            maxLength={70}
+            onChange={(e) => setForm({ ...form, seo_title: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>SEO Description</Label>
+          <Textarea
+            rows={2}
+            maxLength={180}
+            value={form.seo_description}
+            onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
+          />
+        </div>
+      </div>
+
       <div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
           <Label className="min-w-0">Фотографии ({images.length})</Label>
@@ -439,6 +590,23 @@ function ProjectCard({
                 alt={img.caption || project.title}
                 className="aspect-square w-full object-cover"
               />
+              <div className="p-1">
+                <Input
+                  defaultValue={img.alt ?? ""}
+                  placeholder="Alt-текст фото"
+                  className="h-8 text-xs"
+                  onBlur={async (e) => {
+                    const value = e.target.value;
+                    if (value === (img.alt ?? "")) return;
+                    const { error } = await supabase
+                      .from("project_images")
+                      .update({ alt: value })
+                      .eq("id", img.id);
+                    if (error) toast.error(error.message);
+                    else onChanged();
+                  }}
+                />
+              </div>
               <div className="flex items-center justify-between gap-1 p-1">
                 <Button
                   variant="ghost"
