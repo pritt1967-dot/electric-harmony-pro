@@ -7,7 +7,7 @@ import { CONTACTS } from "./contacts";
 const NAV = [
   { label: "Главная", href: "/#top" },
   { label: "Услуги", href: "/#services" },
-  { label: "Наши работы", href: "/#works" },
+  { label: "Наши работы", href: "/raboty" },
   { label: "Цены", href: "/prices" },
   { label: "О компании", href: "/#about" },
   { label: "Контакты", href: "/#contacts" },

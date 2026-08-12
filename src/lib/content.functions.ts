@@ -35,6 +35,7 @@ export type ProjectImage = {
 
 export type ProjectRow = {
   id: string;
+  slug: string;
   title: string;
   description: string;
   location: string;
@@ -114,7 +115,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
         supabase
           .from("projects")
           .select(
-            "id, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
+            "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
           )
           .eq("is_published", true)
           .order("sort_order", { ascending: true }),
@@ -128,6 +129,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
 
     const projectRows: ProjectRow[] = (projects.data ?? []).map((p) => ({
       id: p.id,
+      slug: p.slug ?? "",
       title: p.title,
       description: p.description,
       location: p.location,

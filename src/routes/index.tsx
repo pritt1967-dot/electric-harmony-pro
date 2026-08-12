@@ -16,6 +16,8 @@ import { Contact } from "@/components/site/Contact";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
 import { siteDataQuery } from "@/lib/site-data";
+import { canonical } from "@/lib/seo";
+import { SERVICE_PAGES } from "@/lib/services-seo";
 
 const TITLE =
   "Электромонтаж под ключ в СПб и Ленобласти | S&M Electric";
@@ -30,9 +32,27 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/") },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
+    ],
+    links: [{ rel: "canonical", href: canonical("/") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Услуги S&M Electric",
+          itemListElement: SERVICE_PAGES.map((s, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: s.nav,
+            url: canonical(`/${s.slug}`),
+          })),
+        }),
+      },
     ],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(siteDataQuery),

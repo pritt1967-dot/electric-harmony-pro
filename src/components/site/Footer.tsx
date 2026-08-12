@@ -1,12 +1,13 @@
 import logoAsset from "@/assets/logo.png.asset.json";
 import { CONTACTS } from "./contacts";
+import { SERVICE_PAGES } from "@/lib/services-seo";
 
 const NAV = [
-  { label: "Услуги", href: "#services" },
-  { label: "Наши работы", href: "#works" },
-  { label: "Цены", href: "#prices" },
-  { label: "Отзывы", href: "#reviews" },
-  { label: "Контакты", href: "#contacts" },
+  { label: "Услуги", href: "/#services" },
+  { label: "Наши работы", href: "/raboty" },
+  { label: "Цены", href: "/prices" },
+  { label: "Отзывы", href: "/#reviews" },
+  { label: "Контакты", href: "/#contacts" },
 ];
 
 export function Footer() {
@@ -77,6 +78,28 @@ export function Footer() {
           </li>
         </ul>
       </div>
+
+      <div className="border-t border-ink-border">
+        <nav className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.28em] text-ink-muted">
+            Услуги электромонтажа в СПб
+          </h2>
+          <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            {SERVICE_PAGES.map((s) => (
+              <li key={s.slug}>
+                <a
+                  href={`/${s.slug}`}
+                  className="text-sm text-ink-muted transition-colors hover:text-brand"
+                >
+                  {s.nav}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+
 
       <div className="border-t border-ink-border py-4">
         <p className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 text-center text-xs text-ink-muted sm:px-6">
