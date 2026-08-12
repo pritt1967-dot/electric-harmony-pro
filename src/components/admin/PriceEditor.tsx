@@ -33,16 +33,39 @@ export type PriceRow = {
   unit: string;
   price: number;
   comment: string;
+  description: string;
+  public_category: string;
+  price_from: boolean;
+  sort_order: number;
+  is_public: boolean;
+  in_calculator: boolean;
 };
+
+const PRICE_SELECT =
+  "id, category, name, unit, price, comment, description, public_category, price_from, sort_order, is_public, in_calculator";
+
+export const PUBLIC_CATEGORY_OPTIONS = [
+  "Электромонтажные работы",
+  "Электрические щиты",
+  "Освещение",
+  "Розетки и выключатели",
+  "Кабельные линии",
+  "Заземление",
+  "Поиск и устранение неисправностей",
+  "Работы в квартире",
+  "Работы в частном доме",
+  "Дополнительные работы",
+];
 
 export async function fetchPriceItems(): Promise<PriceRow[]> {
   const { data } = await supabase
     .from("price_items")
-    .select("id, category, name, unit, price, comment")
+    .select(PRICE_SELECT)
     .order("category")
     .order("name");
   return (data ?? []).map((r) => ({ ...r, price: Number(r.price) }));
 }
+
 
 export function PriceEditor() {
   const [rows, setRows] = useState<PriceRow[]>([]);
