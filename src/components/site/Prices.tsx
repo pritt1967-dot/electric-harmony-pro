@@ -1,4 +1,7 @@
+import { Link } from "@tanstack/react-router";
+
 import { Reveal } from "./Reveal";
+
 import { Eyebrow } from "./SectionHeading";
 import type { PriceHighlight } from "@/lib/content.functions";
 
@@ -48,19 +51,20 @@ export function Prices({ items }: { items: PriceHighlight[] }) {
         </ul>
 
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+          <Link
+            to="/prices"
+            className="inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-ink px-8 text-sm font-bold uppercase tracking-[0.08em] text-ink-foreground transition-colors hover:bg-ink-elevated"
+          >
+            Все цены и калькулятор →
+          </Link>
           <a
             href="#contacts"
-            className="inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-ink px-8 text-sm font-bold uppercase tracking-[0.08em] text-ink-foreground transition-colors hover:bg-ink-elevated"
+            className="text-sm font-semibold underline-offset-8 hover:underline"
           >
             Получить точную смету →
           </a>
-          <a
-            href="#services"
-            className="text-sm font-semibold underline-offset-8 hover:underline"
-          >
-            Посмотреть все направления →
-          </a>
         </div>
+
       </div>
     </section>
   );

@@ -33,16 +33,39 @@ export type PriceRow = {
   unit: string;
   price: number;
   comment: string;
+  description: string;
+  public_category: string;
+  price_from: boolean;
+  sort_order: number;
+  is_public: boolean;
+  in_calculator: boolean;
 };
+
+const PRICE_SELECT =
+  "id, category, name, unit, price, comment, description, public_category, price_from, sort_order, is_public, in_calculator";
+
+export const PUBLIC_CATEGORY_OPTIONS = [
+  "Электромонтажные работы",
+  "Электрические щиты",
+  "Освещение",
+  "Розетки и выключатели",
+  "Кабельные линии",
+  "Заземление",
+  "Поиск и устранение неисправностей",
+  "Работы в квартире",
+  "Работы в частном доме",
+  "Дополнительные работы",
+];
 
 export async function fetchPriceItems(): Promise<PriceRow[]> {
   const { data } = await supabase
     .from("price_items")
-    .select("id, category, name, unit, price, comment")
+    .select(PRICE_SELECT)
     .order("category")
     .order("name");
   return (data ?? []).map((r) => ({ ...r, price: Number(r.price) }));
 }
+
 
 export function PriceEditor() {
   const [rows, setRows] = useState<PriceRow[]>([]);
@@ -119,7 +142,11 @@ export function PriceEditor() {
 
 
 
-  function patch(id: string, field: keyof PriceRow, value: string | number) {
+  function patch(
+    id: string,
+    field: keyof PriceRow,
+    value: string | number | boolean,
+  ) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   }
 
@@ -133,6 +160,12 @@ export function PriceEditor() {
         unit: row.unit,
         price: row.price,
         comment: row.comment,
+        description: row.description,
+        public_category: row.public_category,
+        price_from: row.price_from,
+        sort_order: row.sort_order,
+        is_public: row.is_public,
+        in_calculator: row.in_calculator,
       })
       .eq("id", row.id);
     setBusyId(null);
@@ -149,11 +182,12 @@ export function PriceEditor() {
         unit: "шт",
         price: 0,
       })
-      .select("id, category, name, unit, price, comment")
+      .select(PRICE_SELECT)
       .single();
     if (error) toast.error("Ошибка: " + error.message);
     else if (data) setRows((r) => [{ ...data, price: Number(data.price) }, ...r]);
   }
+
 
   async function deleteRow(id: string) {
     setBusyId(id);
@@ -344,14 +378,82 @@ export function PriceEditor() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 space-y-1.5">
-              <Label>Комментарий</Label>
-              <Input
-                value={row.comment}
-                onChange={(e) => patch(row.id, "comment", e.target.value)}
-                placeholder="необязательно"
-              />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Комментарий (внутренний)</Label>
+                <Input
+                  value={row.comment}
+                  onChange={(e) => patch(row.id, "comment", e.target.value)}
+                  placeholder="необязательно"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Описание для сайта</Label>
+                <Input
+                  value={row.description}
+                  onChange={(e) => patch(row.id, "description", e.target.value)}
+                  placeholder="Краткое описание для карточки"
+                />
+              </div>
             </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1.5 lg:col-span-2">
+                <Label>Категория на сайте</Label>
+                <Select
+                  value={row.public_category || "Дополнительные работы"}
+                  onValueChange={(v) => patch(row.id, "public_category", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PUBLIC_CATEGORY_OPTIONS.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Порядок</Label>
+                <Input
+                  type="number"
+                  value={row.sort_order}
+                  onChange={(e) =>
+                    patch(row.id, "sort_order", Number(e.target.value))
+                  }
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-4 pt-6">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={row.price_from}
+                    onCheckedChange={(v) => patch(row.id, "price_from", v === true)}
+                  />
+                  «от»
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-5">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={row.is_public}
+                  onCheckedChange={(v) => patch(row.id, "is_public", v === true)}
+                />
+                Показывать на сайте
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={row.in_calculator}
+                  onCheckedChange={(v) => patch(row.id, "in_calculator", v === true)}
+                />
+                Использовать в калькуляторе
+              </label>
+            </div>
+
             <div className="mt-3 flex items-center gap-2">
               <Button size="sm" onClick={() => saveRow(row)} disabled={busyId === row.id}>
                 {busyId === row.id ? (
