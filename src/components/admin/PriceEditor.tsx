@@ -378,14 +378,82 @@ export function PriceEditor() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 space-y-1.5">
-              <Label>Комментарий</Label>
-              <Input
-                value={row.comment}
-                onChange={(e) => patch(row.id, "comment", e.target.value)}
-                placeholder="необязательно"
-              />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Комментарий (внутренний)</Label>
+                <Input
+                  value={row.comment}
+                  onChange={(e) => patch(row.id, "comment", e.target.value)}
+                  placeholder="необязательно"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Описание для сайта</Label>
+                <Input
+                  value={row.description}
+                  onChange={(e) => patch(row.id, "description", e.target.value)}
+                  placeholder="Краткое описание для карточки"
+                />
+              </div>
             </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1.5 lg:col-span-2">
+                <Label>Категория на сайте</Label>
+                <Select
+                  value={row.public_category || "Дополнительные работы"}
+                  onValueChange={(v) => patch(row.id, "public_category", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PUBLIC_CATEGORY_OPTIONS.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Порядок</Label>
+                <Input
+                  type="number"
+                  value={row.sort_order}
+                  onChange={(e) =>
+                    patch(row.id, "sort_order", Number(e.target.value))
+                  }
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-4 pt-6">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={row.price_from}
+                    onCheckedChange={(v) => patch(row.id, "price_from", v === true)}
+                  />
+                  «от»
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-5">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={row.is_public}
+                  onCheckedChange={(v) => patch(row.id, "is_public", v === true)}
+                />
+                Показывать на сайте
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={row.in_calculator}
+                  onCheckedChange={(v) => patch(row.id, "in_calculator", v === true)}
+                />
+                Использовать в калькуляторе
+              </label>
+            </div>
+
             <div className="mt-3 flex items-center gap-2">
               <Button size="sm" onClick={() => saveRow(row)} disabled={busyId === row.id}>
                 {busyId === row.id ? (
