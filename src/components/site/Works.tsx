@@ -97,85 +97,118 @@ function ProjectBlock({
   const rest = images.filter((_, i) => i !== coverIdx);
   const date = formatWorkDate(project.work_date);
 
+  const featured = index === 0;
+  const flipped = !featured && index % 2 === 0;
+
+  const media = cover && (
+    <button
+      type="button"
+      onClick={() => onOpen(coverIdx)}
+      className="group relative block w-full overflow-hidden rounded-sm border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      aria-label={`Открыть фото: ${project.title}`}
+    >
+      <img
+        src={cover.image_url}
+        alt={`${project.title} — электромонтажные работы`}
+        loading={featured ? "eager" : "lazy"}
+        className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
+          featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
+        }`}
+      />
+      <span className="pointer-events-none absolute left-3 top-3 border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand backdrop-blur-sm">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+    </button>
+  );
+
+  const body = (
+    <div className={featured ? "mt-6" : ""}>
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-xs font-bold text-brand">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className="h-px w-8 bg-brand/50" aria-hidden />
+      </div>
+      <h3 className="mt-4 text-xl font-extrabold uppercase leading-tight tracking-tight sm:text-3xl">
+        {project.title}
+      </h3>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        {project.location && (
+          <span className="inline-flex items-center gap-1.5">
+            <MapPin className="size-4 shrink-0 text-brand" />
+            {project.location}
+          </span>
+        )}
+        {date && (
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-4 shrink-0 text-brand" />
+            {date}
+          </span>
+        )}
+      </div>
+      {project.description && (
+        <p className="mt-4 max-w-3xl leading-relaxed text-muted-foreground">
+          {project.description}
+        </p>
+      )}
+
+      {cover && (
+        <button
+          type="button"
+          onClick={() => onOpen(coverIdx)}
+          className="mt-6 inline-flex items-center gap-2 rounded-sm bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-foreground transition-colors hover:bg-brand hover:text-brand-foreground"
+        >
+          Смотреть объект →
+        </button>
+      )}
+
+      {rest.length > 0 && (
+        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+          {rest.slice(0, featured ? 6 : 3).map((img) => {
+            const realIndex = images.findIndex((x) => x.id === img.id);
+            return (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => onOpen(realIndex)}
+                className="group overflow-hidden rounded-sm border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
+              >
+                <img
+                  src={img.image_url}
+                  alt={img.caption || `${project.title} — фото ${realIndex + 1}`}
+                  loading="lazy"
+                  className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  if (featured) {
+    return (
+      <Reveal as="article">
+        <div className="rounded-sm border border-border bg-card p-4 sm:p-7">
+          {media}
+          {body}
+        </div>
+      </Reveal>
+    );
+  }
+
   return (
     <Reveal as="article" delay={index * 60}>
-      <div className="overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-brand">
-        {cover && (
-          <button
-            type="button"
-            onClick={() => onOpen(coverIdx)}
-            className="group block w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            aria-label={`Открыть фото: ${project.title}`}
-          >
-            <img
-              src={cover.image_url}
-              alt={`${project.title} — электромонтажные работы`}
-              loading={index === 0 ? "eager" : "lazy"}
-              className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.04] sm:aspect-[16/9]"
-            />
-          </button>
-        )}
-
-        <div className="p-5 sm:p-7">
-          <h3 className="text-xl font-extrabold leading-tight sm:text-2xl">
-            {project.title}
-          </h3>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {project.location && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="size-4 shrink-0 text-brand" />
-                {project.location}
-              </span>
-            )}
-            {date && (
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-4 shrink-0 text-brand" />
-                {date}
-              </span>
-            )}
-          </div>
-          {project.description && (
-            <p className="mt-3 max-w-3xl text-muted-foreground">{project.description}</p>
-          )}
-
-          {cover && (
-            <button
-              type="button"
-              onClick={() => onOpen(coverIdx)}
-              className="mt-5 inline-flex items-center gap-2 rounded-md bg-ink px-5 py-3 text-sm font-bold text-ink-foreground transition-colors hover:bg-brand hover:text-brand-foreground"
-            >
-              Смотреть объект
-            </button>
-          )}
-
-          {rest.length > 0 && (
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {rest.map((img) => {
-                const realIndex = images.findIndex((x) => x.id === img.id);
-                return (
-                  <button
-                    key={img.id}
-                    type="button"
-                    onClick={() => onOpen(realIndex)}
-                    className="group overflow-hidden rounded-md border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                    aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
-                  >
-                    <img
-                      src={img.image_url}
-                      alt={img.caption || `${project.title} — фото ${realIndex + 1}`}
-                      loading="lazy"
-                      className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+      <div className="grid items-center gap-6 rounded-sm border border-border bg-card p-4 sm:p-7 lg:grid-cols-2 lg:gap-10">
+        <div className={flipped ? "lg:order-2" : ""}>{media}</div>
+        <div className={flipped ? "lg:order-1" : ""}>{body}</div>
       </div>
     </Reveal>
   );
 }
+
 
 function Lightbox({
   project,

@@ -8,6 +8,8 @@ import { PanelBuild } from "@/components/site/PanelBuild";
 import { Works } from "@/components/site/Works";
 import { Process } from "@/components/site/Process";
 import { Advantages } from "@/components/site/Advantages";
+import { Prices } from "@/components/site/Prices";
+
 import { Reviews } from "@/components/site/Reviews";
 import { About } from "@/components/site/About";
 import { Contact } from "@/components/site/Contact";
@@ -73,7 +75,9 @@ function Index() {
         />
         <Process />
         <Advantages />
+        <Prices />
         <Reviews reviews={data.reviews} title={c.reviews_title ?? "Отзывы"} />
+
         <About title={c.about_title ?? "О компании"} text={c.about_text ?? ""} />
         <Contact />
       </main>
