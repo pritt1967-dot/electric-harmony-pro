@@ -142,7 +142,11 @@ export function PriceEditor() {
 
 
 
-  function patch(id: string, field: keyof PriceRow, value: string | number) {
+  function patch(
+    id: string,
+    field: keyof PriceRow,
+    value: string | number | boolean,
+  ) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   }
 
@@ -156,6 +160,12 @@ export function PriceEditor() {
         unit: row.unit,
         price: row.price,
         comment: row.comment,
+        description: row.description,
+        public_category: row.public_category,
+        price_from: row.price_from,
+        sort_order: row.sort_order,
+        is_public: row.is_public,
+        in_calculator: row.in_calculator,
       })
       .eq("id", row.id);
     setBusyId(null);
@@ -172,11 +182,12 @@ export function PriceEditor() {
         unit: "шт",
         price: 0,
       })
-      .select("id, category, name, unit, price, comment")
+      .select(PRICE_SELECT)
       .single();
     if (error) toast.error("Ошибка: " + error.message);
     else if (data) setRows((r) => [{ ...data, price: Number(data.price) }, ...r]);
   }
+
 
   async function deleteRow(id: string) {
     setBusyId(id);
