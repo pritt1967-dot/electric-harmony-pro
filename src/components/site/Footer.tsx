@@ -1,12 +1,13 @@
 import logoAsset from "@/assets/logo.png.asset.json";
 import { CONTACTS } from "./contacts";
+import { SERVICE_PAGES } from "@/lib/services-seo";
 
 const NAV = [
-  { label: "Услуги", href: "#services" },
-  { label: "Наши работы", href: "#works" },
-  { label: "Цены", href: "#prices" },
-  { label: "Отзывы", href: "#reviews" },
-  { label: "Контакты", href: "#contacts" },
+  { label: "Услуги", href: "/#services" },
+  { label: "Наши работы", href: "/raboty" },
+  { label: "Цены", href: "/prices" },
+  { label: "Отзывы", href: "/#reviews" },
+  { label: "Контакты", href: "/#contacts" },
 ];
 
 export function Footer() {
