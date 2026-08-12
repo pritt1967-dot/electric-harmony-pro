@@ -13,17 +13,13 @@ import {
   Download,
 } from "lucide-react";
 
-
 import { CONTACTS } from "./contacts";
 import { Reveal } from "./Reveal";
+import { SectionHeading } from "./SectionHeading";
 import { createSubmission } from "@/lib/submissions.functions";
 
 const schema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Введите имя")
-    .max(80, "Слишком длинное имя"),
+  name: z.string().trim().min(2, "Введите имя").max(80, "Слишком длинное имя"),
   phone: z
     .string()
     .trim()
@@ -32,6 +28,34 @@ const schema = z.object({
     .regex(/^[0-9+()\-\s]+$/, "Некорректный номер"),
   comment: z.string().trim().max(600, "Слишком длинное сообщение").optional(),
 });
+
+const OBJECT_TYPES = ["Квартира", "Частный дом", "Коммерческий объект", "Другое"];
+const SERVICES = [
+  "Монтаж электропроводки",
+  "Сборка и монтаж электрощита",
+  "Заземление",
+  "Освещение",
+  "Розетки и выключатели",
+  "Диагностика и поиск неисправностей",
+  "Модернизация электрики",
+  "Другое",
+];
+
+const fieldClass =
+  "w-full rounded-md border border-input bg-background px-4 py-3.5 text-base outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/25 sm:text-sm";
+
+const contactItems = [
+  { icon: Phone, label: "Телефон", value: CONTACTS.phoneDisplay, href: CONTACTS.phoneHref },
+  {
+    icon: Phone,
+    label: "Дополнительный телефон",
+    value: CONTACTS.secondaryPhoneDisplay,
+    href: CONTACTS.secondaryPhoneHref,
+  },
+  { icon: Mail, label: "Почта", value: CONTACTS.email, href: `mailto:${CONTACTS.email}` },
+  { icon: MapPin, label: "Адрес", value: CONTACTS.address, href: null },
+  { icon: Clock, label: "Режим работы", value: CONTACTS.hours, href: null },
+];
 
 export function Contact() {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,11 +67,29 @@ export function Contact() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
+    const el = (n: string) =>
+      form.elements.namedItem(n) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+    const objectType = el("objectType").value;
+    const area = el("area").value;
+    const service = el("service").value;
+    const note = el("comment").value;
+
+    const details = [
+      objectType && `Тип объекта: ${objectType}`,
+      area && `Площадь: ${area} м²`,
+      service && `Услуга: ${service}`,
+      note && `Комментарий: ${note}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     const data = {
-      name: (form.elements.namedItem("name") as HTMLInputElement).value,
-      phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
-      comment: (form.elements.namedItem("comment") as HTMLTextAreaElement).value,
+      name: el("name").value,
+      phone: el("phone").value,
+      comment: details,
     };
+
     const result = schema.safeParse(data);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -73,159 +115,181 @@ export function Contact() {
     }
   }
 
-
   return (
-    <section id="contacts" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:py-24">
-      <div className="grid gap-10 lg:grid-cols-2">
+    <section
+      id="contacts"
+      className="relative overflow-hidden scroll-mt-20 bg-ink text-ink-foreground"
+    >
+      <div className="pointer-events-none absolute inset-0 tech-grid opacity-50" aria-hidden />
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14 lg:py-24">
         <Reveal>
-          <span className="text-sm font-semibold uppercase tracking-wide text-brand">
-            Контакты
-          </span>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Оставьте заявку — рассчитаем стоимость
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Перезвоним в течение 15 минут, ответим на вопросы и бесплатно
-            рассчитаем электромонтаж по вашему объекту в СПб.
-          </p>
+          <SectionHeading
+            tone="dark"
+            eyebrow="Контакты"
+            title="Рассчитайте стоимость электромонтажа"
+            subtitle="Перезвоним, уточним детали и подготовим прозрачный расчёт по вашему объекту в Санкт-Петербурге и области."
+          />
 
-          <div className="mt-8 space-y-4">
-            <a href={CONTACTS.phoneHref} className="flex items-center gap-3 text-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                <Phone className="size-5" />
-              </span>
-              <span>
-                <span className="block text-xs text-muted-foreground">Телефон</span>
-                <span className="font-semibold">{CONTACTS.phoneDisplay}</span>
-              </span>
-            </a>
-            <a href={CONTACTS.secondaryPhoneHref} className="flex items-center gap-3 text-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                <Phone className="size-5" />
-              </span>
-              <span>
-                <span className="block text-xs text-muted-foreground">Дополнительный телефон</span>
-                <span className="font-semibold">{CONTACTS.secondaryPhoneDisplay}</span>
-              </span>
-            </a>
-            <a href={`mailto:${CONTACTS.email}`} className="flex items-center gap-3 text-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                <Mail className="size-5" />
-              </span>
-              <span>
-                <span className="block text-xs text-muted-foreground">Почта</span>
-                <span className="font-semibold">{CONTACTS.email}</span>
-              </span>
-            </a>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                <MapPin className="size-5" />
-              </span>
-              <span>
-                <span className="block text-xs text-muted-foreground">Адрес</span>
-                <span className="font-semibold">{CONTACTS.address}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
-                <Clock className="size-5" />
-              </span>
-              <span>
-                <span className="block text-xs text-muted-foreground">Режим работы</span>
-                <span className="font-semibold">{CONTACTS.hours}</span>
-              </span>
-            </div>
+          <div className="mt-8 space-y-3">
+            {contactItems.map((item) => {
+              const Inner = (
+                <>
+                  <span className="grid size-11 shrink-0 place-items-center rounded-md border border-ink-border text-brand">
+                    <item.icon className="size-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs text-ink-muted">{item.label}</span>
+                    <span className="block truncate font-bold">{item.value}</span>
+                  </span>
+                </>
+              );
+              return item.href ? (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center gap-3 text-sm transition-colors hover:text-brand"
+                >
+                  {Inner}
+                </a>
+              ) : (
+                <div key={item.label} className="flex items-center gap-3 text-sm">
+                  {Inner}
+                </div>
+              );
+            })}
           </div>
 
-          <div className="mt-8 rounded-2xl border border-border bg-background p-4">
+          <div className="mt-8 rounded-lg border border-ink-border bg-ink-elevated p-4">
             <div className="flex items-center gap-4">
               <img
                 src="/qr-site.png"
                 alt="QR-код сайта S&M Electric"
                 width={96}
                 height={96}
-                className="size-24 shrink-0 rounded-xl border border-border bg-white p-1"
+                loading="lazy"
+                className="size-24 shrink-0 rounded-md bg-white p-1.5"
               />
-              <div>
-                <p className="text-sm font-semibold">Отсканируйте QR-код</p>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <p className="text-sm font-bold">Отсканируйте QR-код</p>
+                <p className="mt-1 text-xs text-ink-muted">
                   Быстрый переход на сайт с мобильного телефона
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               <a
                 href="/contact-card?print=1"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground transition-transform hover:scale-[1.02]"
+                className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2.5 text-sm font-bold text-brand-foreground"
               >
                 <Printer className="size-4" />
                 Печатная карточка
               </a>
               <a
                 href="/api/public/contact-card.pdf"
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-md border border-ink-border px-4 py-2.5 text-sm font-bold text-ink-foreground transition-colors hover:border-brand hover:text-brand"
               >
                 <Download className="size-4" />
                 Скачать PDF
               </a>
             </div>
           </div>
-
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-brand sm:p-8">
+          <div className="rounded-lg border border-border bg-background p-5 text-foreground sm:p-8">
             {sent ? (
-              <div className="flex flex-col items-center py-10 text-center">
+              <div className="flex flex-col items-center py-12 text-center">
                 <CheckCircle2 className="size-14 text-brand" />
-                <h3 className="mt-4 text-xl font-bold">Заявка отправлена!</h3>
+                <h3 className="mt-4 text-xl font-extrabold">Заявка отправлена!</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Спасибо! Наш электрик свяжется с вами в ближайшее время.
                 </p>
                 <button
                   type="button"
                   onClick={() => setSent(false)}
-                  className="mt-6 rounded-full border border-border px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-accent"
+                  className="mt-6 rounded-md border border-border px-5 py-3 text-sm font-bold transition-colors hover:bg-accent"
                 >
                   Отправить ещё одну
                 </button>
               </div>
             ) : (
               <form onSubmit={onSubmit} noValidate className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
-                    Ваше имя
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Иван"
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-xs text-destructive">{errors.name}</p>
-                  )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="name" className="mb-1.5 block text-sm font-semibold">
+                      Ваше имя
+                    </label>
+                    <input id="name" name="name" type="text" placeholder="Иван" className={fieldClass} />
+                    {errors.name && (
+                      <p className="mt-1 text-xs text-destructive">{errors.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="mb-1.5 block text-sm font-semibold">
+                      Телефон
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      inputMode="tel"
+                      placeholder="+7 (___) ___-__-__"
+                      className={fieldClass}
+                    />
+                    {errors.phone && (
+                      <p className="mt-1 text-xs text-destructive">{errors.phone}</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
-                    Телефон
-                  </label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="+7 (___) ___-__-__"
-                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-xs text-destructive">{errors.phone}</p>
-                  )}
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="objectType" className="mb-1.5 block text-sm font-semibold">
+                      Тип объекта
+                    </label>
+                    <select id="objectType" name="objectType" defaultValue="" className={fieldClass}>
+                      <option value="">Не выбрано</option>
+                      {OBJECT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="area" className="mb-1.5 block text-sm font-semibold">
+                      Площадь, м²
+                    </label>
+                    <input
+                      id="area"
+                      name="area"
+                      type="number"
+                      min="0"
+                      inputMode="numeric"
+                      placeholder="65"
+                      className={fieldClass}
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label htmlFor="comment" className="mb-1.5 block text-sm font-medium">
+                  <label htmlFor="service" className="mb-1.5 block text-sm font-semibold">
+                    Интересующая услуга
+                  </label>
+                  <select id="service" name="service" defaultValue="" className={fieldClass}>
+                    <option value="">Не выбрано</option>
+                    {SERVICES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="comment" className="mb-1.5 block text-sm font-semibold">
                     Комментарий
                   </label>
                   <textarea
@@ -233,16 +297,17 @@ export function Contact() {
                     name="comment"
                     rows={3}
                     placeholder="Опишите задачу: монтаж проводки, сборка щита…"
-                    className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    className={`${fieldClass} resize-none`}
                   />
                   {errors.comment && (
                     <p className="mt-1 text-xs text-destructive">{errors.comment}</p>
                   )}
                 </div>
+
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full gradient-brand px-6 py-3.5 text-base font-semibold text-brand-foreground shadow-brand transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-bold text-brand-foreground transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {submitting ? (
                     <>
@@ -260,7 +325,6 @@ export function Contact() {
                 <p className="text-center text-xs text-muted-foreground">
                   Нажимая кнопку, вы соглашаетесь на обработку персональных данных.
                 </p>
-
               </form>
             )}
           </div>
