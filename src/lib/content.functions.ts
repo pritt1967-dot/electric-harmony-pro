@@ -44,13 +44,43 @@ export type ProjectRow = {
   images: ProjectImage[];
 };
 
+export type PriceHighlight = {
+  key: string;
+  title: string;
+  note: string;
+  price: number;
+  unit: string;
+};
+
 export type SiteData = {
   services: ServiceRow[];
   works: WorkRow[];
   projects: ProjectRow[];
   reviews: ReviewRow[];
   content: Record<string, string>;
+  priceHighlights: PriceHighlight[];
 };
+
+/**
+ * Направления прайса на главной. Цифры берутся ТОЛЬКО из price_items:
+ * минимальная цена внутри указанной категории.
+ */
+const PRICE_DIRECTIONS: { key: string; title: string; category: string }[] = [
+  { key: "wiring", title: "Электромонтаж", category: "Прокладка кабеля" },
+  {
+    key: "panel",
+    title: "Сборка электрощита",
+    category: "Электрощит: сборка, подключение",
+  },
+  { key: "ground", title: "Заземление", category: "Заземление" },
+  {
+    key: "light",
+    title: "Освещение",
+    category: "Потолочное/настенное освещение",
+  },
+  { key: "measure", title: "Электроизмерения", category: "Электроизмерения" },
+  { key: "ev", title: "Зарядные станции", category: "Зарядные станции" },
+];
 
 export const getSiteData = createServerFn({ method: "GET" }).handler(
   async (): Promise<SiteData> => {
