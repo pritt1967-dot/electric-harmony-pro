@@ -52,8 +52,6 @@ export const designPanel = createServerFn({ method: "POST" })
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("AI недоступен: нет ключа");
 
-    const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-    const gateway = createLovableAiGatewayProvider(key);
 
     const prompt = `ИСХОДНЫЕ ДАННЫЕ
 Объект: ${data.object_type}
