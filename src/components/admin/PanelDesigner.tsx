@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
-import { DEFAULT_PANEL_INPUT, railTotal } from "@/lib/panel";
+import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
+import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import type { PanelDesign, PanelInput } from "@/lib/panel";
 import { buildSchematicSvg } from "@/lib/panel-schematic";
 import { buildPanelPdf } from "@/lib/panel-pdf";
@@ -609,37 +610,10 @@ export function PanelDesigner() {
             />
           </section>
 
-          <section className="rounded-xl border bg-card p-4 sm:p-6">
-            <h3 className="font-semibold">Компоновка DIN-реек</h3>
-            <div className="mt-3 space-y-4">
-              {(design.rails ?? []).map((rail) => (
-                <div key={rail.index}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium">{rail.title}</span>
-                    <span className="text-muted-foreground">
-                      {railTotal(rail)} мод.
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-2">
-                    {(rail.items ?? []).map((item, i) => (
-                      <div
-                        key={`${rail.index}-${i}`}
-                        className="rounded border border-primary/40 bg-background px-2 py-2 text-center"
-                        style={{ minWidth: `${Math.max(1, item.modules) * 34}px` }}
-                      >
-                        <div className="text-[11px] font-semibold text-primary">
-                          {item.mark}
-                        </div>
-                        <div className="text-[11px] leading-tight text-muted-foreground">
-                          {item.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <PanelSpecVisual
+            rows={[...(design.spec ?? []), ...(design.materials ?? [])]}
+          />
+
 
           <section className="rounded-xl border bg-card p-4 sm:p-6">
             <h3 className="font-semibold">Спецификация</h3>
