@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldCheck, Download } from "lucide-react";
 
+import { exportPanelLayoutVsdx } from "@/lib/visio/adapters";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
