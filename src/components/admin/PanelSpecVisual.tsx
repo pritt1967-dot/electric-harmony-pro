@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle2, XCircle, ShieldCheck, Download } from "lucide-react";
 
+import { exportPanelLayoutVsdx } from "@/lib/visio/adapters";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -266,10 +267,22 @@ export function PanelSpecVisual({ rows }: { rows: PanelSpecRow[] }) {
             ))}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => setChecked(true)}>
               <ShieldCheck className="mr-2 h-4 w-4" /> Проверить соответствие
               спецификации
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportPanelLayoutVsdx(
+                  rails,
+                  `Компоновка щита ${new Date().toISOString().slice(0, 10)}`,
+                )
+              }
+            >
+              <Download className="mr-2 h-4 w-4" /> Visio (.vsdx)
             </Button>
           </div>
 

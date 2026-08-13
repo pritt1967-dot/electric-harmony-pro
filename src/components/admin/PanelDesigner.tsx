@@ -31,6 +31,7 @@ import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import type { PanelDesign, PanelInput } from "@/lib/panel";
 import { buildSchematicSvg } from "@/lib/panel-schematic";
+import { exportPanelSingleLineVsdx } from "@/lib/visio/adapters";
 import { buildPanelPdf } from "@/lib/panel-pdf";
 import { nextNumber, emptyEstimate, todayISO } from "@/lib/estimates";
 import type { EstimateItem } from "@/lib/estimates";
@@ -603,7 +604,27 @@ export function PanelDesigner() {
           </section>
 
           <section className="rounded-xl border bg-card p-4 sm:p-6">
-            <h3 className="font-semibold">Однолинейная схема</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Однолинейная схема</h3>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={downloadSvg}>
+                  <Download className="mr-2 h-4 w-4" /> SVG
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    design &&
+                    exportPanelSingleLineVsdx(
+                      design,
+                      `Однолинейная схема ${todayISO()}`,
+                    )
+                  }
+                >
+                  <Download className="mr-2 h-4 w-4" /> Visio (.vsdx)
+                </Button>
+              </div>
+            </div>
             <div
               className="mt-3 overflow-x-auto rounded-lg border bg-white p-2"
               dangerouslySetInnerHTML={{ __html: svg }}
