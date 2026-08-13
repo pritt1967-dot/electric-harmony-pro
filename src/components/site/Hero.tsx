@@ -3,6 +3,21 @@ import { ArrowRight } from "lucide-react";
 import heroPanel from "@/assets/hero-panel.jpg";
 import { Reveal } from "./Reveal";
 
+const FACTS = [
+  {
+    value: "СПб + ЛО",
+    text: "Квартиры, частные дома и коммерческие объекты по городу и области.",
+  },
+  {
+    value: "Смета по позициям",
+    text: "Расчёт из действующего прайс-листа, отдельным PDF-документом.",
+  },
+  {
+    value: "Гарантия",
+    text: "Работаем по договору, проверяем линии и передаём объект по акту.",
+  },
+];
+
 export function Hero({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <>
@@ -10,56 +25,42 @@ export function Hero({ title, subtitle }: { title: string; subtitle: string }) {
         id="top"
         className="relative overflow-hidden bg-ink text-ink-foreground"
       >
-        {/* Full-bleed фото щита: на десктопе занимает правые ~62% и уходит под текст */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] lg:block">
-          <img
-            src={heroPanel}
-            alt="Собранный электрощит с автоматами и УЗО на DIN-рейке — электромонтаж в Санкт-Петербурге"
-            width={1600}
-            height={1200}
-            fetchPriority="high"
-            className="h-full w-full object-cover"
-          />
-          <div
-            className="absolute inset-0 bg-[linear-gradient(90deg,var(--ink)_0%,color-mix(in_oklab,var(--ink)_85%,transparent)_28%,transparent_70%)]"
-            aria-hidden
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink to-transparent"
-            aria-hidden
-          />
-        </div>
+        <div
+          className="pointer-events-none absolute -top-32 right-[-8%] size-[560px] rounded-full bg-brand/10 blur-[150px]"
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute inset-0 tech-grid opacity-25" aria-hidden />
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 lg:min-h-[calc(100svh-5rem)] lg:pb-24 lg:pt-28">
-          <div className="max-w-2xl lg:max-w-[46%]">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-14 lg:pb-24 lg:pt-24">
+          <div>
             <Reveal>
-              <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-ink-muted">
-                <span className="h-px w-8 bg-brand" aria-hidden />
+              <p className="inline-flex items-center gap-3 rounded-full border border-ink-border px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-ink-muted">
+                <span className="size-1.5 rounded-full bg-brand" aria-hidden />
                 S&amp;M Electric / Electrical Engineering
               </p>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="mt-6 text-[clamp(2.6rem,9vw,6rem)] font-extrabold uppercase leading-[0.92] tracking-[-0.04em]">
+              <h1 className="mt-7 text-balance text-[clamp(2.5rem,7.5vw,5.2rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.045em]">
                 Электромонтаж
                 <span className="block text-brand">без компромиссов</span>
               </h1>
             </Reveal>
             <Reveal delay={150}>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
+              <p className="mt-7 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
                 {subtitle}
               </p>
             </Reveal>
             <Reveal delay={220}>
-              <div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-8">
+              <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <a
                   href="#contacts"
-                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-8 text-sm font-bold uppercase tracking-[0.08em] text-brand-foreground transition-transform hover:scale-[1.02] sm:w-auto"
+                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-brand px-8 text-sm font-bold uppercase tracking-[0.08em] text-brand-foreground shadow-brand transition-transform duration-300 hover:scale-[1.03] sm:w-auto"
                 >
                   Рассчитать стоимость <ArrowRight className="size-5" />
                 </a>
                 <a
                   href="#works"
-                  className="group inline-flex items-center gap-2 text-sm font-semibold text-ink-foreground underline-offset-8 transition-colors hover:text-brand hover:underline"
+                  className="group inline-flex h-14 items-center justify-center gap-2 rounded-full border border-ink-border px-7 text-sm font-semibold text-ink-foreground transition-colors hover:border-brand hover:text-brand"
                 >
                   Смотреть наши работы
                   <span aria-hidden className="transition-transform group-hover:translate-x-1">
@@ -71,54 +72,43 @@ export function Hero({ title, subtitle }: { title: string; subtitle: string }) {
             <p className="sr-only">{title}</p>
           </div>
 
-          {/* Мобильное фото — под текстом и CTA */}
-          <Reveal delay={120} className="mt-10 block lg:hidden">
-            <div className="relative overflow-hidden rounded-sm border border-ink-border">
+          <Reveal delay={120}>
+            <figure className="relative overflow-hidden rounded-3xl border border-ink-border">
               <img
                 src={heroPanel}
-                alt="Собранный электрощит с автоматами и УЗО — сборка электрощитов в СПб"
+                alt="Собранный электрощит с автоматами и УЗО на DIN-рейке — электромонтаж в Санкт-Петербурге"
                 width={1600}
                 height={1200}
                 fetchPriority="high"
-                className="aspect-[4/3] w-full object-cover"
+                className="aspect-[4/3] w-full object-cover lg:aspect-[4/4.4]"
               />
-              <span className="absolute left-3 top-3 border border-brand/40 bg-ink/75 px-2 py-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand backdrop-blur-sm">
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"
+                aria-hidden
+              />
+              <span className="absolute left-4 top-4 rounded-full border border-brand/40 bg-ink/70 px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand backdrop-blur-sm">
                 Pro panel
               </span>
-            </div>
+            </figure>
           </Reveal>
         </div>
-
-        {/* Максимум 2 технические метки, привязанные к фото (desktop) */}
-        <span className="absolute right-[8%] top-[22%] hidden border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand backdrop-blur-sm lg:inline-block">
-          S&amp;M / 01
-        </span>
-        <span className="absolute bottom-[16%] right-[24%] hidden border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-brand backdrop-blur-sm lg:inline-block">
-          Pro panel
-        </span>
       </section>
 
-      {/* Блок доверия — 2 сильных факта */}
+      {/* Блок доверия */}
       <div className="border-b border-border bg-background">
-        <div className="mx-auto grid max-w-7xl gap-px bg-border sm:grid-cols-2">
-          <div className="bg-background px-4 py-8 sm:px-8">
-            <p className="text-[clamp(2rem,6vw,3rem)] font-extrabold leading-none tracking-[-0.04em]">
-              СПб&nbsp;+&nbsp;ЛО
-            </p>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Работаем по Санкт-Петербургу и Ленинградской области: квартиры,
-              частные дома и коммерческие объекты.
-            </p>
-          </div>
-          <div className="bg-background px-4 py-8 sm:px-8">
-            <p className="text-[clamp(2rem,6vw,3rem)] font-extrabold leading-none tracking-[-0.04em]">
-              Смета по позициям
-            </p>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Расчёт формируется из действующего прайс-листа и отправляется
-              отдельным PDF-документом.
-            </p>
-          </div>
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 py-10 sm:px-6 lg:grid-cols-3 lg:py-12">
+          {FACTS.map((f, i) => (
+            <Reveal key={f.value} delay={i * 70}>
+              <div className="card-premium h-full p-6">
+                <p className="text-[clamp(1.4rem,3vw,2rem)] font-extrabold leading-none tracking-[-0.035em]">
+                  {f.value}
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {f.text}
+                </p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </>

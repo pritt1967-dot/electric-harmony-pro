@@ -31,7 +31,7 @@ export function Works({
   return (
     <section
       id="works"
-      className="scroll-mt-20 border-y border-border bg-secondary/60 py-16 lg:py-24"
+      className="scroll-mt-24 border-y border-border bg-secondary/60 py-20 lg:py-28"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <Reveal>
@@ -59,7 +59,7 @@ export function Works({
             <button
               type="button"
               onClick={() => setVisible((v) => v + 3)}
-              className="rounded-md border border-border bg-background px-6 py-3.5 text-sm font-bold transition hover:border-brand hover:bg-brand hover:text-brand-foreground"
+              className="rounded-full border border-border bg-background px-7 py-3.5 text-sm font-bold transition hover:border-brand hover:bg-brand hover:text-brand-foreground"
             >
               Показать ещё объекты ({projects.length - visible})
             </button>
@@ -104,7 +104,7 @@ function ProjectBlock({
     <button
       type="button"
       onClick={() => onOpen(coverIdx)}
-      className="group relative block w-full overflow-hidden rounded-sm border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="group relative block w-full overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       aria-label={`Открыть фото: ${project.title}`}
     >
       <img
@@ -156,7 +156,7 @@ function ProjectBlock({
         <button
           type="button"
           onClick={() => onOpen(coverIdx)}
-          className="mt-6 inline-flex items-center gap-2 rounded-sm bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-foreground transition-colors hover:bg-brand hover:text-brand-foreground"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-foreground transition-colors hover:bg-brand hover:text-brand-foreground"
         >
           Смотреть объект →
         </button>
@@ -171,7 +171,7 @@ function ProjectBlock({
                 key={img.id}
                 type="button"
                 onClick={() => onOpen(realIndex)}
-                className="group overflow-hidden rounded-sm border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="group overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
               >
                 <img
@@ -191,7 +191,7 @@ function ProjectBlock({
   if (featured) {
     return (
       <Reveal as="article">
-        <div className="rounded-sm border border-border bg-card p-4 sm:p-7">
+        <div className="rounded-2xl border border-border bg-card p-5 sm:p-8">
           {media}
           {body}
         </div>
@@ -201,7 +201,7 @@ function ProjectBlock({
 
   return (
     <Reveal as="article" delay={index * 60}>
-      <div className="grid items-center gap-6 rounded-sm border border-border bg-card p-4 sm:p-7 lg:grid-cols-2 lg:gap-10">
+      <div className="grid items-center gap-6 rounded-2xl border border-border bg-card p-5 sm:p-8 lg:grid-cols-2 lg:gap-10">
         <div className={flipped ? "lg:order-2" : ""}>{media}</div>
         <div className={flipped ? "lg:order-1" : ""}>{body}</div>
       </div>

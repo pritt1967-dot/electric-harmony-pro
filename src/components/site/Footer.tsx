@@ -15,7 +15,7 @@ export function Footer() {
     <footer className="border-t border-ink-border bg-ink pb-20 text-ink-foreground md:pb-0">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-sm bg-ink-elevated">
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-elevated">
             <img
               src={logoAsset.url}
               alt="S&M Electric — логотип"
