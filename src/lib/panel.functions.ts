@@ -69,28 +69,53 @@ export const designPanel = createServerFn({ method: "POST" })
 СПИСОК ЛИНИЙ:
 ${data.lines_text}`;
 
-    const result = streamText({
-      model: gateway("google/gemini-3.6-flash"),
-      system: SYSTEM,
-      prompt,
-      temperature: 0.2,
-    });
-
-    const text = await result.text;
-    const cleaned = text
-      .replace(/^```(?:json)?/i, "")
-      .replace(/```$/, "")
-      .trim();
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start < 0 || end < 0) throw new Error("AI вернул некорректный ответ");
-
-    try {
-      return JSON.parse(cleaned.slice(start, end + 1)) as PanelDesign;
-    } catch {
-      throw new Error("Не удалось разобрать расчёт, попробуйте ещё раз");
+    async function askModel(extra: string): Promise<string> {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Lovable-API-Key": key!, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3.6-flash",
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: SYSTEM },
+            { role: "user", content: prompt + extra },
+          ],
+        }),
+      });
+      if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
+      if (res.status === 402) throw new Error("Закончились кредиты AI");
+      if (!res.ok) throw new Error("Не удалось выполнить расчёт");
+      const json = (await res.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      return json.choices?.[0]?.message?.content ?? "";
     }
+
+    function parse(text: string): PanelDesign | null {
+      const cleaned = text
+        .replace(/^```(?:json)?/i, "")
+        .replace(/```$/, "")
+        .trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start < 0 || end < 0) return null;
+      try {
+        return JSON.parse(cleaned.slice(start, end + 1)) as PanelDesign;
+      } catch {
+        return null;
+      }
+    }
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const text = await askModel(
+        attempt === 0 ? "" : "\n\nВерни ТОЛЬКО JSON-объект без пояснений и markdown.",
+      );
+      const design = parse(text);
+      if (design) return design;
+    }
+    throw new Error("Модель не вернула расчёт, попробуйте ещё раз");
   });
+
 
 export const renderPanelImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
