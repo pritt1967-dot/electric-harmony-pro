@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
-import { DEFAULT_PANEL_INPUT, railTotal } from "@/lib/panel";
+import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
+import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import type { PanelDesign, PanelInput } from "@/lib/panel";
 import { buildSchematicSvg } from "@/lib/panel-schematic";
 import { buildPanelPdf } from "@/lib/panel-pdf";
