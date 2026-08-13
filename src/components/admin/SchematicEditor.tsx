@@ -51,6 +51,7 @@ import {
 } from "@/lib/schematic/library";
 import { pointsToPath, wirePoints } from "@/lib/schematic/routing";
 import { autoBuild } from "@/lib/schematic/autobuild";
+import { exportSchematicVsdx } from "@/lib/visio/adapters";
 import { checkSchematic, type CheckResult } from "@/lib/schematic/validate";
 import {
   exportDxf,
@@ -672,6 +673,9 @@ export function SchematicEditor() {
           </Button>
           <Button size="sm" variant="outline" onClick={() => exportDxf(doc, title)}>
             DXF
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => exportSchematicVsdx(doc, title)}>
+            Visio (.vsdx)
           </Button>
           <Button size="sm" variant="outline" onClick={() => printSchematic(doc)}>
             <Printer className="mr-2 h-4 w-4" /> Печать
