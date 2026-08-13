@@ -192,12 +192,26 @@ export function PanelDesigner() {
         data: { prompt: design.image_prompt || design.summary?.enclosure || "" },
       });
       setImage(res.image);
-      toast.success("Визуализация готова");
+      if (sessionId) {
+        const { error } = await supabase
+          .from("panel_designs")
+          .update({ image: res.image, design: (design ?? null) as never })
+          .eq("id", sessionId);
+        if (error) {
+          toast.error("Визуализация готова, но не сохранилась: " + error.message);
+        } else {
+          await loadSessions();
+          toast.success("Визуализация готова и сохранена в сессии");
+        }
+      } else {
+        toast.success("Визуализация готова — нажмите «Сохранить», чтобы записать её в сессию");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Ошибка визуализации");
     }
     setImgBusy(false);
   }
+
 
   async function handlePdf() {
     if (!design) return;
