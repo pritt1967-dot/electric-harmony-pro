@@ -40,7 +40,7 @@ export function Hero({ title, subtitle }: { title: string; subtitle: string }) {
               </p>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="mt-7 text-balance text-[clamp(2.5rem,7.5vw,5.2rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.045em]">
+              <h1 className="mt-7 text-balance text-[clamp(2.2rem,5vw,3.9rem)] font-extrabold uppercase leading-[0.94] tracking-[-0.045em]">
                 Электромонтаж
                 <span className="block text-brand">без компромиссов</span>
               </h1>
