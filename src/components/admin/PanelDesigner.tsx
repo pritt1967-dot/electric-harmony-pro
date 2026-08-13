@@ -652,7 +652,14 @@ export function PanelDesigner() {
 
           {(image || imgBusy) && (
             <section className="rounded-xl border bg-card p-4 sm:p-6">
-              <h3 className="font-semibold">Визуализация щита</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-semibold">Визуализация щита</h3>
+                {image && (
+                  <Button variant="outline" size="sm" onClick={downloadImage}>
+                    <Download className="mr-2 h-4 w-4" /> Скачать визуализацию
+                  </Button>
+                )}
+              </div>
               {imgBusy ? (
                 <p className="mt-2 text-sm text-muted-foreground">
                   Генерация изображения…
@@ -666,6 +673,7 @@ export function PanelDesigner() {
               )}
             </section>
           )}
+
 
           {(!!(design.issues ?? []).length || !!(design.assumptions ?? []).length) && (
             <section className="rounded-xl border bg-card p-4 sm:p-6">
