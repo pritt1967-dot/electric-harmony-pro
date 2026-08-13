@@ -75,7 +75,10 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 1rem;
+  --shadow-soft: 0 1px 2px oklch(0.2 0.006 265 / 0.04), 0 12px 32px -18px oklch(0.2 0.006 265 / 0.28);
+  --shadow-lift: 0 2px 4px oklch(0.2 0.006 265 / 0.05), 0 28px 60px -28px oklch(0.2 0.006 265 / 0.35);
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.2 0.006 265);
   --card: oklch(1 0 0);
@@ -216,7 +219,58 @@
   text-wrap: balance;
 }
 
+/* Премиальная карточка на светлом фоне */
+@utility card-premium {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+    border-color: color-mix(in oklab, var(--brand) 45%, var(--color-border));
+  }
+}
+
+/* Премиальная карточка на графитовом фоне */
+@utility card-ink {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--ink-border);
+  background-color: var(--ink-elevated);
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--brand) 55%, var(--ink-border));
+  }
+}
+
+@utility soft-shadow {
+  box-shadow: var(--shadow-soft);
+}
+
+@utility brand-underline {
+  background-image: linear-gradient(var(--brand), var(--brand));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background-size: 100% 2px;
+  }
+}
+
 @utility scrollbar-hide {
+
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

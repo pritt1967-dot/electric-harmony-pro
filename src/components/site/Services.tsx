@@ -11,6 +11,7 @@ import {
   Settings,
   Plug,
   Fan,
+  ArrowUpRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,47 +52,67 @@ export function Services({
   return (
     <section
       id="services"
-      className="relative scroll-mt-20 overflow-hidden bg-ink py-16 text-ink-foreground lg:py-24"
+      className="relative scroll-mt-24 overflow-hidden bg-ink py-20 text-ink-foreground lg:py-32"
     >
-      <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 tech-grid opacity-30" aria-hidden />
+      <div
+        className="pointer-events-none absolute -top-40 right-[-10%] size-[520px] rounded-full bg-brand/10 blur-[140px]"
+        aria-hidden
+      />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <Reveal>
-          <Eyebrow tone="dark">Услуги</Eyebrow>
-          <h2 className="mt-4 max-w-3xl text-[clamp(1.9rem,4vw,3.2rem)] font-extrabold uppercase leading-[1.02] tracking-[-0.03em]">
-            {title}
-          </h2>
-          {subtitle && (
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">
-              {subtitle}
-            </p>
-          )}
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <Eyebrow tone="dark">Услуги</Eyebrow>
+              <h2 className="mt-5 text-[clamp(2rem,4.2vw,3.4rem)] font-extrabold uppercase leading-[1.02] tracking-[-0.035em]">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            <a
+              href="#contacts"
+              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full border border-ink-border px-6 text-sm font-semibold text-ink-foreground transition-colors hover:border-brand hover:text-brand"
+            >
+              Обсудить задачу <ArrowUpRight className="size-4" />
+            </a>
+          </div>
         </Reveal>
 
-        <ul className="mt-10 border-t border-ink-border">
-          {services.map((service, i) => (
-            <Reveal as="li" key={service.id} delay={Math.min(i, 6) * 40}>
-              <a
-                href="#contacts"
-                className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 border-b border-ink-border py-5 transition-colors hover:bg-ink-elevated sm:gap-x-8 sm:py-7 lg:grid-cols-[auto_minmax(0,0.9fr)_minmax(0,1.1fr)_auto]"
-              >
-                <span className="font-mono text-[11px] font-bold text-ink-muted transition-colors group-hover:text-brand sm:text-sm">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-lg font-bold leading-tight tracking-tight sm:text-2xl">
-                  {service.title}
-                </h3>
-                <p className="col-start-2 max-w-xl text-sm leading-relaxed text-ink-muted lg:col-start-3">
-                  {service.text}
-                </p>
-                <span
-                  aria-hidden
-                  className="col-start-3 row-start-1 justify-self-end text-lg text-ink-muted transition-all group-hover:translate-x-1 group-hover:text-brand lg:col-start-4"
+        <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-6">
+          {services.map((service, i) => {
+            const Icon = iconFor(service.icon);
+            return (
+              <Reveal as="li" key={service.id} delay={Math.min(i, 8) * 60}>
+                <a
+                  href="#contacts"
+                  className="card-ink group flex h-full flex-col p-6 sm:p-7"
                 >
-                  →
-                </span>
-              </a>
-            </Reveal>
-          ))}
+                  <div className="flex items-start justify-between">
+                    <span className="grid size-12 place-items-center rounded-2xl bg-brand/12 text-brand transition-colors group-hover:bg-brand group-hover:text-brand-foreground">
+                      <Icon className="size-5" />
+                    </span>
+                    <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-ink-muted">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <h3 className="mt-7 text-xl font-bold leading-tight tracking-tight">
+                    {service.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-muted">
+                    {service.text}
+                  </p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand">
+                    Подробнее
+                    <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                  </span>
+                </a>
+              </Reveal>
+            );
+          })}
         </ul>
       </div>
     </section>

@@ -199,7 +199,7 @@ export function Contact() {
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="rounded-lg border border-border bg-background p-5 text-foreground sm:p-8">
+          <div className="rounded-3xl border border-border bg-background p-5 text-foreground soft-shadow sm:p-8">
             {sent ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <CheckCircle2 className="size-14 text-brand" />
@@ -210,7 +210,7 @@ export function Contact() {
                 <button
                   type="button"
                   onClick={() => setSent(false)}
-                  className="mt-6 rounded-md border border-border px-5 py-3 text-sm font-bold transition-colors hover:bg-accent"
+                  className="mt-6 rounded-full border border-border px-6 py-3 text-sm font-bold transition-colors hover:bg-accent"
                 >
                   Отправить ещё одну
                 </button>

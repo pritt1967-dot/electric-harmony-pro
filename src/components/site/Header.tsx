@@ -45,7 +45,7 @@ export function Header() {
       >
         <a href="#top" className="flex min-w-0 items-center gap-2.5">
           <span
-            className={`grid shrink-0 place-items-center overflow-hidden rounded-sm bg-ink-elevated transition-all ${
+            className={`grid shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-elevated transition-all ${
               scrolled ? "size-8" : "size-10"
             }`}
           >
@@ -89,7 +89,7 @@ export function Header() {
           </a>
           <a
             href="#contacts"
-            className="hidden items-center gap-2 rounded-sm bg-brand px-5 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] text-brand-foreground transition-transform hover:scale-[1.03] md:inline-flex"
+            className="hidden items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] text-brand-foreground transition-transform hover:scale-[1.03] md:inline-flex"
           >
             Рассчитать стоимость <ArrowRight className="size-4" />
           </a>
@@ -98,7 +98,7 @@ export function Header() {
             aria-label={open ? "Закрыть меню" : "Открыть меню"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="grid size-11 place-items-center rounded-sm border border-ink-border text-ink-foreground lg:hidden"
+            className="grid size-11 place-items-center rounded-xl border border-ink-border text-ink-foreground lg:hidden"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -124,7 +124,7 @@ export function Header() {
             <a
               href={CONTACTS.phoneHref}
               onClick={() => setOpen(false)}
-              className="mt-4 inline-flex items-center justify-center gap-2 rounded-sm border border-ink-border py-3.5 text-sm font-bold text-ink-foreground"
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-ink-border py-3.5 text-sm font-bold text-ink-foreground"
             >
               <Phone className="size-4 text-brand" />
               {CONTACTS.phoneDisplay}
@@ -132,7 +132,7 @@ export function Header() {
             <a
               href="#contacts"
               onClick={() => setOpen(false)}
-              className="mb-2 mt-2 rounded-sm bg-brand py-3.5 text-center text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
+              className="mb-2 mt-2 rounded-xl bg-brand py-3.5 text-center text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
             >
               Рассчитать стоимость
             </a>
@@ -150,13 +150,13 @@ export function MobileCtaBar() {
         <a
           href={CONTACTS.phoneHref}
           aria-label="Позвонить"
-          className="inline-flex h-12 w-14 items-center justify-center rounded-sm border border-ink-border text-ink-foreground"
+          className="inline-flex h-12 w-14 items-center justify-center rounded-xl border border-ink-border text-ink-foreground"
         >
           <Phone className="size-5 text-brand" />
         </a>
         <a
           href="#contacts"
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-sm bg-brand text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
         >
           Рассчитать стоимость
         </a>
