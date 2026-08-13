@@ -211,7 +211,16 @@ export function PanelDesigner() {
     setExporting(false);
   }
 
+  function downloadImage() {
+    if (!image) return;
+    const a = document.createElement("a");
+    a.href = image;
+    a.download = `Визуализация щита ${todayISO()}.png`;
+    a.click();
+  }
+
   function downloadSvg() {
+
     if (!svg) return;
     const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
