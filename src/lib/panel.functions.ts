@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { streamText } from "ai";
 
 import type { PanelDesign, PanelInput } from "./panel";
 
