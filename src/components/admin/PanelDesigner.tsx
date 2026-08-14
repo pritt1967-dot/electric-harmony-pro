@@ -29,6 +29,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
 import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
+import { PanelDrawings } from "@/components/admin/PanelDrawings";
+
 import type { PanelDesign, PanelInput } from "@/lib/panel";
 import { buildSchematicSvg } from "@/lib/panel-schematic";
 import { exportPanelSingleLineVsdx } from "@/lib/visio/adapters";
@@ -603,12 +605,14 @@ export function PanelDesigner() {
             </div>
           </section>
 
+          <PanelDrawings design={design} title={title} />
+
           <section className="rounded-xl border bg-card p-4 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-semibold">Однолинейная схема</h3>
+              <h3 className="font-semibold">Экспорт в Visio</h3>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={downloadSvg}>
-                  <Download className="mr-2 h-4 w-4" /> SVG
+                  <Download className="mr-2 h-4 w-4" /> Схема SVG
                 </Button>
                 <Button
                   variant="outline"
@@ -625,15 +629,12 @@ export function PanelDesigner() {
                 </Button>
               </div>
             </div>
-            <div
-              className="mt-3 overflow-x-auto rounded-lg border bg-white p-2"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
           </section>
 
           <PanelSpecVisual
             rows={[...(design.spec ?? []), ...(design.materials ?? [])]}
           />
+
 
 
           <section className="rounded-xl border bg-card p-4 sm:p-6">
