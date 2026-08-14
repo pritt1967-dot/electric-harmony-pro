@@ -304,14 +304,45 @@
 
 @media print {
   @page {
-    margin: 10mm;
+    margin: 8mm;
     size: A4 portrait;
   }
 
+  html,
   body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     background: white !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  /* Убираем всё, что может создать вторую страницу */
+  body > *:not(#root),
+  #root > div > div > *:last-child:empty,
+  [id*="lovable"],
+  [class*="lovable-badge"],
+  a[href*="lovable.dev"],
+  iframe {
+    display: none !important;
+  }
+
+  #root,
+  #root > div {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  article {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
 }
+
 
