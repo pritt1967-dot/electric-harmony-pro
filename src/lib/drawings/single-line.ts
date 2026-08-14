@@ -263,49 +263,72 @@ function sheetSvg(
   if (p.input.cable) parts.push(T(inX + 3, y + 5.5, `Вводной кабель ${p.input.cable}`, { size: 2.5 }));
   y += 8;
 
-  const chainX = inX;
-  for (const d of p.mainDevices) {
-    parts.push(symbolFor(d.kind, chainX, y, d.poles));
-    const label = [
-      d.manufacturer,
-      d.model,
-      d.rating || (d.ratedCurrent ? `${d.ratedCurrent} А` : ""),
-      d.poles ? `${d.poles}P` : "",
-      d.leakage,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    parts.push(T(chainX + 8, y + 6, d.name || label, { size: 2.6, bold: true }));
-    parts.push(T(chainX + 8, y + 10, label, { size: 2.4 }));
-    y += SYM_H + 3;
-  }
-  if (!p.mainDevices.length && p.input.mainBreaker) {
-    parts.push(symBreaker(chainX, y, p.input.phases === 3 ? 4 : 2));
-    parts.push(T(chainX + 8, y + 8, `Вводной автомат ${p.input.mainBreaker}`, { size: 2.6, bold: true }));
-    y += SYM_H + 3;
-  }
+  /* --- Вводная цепочка (при необходимости — в несколько колонок) --- */
+  const circuitH = 46;
+  const busSpan = (p.busbars.length - 1) * 4;
+  const chainTop = y;
+  const chainBottomLimit = tableTop - 6 - circuitH - busSpan - 6;
+  const step = SYM_H + 3;
+  const perCol = Math.max(1, Math.floor((chainBottomLimit - chainTop) / step));
+  const chain = p.mainDevices.length
+    ? p.mainDevices
+    : p.input.mainBreaker
+      ? [
+          {
+            kind: "input" as const,
+            name: "Вводной автомат",
+            manufacturer: "",
+            model: "",
+            rating: p.input.mainBreaker,
+            ratedCurrent: 0,
+            leakage: "",
+            poles: p.input.phases === 3 ? 4 : 2,
+          },
+        ]
+      : [];
+
+  const colGap = 92;
+  let lastX = inX;
+  let lastY = y;
+  chain.forEach((d, i) => {
+    const col = Math.floor(i / perCol);
+    const row = i % perCol;
+    const cx = inX + col * colGap;
+    const cyTop = chainTop + row * step;
+    if (row === 0 && col > 0) parts.push(L(lastX, lastY, cx, lastY), L(cx, lastY, cx, cyTop));
+    parts.push(symbolFor(d.kind as ProjectDevice["kind"], cx, cyTop, d.poles));
+    const bits = [d.manufacturer, d.model, d.rating || (d.ratedCurrent ? `${d.ratedCurrent} А` : "")];
+    if (d.poles && !/\dP/i.test(d.rating)) bits.push(`${d.poles}P`);
+    if (d.leakage && !d.rating.includes(d.leakage.replace(" мА", ""))) bits.push(d.leakage);
+    const label = bits.filter(Boolean).join(" ");
+    parts.push(T(cx + 8, cyTop + 6, d.name || label, { size: 2.6, bold: true }));
+    parts.push(T(cx + 8, cyTop + 10, label, { size: 2.4 }));
+    lastX = cx;
+    lastY = cyTop + SYM_H;
+    if (row < perCol - 1 && i < chain.length - 1) parts.push(L(cx, lastY, cx, cyTop + step));
+  });
 
   /* --- Шины --- */
   const busGap = 4;
-  const busTop = y + 6;
+  const busTop = Math.max(lastY + 8, chainTop + 10);
   const busX1 = b.x1 - 4;
   const busY: Record<string, number> = {};
   p.busbars.forEach((c, i) => {
     const by = busTop + i * busGap;
     busY[c] = by;
     parts.push(L(b.x0 + 4, by, busX1, by, c === "PE" || c === "N" ? 0.4 : 0.6));
-    parts.push(T(b.x0 + 1.5, by + 1, c, { size: 2.6, bold: true }));
+    parts.push(T(b.x0 + 1.5, by - 0.8, c, { size: 2.6, bold: true }));
   });
   const busBottom = busTop + (p.busbars.length - 1) * busGap;
   // ввод на шины
-  parts.push(L(chainX, y, chainX, busTop));
+  parts.push(L(lastX, lastY, lastX, busTop));
   p.busbars.forEach((c, i) => {
-    if (i > 0 && c !== "PE") parts.push(DOT(chainX, busTop + i * busGap, 0.6));
+    if (c !== "PE") parts.push(DOT(lastX, busTop + i * busGap, 0.6));
   });
-  parts.push(DOT(chainX, busTop, 0.6));
 
   /* --- Отходящие группы --- */
   const startY = busBottom + 6;
+  const loadY = tableTop - 5;
   circuits.forEach((c, i) => {
     const x = colX0 + colW * (i + 0.5);
     const py = busY[c.phase] ?? busTop;
@@ -326,23 +349,24 @@ function sheetSvg(
     } else {
       parts.push(symBreaker(x, cy, c.poles));
     }
-    parts.push(T(x + 6, cy + 12.5, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.4 }));
+    parts.push(T(x + 6, cy + 13, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.3 }));
     cy += SYM_H;
 
     // N и PE к нагрузке
-    parts.push(L(x, cy, x, tableTop - 12));
-    parts.push(T(x - 1.5, tableTop - 14, c.cable, { size: 2.3, anchor: "middle" }));
+    parts.push(L(x, cy, x, loadY));
+    parts.push(T(x + 6, (cy + loadY) / 2 + 1, c.cable, { size: 2.2 }));
     if (busY["N"] !== undefined) {
       parts.push(DOT(x + 2, busY["N"]!, 0.5));
-      parts.push(L(x + 2, busY["N"]!, x + 2, tableTop - 12));
+      parts.push(L(x + 2, busY["N"]!, x + 2, loadY));
     }
     if (busY["PE"] !== undefined) {
       parts.push(DOT(x + 4, busY["PE"]!, 0.5));
-      parts.push(L(x + 4, busY["PE"]!, x + 4, tableTop - 12));
+      parts.push(L(x + 4, busY["PE"]!, x + 4, loadY));
     }
     // стрелка нагрузки
-    parts.push(L(x - 2, tableTop - 12, x + 6, tableTop - 12, 0.4));
+    parts.push(L(x - 2, loadY, x + 6, loadY, 0.4));
   });
+
 
   /* --- Таблица групп --- */
   parts.push(R(b.x0, tableTop, b.x1 - b.x0, tableH, 0.5));
