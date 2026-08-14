@@ -15,7 +15,7 @@ export const MODULE_MM = 17.5;
 export const DEV_H = 45;
 const RAIL_GAP = 42; // расстояние между лицевыми частями соседних реек
 const PAD_X = 22;
-const PAD_TOP = 40;
+const PAD_TOP = 46;
 
 const ORDER: ProjectDevice["kind"][] = [
   "input",
@@ -140,7 +140,7 @@ export function buildAssemblySvg(p: PanelProject): string {
   const w = innerW + PAD_X * 2 + 56;
   const railsH = lay.rails.length * (DEV_H + RAIL_GAP);
   const busZone = 46;
-  const h = PAD_TOP + railsH + busZone + 34;
+  const h = PAD_TOP + railsH + busZone + 40;
 
   const x0 = PAD_X;
   const parts: string[] = [
@@ -158,9 +158,9 @@ export function buildAssemblySvg(p: PanelProject): string {
 
   // корпус
   const caseX = x0 - 8;
-  const caseY = PAD_TOP - 12;
+  const caseY = PAD_TOP - 18;
   const caseW = innerW + 16;
-  const caseH = railsH + busZone + 6;
+  const caseH = railsH + busZone + 12;
   parts.push(R(caseX, caseY, caseW, caseH, 0.8));
   parts.push(R(caseX + 3, caseY + 3, caseW - 6, caseH - 6, 0.25));
 
@@ -235,8 +235,8 @@ export function buildAssemblySvg(p: PanelProject): string {
   });
 
   // Вводной кабель
-  parts.push(L(caseX - 12, caseY + 6, x0, caseY + 6, "#000", 0.5));
-  parts.push(T(caseX - 12, caseY + 3, `Ввод ${p.input.cable || p.input.mainBreaker}`, { size: 2.4 }));
+  parts.push(L(caseX - 12, caseY - 4, caseX, caseY - 4, "#000", 0.5));
+  parts.push(T(caseX - 12, caseY - 6, `Ввод ${p.input.cable || p.input.mainBreaker}`, { size: 2.4 }));
 
   // Легенда проводников
   const legY = h - 20;
