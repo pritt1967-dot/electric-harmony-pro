@@ -34,8 +34,8 @@ function ContactCardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-muted p-6 print:bg-white print:p-0">
-      <div className="mx-auto max-w-3xl print:max-w-none">
+    <div className="contact-card-page min-h-screen bg-muted p-6 print:bg-white print:p-0">
+      <div className="contact-card-sheet mx-auto max-w-3xl print:max-w-none">
         <div className="mb-4 flex flex-wrap items-center justify-end gap-3 print:hidden">
           <Link
             to="/api/public/contact-card.pdf"
@@ -54,7 +54,7 @@ function ContactCardPage() {
           </button>
         </div>
 
-        <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-brand print:break-inside-avoid print:rounded-none print:border-0 print:bg-white print:shadow-none">
+        <article className="contact-card-content overflow-hidden rounded-3xl border border-border bg-card shadow-brand print:break-inside-avoid print:rounded-none print:border-0 print:bg-white print:shadow-none">
           <header className="flex items-center gap-5 border-b border-border bg-card px-8 py-8 print:bg-white print:px-6 print:py-4">
             <span className="grid size-28 shrink-0 place-items-center overflow-hidden rounded-2xl bg-foreground p-3 print:size-24">
               <img
