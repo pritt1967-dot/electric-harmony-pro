@@ -178,7 +178,14 @@ function symbolFor(kind: ProjectDevice["kind"], x: number, y: number, poles: num
 /* Рамка и основная надпись                                            */
 /* ------------------------------------------------------------------ */
 
-function frame(w: number, h: number, p: PanelProject, sheet: number, total: number) {
+function frame(
+  w: number,
+  h: number,
+  p: PanelProject,
+  sheet: number,
+  total: number,
+  format: SheetFormat,
+) {
   const x0 = 20;
   const y0 = 5;
   const x1 = w - 5;
@@ -200,7 +207,7 @@ function frame(w: number, h: number, p: PanelProject, sheet: number, total: numb
     }),
     T(tx + 3, ty + 29, "S&M ELECTRIC · Санкт-Петербург", { size: 2.8, bold: true }),
     T(tx + 3, ty + 36, new Date().toLocaleDateString("ru-RU"), { size: 2.6 }),
-    T(tx + 123, ty + 29, "Формат", { size: 2.4 }),
+    T(tx + 123, ty + 29, `Формат ${format}`, { size: 2.4 }),
     T(tx + 153, ty + 29, `Лист ${sheet} из ${total}`, { size: 2.4 }),
   ];
   return { svg: out.join(""), box: { x0, y0, x1, y1, tbTop: ty } };
@@ -234,7 +241,7 @@ function sheetSvg(
   total: number,
 ): string {
   const { w, h } = SHEET_MM[format];
-  const f = frame(w, h, p, sheet, total);
+  const f = frame(w, h, p, sheet, total, format);
   const b = f.box;
   const parts: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" font-family="Arial, Helvetica, sans-serif" shape-rendering="geometricPrecision">`,
@@ -270,7 +277,7 @@ function sheetSvg(
   const chainBottomLimit = tableTop - 6 - circuitH - busSpan - 6;
   const step = SYM_H + 3;
   const perCol = Math.max(1, Math.floor((chainBottomLimit - chainTop) / step));
-  const chain = p.mainDevices.length
+  const chain: Pick<ProjectDevice, "kind" | "name" | "manufacturer" | "model" | "rating" | "ratedCurrent" | "leakage" | "poles">[] = p.mainDevices.length
     ? p.mainDevices
     : p.input.mainBreaker
       ? [
