@@ -15,7 +15,7 @@ export const MODULE_MM = 17.5;
 export const DEV_H = 45;
 const RAIL_GAP = 42; // расстояние между лицевыми частями соседних реек
 const PAD_X = 22;
-const PAD_TOP = 34;
+const PAD_TOP = 40;
 
 const ORDER: ProjectDevice["kind"][] = [
   "input",
@@ -121,17 +121,15 @@ function deviceFace(d: PlacedDev, x: number, y: number): string {
     p.push(R(x + 2, y + 15, w - 4, 10, 0.3));
     p.push(T(x + w / 2, y + 21.6, "KM", { size: 2.6, anchor: "middle" }));
   }
-  // маркировка
+  // маркировка (вертикальные подписи по бокам аппарата, без наложений)
   const label = [d.manufacturer, d.model].filter(Boolean).join(" ");
   const rating = [d.rating || (d.ratedCurrent ? `${d.ratedCurrent}A` : ""), d.leakage]
     .filter(Boolean)
     .join(" ");
-  if (w >= 30) {
-    p.push(T(x + w / 2, y + 37, label.slice(0, Math.floor(w / 1.5)), { size: 2.1, anchor: "middle" }));
-    p.push(T(x + w / 2, y + 40.5, rating, { size: 2.1, anchor: "middle", bold: true }));
-  } else {
-    p.push(T(x + w / 2, y + 40, `${label} ${rating}`.slice(0, 26), { size: 1.9, anchor: "middle", rotate: -90 }));
-  }
+  const cut = (t: string) => (t.length > 15 ? `${t.slice(0, 14)}…` : t);
+  const ty = y + DEV_H - 11;
+  if (label) p.push(T(x + 3, ty, cut(label), { size: 1.9, rotate: -90 }));
+  if (rating) p.push(T(x + w - 2.4, ty, cut(rating), { size: 1.9, rotate: -90, bold: true }));
   return p.join("");
 }
 
@@ -209,10 +207,10 @@ export function buildAssemblySvg(p: PanelProject): string {
   // Гребенчатая шина фаз над каждой рейкой + реальные проводники
   lay.rails.forEach((rail, i) => {
     const y = railY[i]!;
-    const combY = y - 8;
+    const combY = y - 10;
     const phases: Conductor[] = p.input.phases === 3 ? ["L1", "L2", "L3"] : ["L1"];
     phases.forEach((ph, k) => {
-      const cy = combY - k * 3;
+      const cy = combY - (phases.length - 1 - k) * 3;
       parts.push(L(x0, cy, x0 + rail.used * MODULE_MM, cy, WIRE_COLOR[ph], 0.7));
       parts.push(T(x0 - 3, cy + 0.9, ph, { size: 2.2, anchor: "end" }));
     });
@@ -222,7 +220,7 @@ export function buildAssemblySvg(p: PanelProject): string {
       const ph: Conductor = (d.phase || "L1") as Conductor;
       const phIdx = Math.max(0, phases.indexOf(ph));
       // фазный проводник к верхней клемме
-      parts.push(L(dx + MODULE_MM / 2, combY - phIdx * 3, dx + MODULE_MM / 2, y + 4.5, WIRE_COLOR[ph], 0.7));
+      parts.push(L(dx + MODULE_MM / 2, combY - (phases.length - 1 - phIdx) * 3, dx + MODULE_MM / 2, y + 4.5, WIRE_COLOR[ph], 0.7));
       // нулевой проводник от нижней клеммы к шине N
       if (d.kind === "breaker" || d.kind === "rcd" || d.kind === "rcbo" || d.kind === "input") {
         const nx = dx + wmm - MODULE_MM / 2;
@@ -238,7 +236,7 @@ export function buildAssemblySvg(p: PanelProject): string {
 
   // Вводной кабель
   parts.push(L(caseX - 12, caseY + 6, x0, caseY + 6, "#000", 0.5));
-  parts.push(T(caseX - 12, caseY + 3.5, `Ввод ${p.input.cable || p.input.mainBreaker}`, { size: 2.4 }));
+  parts.push(T(caseX - 12, caseY + 3, `Ввод ${p.input.cable || p.input.mainBreaker}`, { size: 2.4 }));
 
   // Легенда проводников
   const legY = h - 20;
