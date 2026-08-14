@@ -297,6 +297,7 @@ function sheetSvg(
   const colGap = 92;
   let lastX = inX;
   let lastY = y;
+  let chainBottom = y;
   chain.forEach((d, i) => {
     const col = Math.floor(i / perCol);
     const row = i % perCol;
@@ -312,12 +313,13 @@ function sheetSvg(
     parts.push(T(cx + 8, cyTop + 10, label, { size: 2.4 }));
     lastX = cx;
     lastY = cyTop + SYM_H;
+    chainBottom = Math.max(chainBottom, lastY);
     if (row < perCol - 1 && i < chain.length - 1) parts.push(L(cx, lastY, cx, cyTop + step));
   });
 
   /* --- Шины --- */
   const busGap = 4;
-  const busTop = Math.max(lastY + 8, chainTop + 10);
+  const busTop = Math.max(chainBottom + 8, chainTop + 10);
   const busX1 = b.x1 - 4;
   const busY: Record<string, number> = {};
   p.busbars.forEach((c, i) => {
@@ -388,7 +390,7 @@ function sheetSvg(
     parts.push(L(x + colW, tableTop, x + colW, tableTop + tableH, 0.3));
     const cx = x + colW / 2;
     // мини-символ аппарата в первой строке
-    const g = `<g transform="translate(${cx - 1.2},${tableTop + 0.7}) scale(0.36)">${
+    const g = `<g transform="translate(${cx - 1.6},${tableTop + 0.8}) scale(0.42)">${
       /дифавтомат|авдт|rcbo/i.test(c.rcd) ? symRcbo(0, 0) : symBreaker(0, 0, c.poles)
     }</g>`;
     parts.push(g);
