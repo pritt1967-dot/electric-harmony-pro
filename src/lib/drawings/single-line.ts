@@ -340,6 +340,9 @@ function sheetSvg(
   const loadY = tableTop - 5;
   circuits.forEach((c, i) => {
     const x = colX0 + colW * (i + 0.5);
+    const flip = x + 34 > b.x1;
+    const tx = flip ? x - 4 : x + 6;
+    const anchor: "start" | "end" = flip ? "end" : "start";
     const py = busY[c.phase] ?? busTop;
     parts.push(DOT(x, py, 0.6));
     parts.push(L(x, py, x, startY));
@@ -348,22 +351,22 @@ function sheetSvg(
     const isRcbo = /дифавтомат|авдт|rcbo/i.test(c.rcd);
     if (hasRcd && !isRcbo) {
       parts.push(symRcd(x, cy));
-      parts.push(T(x + 6, cy + 7, c.rcd, { size: 2.2 }));
+      parts.push(T(tx, cy + 7, c.rcd, { size: 2.2, anchor }));
       cy += SYM_H + 2;
       parts.push(L(x, cy - 2, x, cy));
     }
     if (isRcbo) {
       parts.push(symRcbo(x, cy));
-      parts.push(T(x + 6, cy + 7, c.rcd, { size: 2.2 }));
+      parts.push(T(tx, cy + 7, c.rcd, { size: 2.2, anchor }));
     } else {
       parts.push(symBreaker(x, cy, c.poles));
     }
-    parts.push(T(x + 6, cy + 13, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.3 }));
+    parts.push(T(tx, cy + 13, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.3, anchor }));
     cy += SYM_H;
 
     // N и PE к нагрузке
     parts.push(L(x, cy, x, loadY));
-    parts.push(T(x + 6, (cy + loadY) / 2 + 1, c.cable, { size: 2.2 }));
+    parts.push(T(tx, (cy + loadY) / 2 + 1, c.cable, { size: 2.2, anchor }));
     if (busY["N"] !== undefined) {
       parts.push(DOT(x + 2, busY["N"]!, 0.5));
       parts.push(L(x + 2, busY["N"]!, x + 2, loadY));
