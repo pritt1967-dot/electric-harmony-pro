@@ -318,10 +318,8 @@
     print-color-adjust: exact;
   }
 
-  /* Убираем всё, что может создать вторую страницу */
-  body > *:not(#root),
-  #root > div > div > *:last-child:empty,
-  [id*="lovable"],
+  /* Убираем только служебные элементы, создающие вторую страницу */
+  [id*="lovable-badge"],
   [class*="lovable-badge"],
   a[href*="lovable.dev"],
   iframe {
@@ -336,6 +334,7 @@
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
+
 
   article {
     page-break-inside: avoid;
