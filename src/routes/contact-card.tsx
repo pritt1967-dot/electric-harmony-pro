@@ -54,9 +54,9 @@ function ContactCardPage() {
           </button>
         </div>
 
-        <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-brand print:rounded-none print:border-0 print:bg-white print:shadow-none">
-          <header className="gradient-hero flex items-center gap-4 px-8 py-8 print:bg-white print:px-6 print:py-6">
-            <span className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-foreground p-2.5">
+        <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-brand print:break-inside-avoid print:rounded-none print:border-0 print:bg-white print:shadow-none">
+          <header className="flex items-center gap-5 border-b border-border bg-card px-8 py-8 print:bg-white print:px-6 print:py-4">
+            <span className="grid size-28 shrink-0 place-items-center overflow-hidden rounded-2xl bg-foreground p-3 print:size-24">
               <img
                 src={logoAsset.url}
                 alt="S&M Electric"
@@ -64,7 +64,7 @@ function ContactCardPage() {
               />
             </span>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight">
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
                 S&M electric
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -72,6 +72,7 @@ function ContactCardPage() {
               </p>
             </div>
           </header>
+
 
           <div className="grid gap-8 px-8 py-10 md:grid-cols-2 print:px-6 print:py-6">
             <div className="space-y-5">
