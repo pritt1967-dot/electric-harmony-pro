@@ -46,17 +46,18 @@ export function Header() {
         <a href="#top" className="flex min-w-0 items-center gap-2.5">
           <span
             className={`grid shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-elevated transition-all ${
-              scrolled ? "size-8" : "size-10"
+              scrolled ? "size-12" : "size-16"
             }`}
           >
             <img
               src={logoAsset.url}
               alt="S&M Electric — логотип электромонтажной компании"
-              width={40}
-              height={40}
+              width={64}
+              height={64}
               className="size-full object-contain"
             />
           </span>
+
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-sm font-extrabold uppercase tracking-[0.14em] sm:text-base">
               S&amp;M Electric
