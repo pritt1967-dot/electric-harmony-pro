@@ -342,6 +342,28 @@
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
+
+  /* На Android 100vh равен полному листу без учёта полей @page.
+     Поэтому min-h-screen переносил невидимый остаток на пустую страницу. */
+  .contact-card-page,
+  .contact-card-sheet,
+  .contact-card-content {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .contact-card-page {
+    padding: 0 !important;
+  }
 }
 
 
