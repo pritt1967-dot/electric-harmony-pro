@@ -167,8 +167,27 @@ export function PanelDesigner() {
     setImage("");
   }
 
+  async function pasteLines() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        toast.error("Буфер обмена пуст");
+        return;
+      }
+      setInput((p) => ({
+        ...p,
+        lines_text: p.lines_text.trim()
+          ? `${p.lines_text.replace(/\s*$/, "")}\n${text}`
+          : text,
+      }));
+      toast.success("Текст вставлен");
+    } catch {
+      toast.error("Разрешите доступ к буферу обмена и попробуйте ещё раз");
+    }
+  }
 
   const svg = useMemo(() => (design ? buildSchematicSvg(design) : ""), [design]);
+
 
   async function handleDesign() {
     if (!input.lines_text.trim()) {
