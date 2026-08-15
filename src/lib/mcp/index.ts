@@ -14,7 +14,7 @@ export default defineMcp({
   title: "Электро Site",
   version: "0.1.0",
   instructions:
-    "Tools for the VoltPro electrician site: read services, works, reviews and site texts, review incoming leads and update their status, and edit site text blocks. Callers act as the signed-in app user.",
+    "Tools for the S&M Electric electrician site: read services, works, reviews and site texts, review incoming leads and update their status, and edit site text blocks. Callers act as the signed-in app user.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CONTACTS } from "@/components/site/contacts";
+import { canonical } from "@/lib/seo";
 import { createSubmission } from "@/lib/submissions.functions";
 import {
   PUBLIC_CATEGORIES,
