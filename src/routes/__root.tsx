@@ -124,10 +124,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Electrician",
-          name: "S&M electric",
+          name: "S&M Electric",
+          url: "https://sm-electric.ru/",
+          logo: "https://sm-electric.ru/favicon.png",
+          image: "https://sm-electric.ru/favicon.png",
           description:
             "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика.",
-          areaServed: "Санкт-Петербург",
+          areaServed: ["Санкт-Петербург", "Ленинградская область"],
           address: {
             "@type": "PostalAddress",
             addressLocality: "Санкт-Петербург",
