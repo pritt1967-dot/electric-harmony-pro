@@ -464,23 +464,51 @@ export function PanelDesigner() {
         <div className="mt-4 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <Label>Список линий (по одной в строке)</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => set("lines_text", EXAMPLE)}
-            >
-              Пример
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={pasteLines}
+              >
+                Вставить
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => set("lines_text", EXAMPLE)}
+              >
+                Пример
+              </Button>
+            </div>
           </div>
           <Textarea
             rows={10}
             className="font-mono text-sm"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             placeholder={"Освещение кухня — 0.5 кВт\nРозетки спальня — 2 кВт"}
             value={input.lines_text}
             onChange={(e) => set("lines_text", e.target.value)}
+            onPaste={(e) => {
+              const text = e.clipboardData?.getData("text/plain");
+              if (!text) return;
+              e.preventDefault();
+              const el = e.currentTarget;
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? el.value.length;
+              const next = el.value.slice(0, start) + text + el.value.slice(end);
+              set("lines_text", next);
+              requestAnimationFrame(() => {
+                const pos = start + text.length;
+                el.setSelectionRange(pos, pos);
+              });
+            }}
           />
         </div>
+
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={handleDesign} disabled={busy}>
