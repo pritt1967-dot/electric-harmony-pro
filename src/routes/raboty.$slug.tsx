@@ -188,19 +188,26 @@ function WorkPage() {
           <section className="border-y border-border bg-secondary/40 py-10 lg:py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
               <h2 className="text-2xl font-extrabold text-foreground">Фотографии объекта</h2>
-              <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {project.images.map((img) => (
+              <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {project.images.map((img, i) => (
                   <figure key={img.id} className="overflow-hidden rounded-xl border border-border bg-background">
-                    <img
-                      src={img.image_url}
-                      alt={
-                        img.alt ||
-                        img.caption ||
-                        `${project.title} — фото выполненных работ${place ? `, ${place}` : ""}`
-                      }
-                      loading="lazy"
-                      className="h-56 w-full object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setLightbox(i)}
+                      className="block w-full cursor-zoom-in"
+                      aria-label="Открыть фото в увеличенном размере"
+                    >
+                      <img
+                        src={img.image_url}
+                        alt={
+                          img.alt ||
+                          img.caption ||
+                          `${project.title} — фото выполненных работ${place ? `, ${place}` : ""}`
+                        }
+                        loading="lazy"
+                        className="h-56 w-full object-cover transition-transform hover:scale-[1.03]"
+                      />
+                    </button>
                     {img.caption && (
                       <figcaption className="p-3 text-sm text-muted-foreground">
                         {img.caption}
@@ -212,6 +219,26 @@ function WorkPage() {
             </div>
           </section>
         )}
+
+        <Dialog open={lightbox !== null} onOpenChange={(o) => !o && setLightbox(null)}>
+          <DialogContent className="max-w-[95vw] border-border bg-background p-2 sm:max-w-4xl">
+            {lightbox !== null && project.images[lightbox] && (
+              <figure>
+                <img
+                  src={project.images[lightbox].image_url}
+                  alt={project.images[lightbox].alt || project.images[lightbox].caption || project.title}
+                  className="max-h-[80vh] w-full rounded-lg object-contain"
+                />
+                {project.images[lightbox].caption && (
+                  <figcaption className="p-3 text-center text-sm text-muted-foreground">
+                    {project.images[lightbox].caption}
+                  </figcaption>
+                )}
+              </figure>
+            )}
+          </DialogContent>
+        </Dialog>
+
 
         <section className="py-10 lg:py-14">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 sm:px-6">
