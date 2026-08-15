@@ -13,6 +13,7 @@ import { canonical, breadcrumbSchema } from "@/lib/seo";
 import { worksQuery } from "@/lib/public-queries";
 import { getServicePage } from "@/lib/services-seo";
 import type { WorkProject } from "@/lib/works.functions";
+import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
 
 export const Route = createFileRoute("/raboty/$slug")({
   loader: async ({ params, context }) => {
