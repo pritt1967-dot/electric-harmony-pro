@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, MapPin, Phone } from "lucide-react";
@@ -6,6 +7,7 @@ import { Header, MobileCtaBar } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CONTACTS } from "@/components/site/contacts";
 import { canonical, breadcrumbSchema } from "@/lib/seo";
 import { worksQuery } from "@/lib/public-queries";
@@ -88,6 +90,7 @@ function WorkPage() {
   const service = project.service_slug ? getServicePage(project.service_slug) : undefined;
   const others = works.filter((w) => w.slug !== project.slug).slice(0, 3);
   const place = project.city || project.location;
+  const [lightbox, setLightbox] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
