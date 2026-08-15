@@ -13,6 +13,7 @@ import { canonical, breadcrumbSchema } from "@/lib/seo";
 import { worksQuery } from "@/lib/public-queries";
 import { getServicePage } from "@/lib/services-seo";
 import type { WorkProject } from "@/lib/works.functions";
+import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
 
 export const Route = createFileRoute("/raboty/$slug")({
   loader: async ({ params, context }) => {
@@ -192,12 +193,14 @@ function WorkPage() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
               <h2 className="text-2xl font-extrabold text-foreground">Фотографии объекта</h2>
               <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {project.images.map((img, i) => (
+                {project.images.map((img, i) => {
+                  const ba = detectBeforeAfter(img.caption, img.alt);
+                  return (
                   <figure key={img.id} className="overflow-hidden rounded-xl border border-border bg-background">
                     <button
                       type="button"
                       onClick={() => setLightbox(i)}
-                      className="block w-full cursor-zoom-in"
+                      className="relative block w-full cursor-zoom-in"
                       aria-label="Открыть фото в увеличенном размере"
                     >
                       <img
@@ -210,6 +213,17 @@ function WorkPage() {
                         loading="lazy"
                         className="h-56 w-full object-cover transition-transform hover:scale-[1.03]"
                       />
+                      {ba && (
+                        <span
+                          className={`absolute left-3 top-3 rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                            ba === "before"
+                              ? "bg-foreground/85 text-background"
+                              : "bg-brand text-brand-foreground"
+                          }`}
+                        >
+                          {beforeAfterLabel(ba)}
+                        </span>
+                      )}
                     </button>
                     {img.caption && (
                       <figcaption className="p-3 text-sm text-muted-foreground">
@@ -217,7 +231,8 @@ function WorkPage() {
                       </figcaption>
                     )}
                   </figure>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -226,12 +241,25 @@ function WorkPage() {
         <Dialog open={lightbox !== null} onOpenChange={(o) => !o && setLightbox(null)}>
           <DialogContent className="max-w-[95vw] border-border bg-background p-2 sm:max-w-4xl">
             {lightbox !== null && project.images[lightbox] && (
-              <figure>
+              <figure className="relative">
                 <img
                   src={project.images[lightbox].image_url}
                   alt={project.images[lightbox].alt || project.images[lightbox].caption || project.title}
                   className="max-h-[80vh] w-full rounded-lg object-contain"
                 />
+                {detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt) && (
+                  <span
+                    className={`absolute left-4 top-4 rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt) === "before"
+                        ? "bg-foreground/85 text-background"
+                        : "bg-brand text-brand-foreground"
+                    }`}
+                  >
+                    {beforeAfterLabel(
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt),
+                    )}
+                  </span>
+                )}
                 {project.images[lightbox].caption && (
                   <figcaption className="p-3 text-center text-sm text-muted-foreground">
                     {project.images[lightbox].caption}

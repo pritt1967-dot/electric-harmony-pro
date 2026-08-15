@@ -4,6 +4,21 @@ import { ChevronLeft, ChevronRight, MapPin, CalendarDays, X } from "lucide-react
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
 import type { ProjectRow } from "@/lib/content.functions";
+import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
+
+function BaBadge({ caption, className = "" }: { caption?: string | null; className?: string }) {
+  const ba = detectBeforeAfter(caption);
+  if (!ba) return null;
+  return (
+    <span
+      className={`pointer-events-none absolute left-3 top-3 rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+        ba === "before" ? "bg-foreground/85 text-background" : "bg-brand text-brand-foreground"
+      } ${className}`}
+    >
+      {beforeAfterLabel(ba)}
+    </span>
+  );
+}
 
 function formatWorkDate(value: string | null) {
   if (!value) return "";
@@ -171,7 +186,7 @@ function ProjectBlock({
                 key={img.id}
                 type="button"
                 onClick={() => onOpen(realIndex)}
-                className="group overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="group relative overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
               >
                 <img
@@ -180,6 +195,7 @@ function ProjectBlock({
                   loading="lazy"
                   className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                <BaBadge caption={img.caption} className="left-2 top-2 px-2 py-0.5 text-[10px]" />
               </button>
             );
           })}
@@ -293,6 +309,7 @@ function Lightbox({
           alt={current.caption || `${project.title} — фото ${index + 1}`}
           className="max-h-full max-w-full select-none object-contain"
         />
+        <BaBadge caption={current.caption} className="left-4 top-4" />
 
         {total > 1 && (
           <>
