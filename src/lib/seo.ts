@@ -1,4 +1,4 @@
-export const SITE_URL = "https://electric-9117335567.lovable.app";
+export const SITE_URL = "https://sm-electric.ru";
 
 export const canonical = (path: string) => `${SITE_URL}${path}`;
 

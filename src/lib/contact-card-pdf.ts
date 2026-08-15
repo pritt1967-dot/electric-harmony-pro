@@ -9,7 +9,7 @@ const DARK: [number, number, number] = [17, 17, 17];
 const GRAY: [number, number, number] = [90, 90, 90];
 
 export async function buildContactCardPdf(baseUrl?: string) {
-  const siteUrl = baseUrl ? `${baseUrl}/` : "https://electric-9117335567.lovable.app/";
+  const siteUrl = "https://sm-electric.ru/";
   const { fonts, logo } = await loadAssets(baseUrl);
 
   // Use the existing site QR code from public/qr-site.png

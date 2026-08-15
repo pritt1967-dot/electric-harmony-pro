@@ -10,4 +10,4 @@ Disallow: /api/
 Disallow: /mcp
 Disallow: /.lovable/
 
-Sitemap: https://electric-9117335567.lovable.app/sitemap.xml
+Sitemap: https://sm-electric.ru/sitemap.xml
