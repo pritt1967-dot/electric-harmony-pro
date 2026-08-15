@@ -4,6 +4,21 @@ import { ChevronLeft, ChevronRight, MapPin, CalendarDays, X } from "lucide-react
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
 import type { ProjectRow } from "@/lib/content.functions";
+import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
+
+function BaBadge({ caption, className = "" }: { caption?: string | null; className?: string }) {
+  const ba = detectBeforeAfter(caption);
+  if (!ba) return null;
+  return (
+    <span
+      className={`pointer-events-none absolute left-3 top-3 rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+        ba === "before" ? "bg-foreground/85 text-background" : "bg-brand text-brand-foreground"
+      } ${className}`}
+    >
+      {beforeAfterLabel(ba)}
+    </span>
+  );
+}
 
 function formatWorkDate(value: string | null) {
   if (!value) return "";
