@@ -309,6 +309,7 @@ function Lightbox({
           alt={current.caption || `${project.title} — фото ${index + 1}`}
           className="max-h-full max-w-full select-none object-contain"
         />
+        <BaBadge caption={current.caption} className="left-4 top-4" />
 
         {total > 1 && (
           <>
