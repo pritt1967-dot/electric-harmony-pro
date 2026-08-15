@@ -1,9 +1,9 @@
+import { SITE_URL } from "@/lib/seo";
 import QRCode from "qrcode";
 
 /** Public URL of an estimate page for a given token. */
 export function estimatePublicUrl(token: string, origin?: string) {
-  const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const base = origin ?? SITE_URL;
   return `${base}/smeta/${token}`;
 }
 
