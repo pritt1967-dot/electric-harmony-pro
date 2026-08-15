@@ -1,0 +1,1 @@
+update public.projects set is_published = false where title = 'Новый объект' and cover_image = '' and description = '';
