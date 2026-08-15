@@ -101,8 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Электрик СПб — Электромонтаж, сборка электрощитов | S&M electric" },
       { name: "twitter:description", content: "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/52369898-35f4-4259-8255-17b88877a6fe/id-preview-6d207ed3--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app-1783502660562.png" },
+      { property: "og:url", content: "https://sm-electric.ru/" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
