@@ -241,12 +241,25 @@ function WorkPage() {
         <Dialog open={lightbox !== null} onOpenChange={(o) => !o && setLightbox(null)}>
           <DialogContent className="max-w-[95vw] border-border bg-background p-2 sm:max-w-4xl">
             {lightbox !== null && project.images[lightbox] && (
-              <figure>
+              <figure className="relative">
                 <img
                   src={project.images[lightbox].image_url}
                   alt={project.images[lightbox].alt || project.images[lightbox].caption || project.title}
                   className="max-h-[80vh] w-full rounded-lg object-contain"
                 />
+                {detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt) && (
+                  <span
+                    className={`absolute left-4 top-4 rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt) === "before"
+                        ? "bg-foreground/85 text-background"
+                        : "bg-brand text-brand-foreground"
+                    }`}
+                  >
+                    {beforeAfterLabel(
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt),
+                    )}
+                  </span>
+                )}
                 {project.images[lightbox].caption && (
                   <figcaption className="p-3 text-center text-sm text-muted-foreground">
                     {project.images[lightbox].caption}
