@@ -31,7 +31,7 @@ export async function notifyTelegram(submission: {
   }
 
   const lines = [
-    "🔔 <b>Новая заявка с сайта S&M electric</b>",
+    "🔔 <b>Новая заявка с сайта S&amp;M electric</b>",
     "",
     `👤 <b>Имя:</b> ${escapeHtml(submission.name)}`,
     `📞 <b>Телефон:</b> ${escapeHtml(submission.phone)}`,
