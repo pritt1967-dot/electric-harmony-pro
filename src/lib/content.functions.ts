@@ -159,7 +159,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
 
     return {
       services: services.data ?? [],
-      works: works.data ?? [],
+      
       projects: projectRows,
       reviews: reviews.data ?? [],
       content: contentMap,
