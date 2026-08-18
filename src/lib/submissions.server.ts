@@ -57,9 +57,12 @@ export async function notifyTelegram(submission: {
     if (!res.ok) {
       const body = await res.text();
       console.error("[notifyTelegram] Telegram API error", res.status, body);
+      return { sent: false, reason: "api_error", detail: `${res.status}` };
     }
+    return { sent: true };
   } catch (error) {
     console.error("[notifyTelegram] request failed", error);
+    return { sent: false, reason: "request_failed" };
   }
 }
 
