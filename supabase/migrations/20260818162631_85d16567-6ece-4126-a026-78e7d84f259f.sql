@@ -1,0 +1,41 @@
+
+GRANT SELECT ON public.projects TO anon;
+GRANT SELECT ON public.project_images TO anon;
+GRANT SELECT ON public.price_items TO anon;
+GRANT SELECT ON public.reviews TO anon;
+GRANT SELECT ON public.services TO anon;
+GRANT SELECT ON public.site_content TO anon;
+GRANT SELECT ON public.works TO anon;
+GRANT INSERT ON public.submissions TO anon;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_images TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.price_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.reviews TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.services TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.site_content TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.works TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.submissions TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.estimates TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.estimate_versions TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.order_events TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.panel_designs TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.panel_schematics TO authenticated;
+GRANT SELECT ON public.user_roles TO authenticated;
+
+GRANT ALL ON public.projects TO service_role;
+GRANT ALL ON public.project_images TO service_role;
+GRANT ALL ON public.price_items TO service_role;
+GRANT ALL ON public.reviews TO service_role;
+GRANT ALL ON public.services TO service_role;
+GRANT ALL ON public.site_content TO service_role;
+GRANT ALL ON public.works TO service_role;
+GRANT ALL ON public.submissions TO service_role;
+GRANT ALL ON public.estimates TO service_role;
+GRANT ALL ON public.estimate_versions TO service_role;
+GRANT ALL ON public.orders TO service_role;
+GRANT ALL ON public.order_events TO service_role;
+GRANT ALL ON public.panel_designs TO service_role;
+GRANT ALL ON public.panel_schematics TO service_role;
+GRANT ALL ON public.user_roles TO service_role;
