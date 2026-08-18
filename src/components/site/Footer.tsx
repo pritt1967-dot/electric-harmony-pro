@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { CONTACTS } from "./contacts";
 import { SERVICE_PAGES } from "@/lib/services-seo";
 
@@ -17,7 +17,7 @@ export function Footer() {
         <div className="flex items-center gap-2.5">
           <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-elevated">
             <img
-              src={logoAsset.url}
+              src={LOGO_URL}
               alt="S&M Electric — логотип"
               width={40}
               height={40}

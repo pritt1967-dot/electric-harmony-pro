@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X, Phone, ArrowRight } from "lucide-react";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { CONTACTS } from "./contacts";
 
 const NAV = [
@@ -50,7 +50,7 @@ export function Header() {
             }`}
           >
             <img
-              src={logoAsset.url}
+              src={LOGO_URL}
               alt="S&M Electric — логотип электромонтажной компании"
               width={64}
               height={64}
