@@ -10,13 +10,8 @@ export type ServiceRow = {
   sort_order: number;
 };
 
-export type WorkRow = {
-  id: string;
-  image_key: string;
-  title: string;
-  text: string;
-  sort_order: number;
-};
+
+
 
 export type ReviewRow = {
   id: string;
