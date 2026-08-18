@@ -10,13 +10,8 @@ export type ServiceRow = {
   sort_order: number;
 };
 
-export type WorkRow = {
-  id: string;
-  image_key: string;
-  title: string;
-  text: string;
-  sort_order: number;
-};
+
+
 
 export type ReviewRow = {
   id: string;
@@ -55,7 +50,7 @@ export type PriceHighlight = {
 
 export type SiteData = {
   services: ServiceRow[];
-  works: WorkRow[];
+  
   projects: ProjectRow[];
   reviews: ReviewRow[];
   content: Record<string, string>;
@@ -97,35 +92,39 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       },
     );
 
-    const [services, works, reviews, content, projects, prices] =
-      await Promise.all([
-        supabase
-          .from("services")
-          .select("id, icon, title, text, sort_order")
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("works")
-          .select("id, image_key, title, text, sort_order")
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("reviews")
-          .select("id, name, role, text, sort_order")
-          .order("sort_order", { ascending: true }),
-        supabase.from("site_content").select("key, value"),
-        supabase
-          .from("projects")
-          .select(
-            "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
-          )
-          .eq("is_published", true)
-          .order("sort_order", { ascending: true }),
-        supabase.from("price_items").select("category, name, price, unit"),
-      ]);
+    const [services, reviews, content, projects, prices] = await Promise.all([
+      supabase
+        .from("services")
+        .select("id, icon, title, text, sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("reviews")
+        .select("id, name, role, text, sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase.from("site_content").select("key, value"),
+      supabase
+        .from("projects")
+        .select(
+          "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
+        )
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true }),
+      supabase.from("price_items").select("category, name, price, unit"),
+    ]);
+
+    // Ошибки не маскируем: пустой список должен означать реально пустую выдачу.
+    const failed = [services, reviews, content, projects, prices].find(
+      (r) => r.error,
+    );
+    if (failed?.error) {
+      throw new Error(`Не удалось загрузить контент: ${failed.error.message}`);
+    }
 
     const contentMap: Record<string, string> = {};
     for (const row of content.data ?? []) {
       contentMap[row.key] = row.value;
     }
+
 
     const projectRows: ProjectRow[] = (projects.data ?? []).map((p) => ({
       id: p.id,
@@ -160,7 +159,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
 
     return {
       services: services.data ?? [],
-      works: works.data ?? [],
+      
       projects: projectRows,
       reviews: reviews.data ?? [],
       content: contentMap,
