@@ -19,25 +19,54 @@ const submissionSchema = z.object({
 export const createSubmission = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submissionSchema.parse(data))
   .handler(async ({ data }) => {
-    const supabase = createPublicSupabaseClient();
+    let saved = false;
+    let saveError: string | null = null;
 
-    const { error } = await supabase.from("submissions").insert({
-      name: data.name,
-      phone: data.phone,
-      comment: data.comment ?? "",
-    });
+    try {
+      const supabase = createPublicSupabaseClient();
+      const { error } = await supabase.from("submissions").insert({
+        name: data.name,
+        phone: data.phone,
+        comment: data.comment ?? "",
+      });
+      if (error) {
+        saveError = error.message;
+        console.error("[createSubmission] db insert failed:", error.message);
+      } else {
+        saved = true;
+      }
+    } catch (e) {
+      saveError = e instanceof Error ? e.message : String(e);
+      console.error("[createSubmission] db insert threw:", saveError);
+    }
 
-    if (error) throw new Error(error.message);
-
+    // Уведомление отправляется всегда, даже если запись в БД не удалась.
     const notify = await notifyTelegram({
       name: data.name,
       phone: data.phone,
       comment: data.comment ?? "",
     });
 
-    if (!notify.sent) {
-      console.error("[createSubmission] telegram not sent:", notify.reason, notify.detail ?? "");
+    console.log(
+      "[createSubmission] result:",
+      JSON.stringify({
+        saved,
+        saveError,
+        notified: notify.sent,
+        reason: notify.sent ? "sent" : notify.reason,
+        detail: notify.sent ? undefined : notify.detail,
+      }),
+    );
+
+    if (!saved && !notify.sent) {
+      throw new Error(saveError ?? "Не удалось отправить заявку");
     }
 
-    return { ok: true, notified: notify.sent };
+    return {
+      ok: true,
+      saved,
+      notified: notify.sent,
+      reason: notify.sent ? "sent" : notify.reason,
+    };
   });
+
