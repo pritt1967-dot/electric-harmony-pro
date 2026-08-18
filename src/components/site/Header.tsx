@@ -43,7 +43,7 @@ export function Header() {
           scrolled ? "h-14 lg:h-16" : "h-16 lg:h-20"
         }`}
       >
-        <a href="#top" className="flex min-w-0 items-center gap-2.5">
+        <a href="/#top" className="flex min-w-0 items-center gap-2.5">
           <span
             className={`grid shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-elevated transition-all ${
               scrolled ? "size-12" : "size-16"
@@ -89,7 +89,7 @@ export function Header() {
             {CONTACTS.phoneDisplay}
           </a>
           <a
-            href="#contacts"
+            href="/#contacts"
             className="hidden items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] text-brand-foreground transition-transform hover:scale-[1.03] md:inline-flex"
           >
             Рассчитать стоимость <ArrowRight className="size-4" />
@@ -131,7 +131,7 @@ export function Header() {
               {CONTACTS.phoneDisplay}
             </a>
             <a
-              href="#contacts"
+              href="/#contacts"
               onClick={() => setOpen(false)}
               className="mb-2 mt-2 rounded-xl bg-brand py-3.5 text-center text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
             >
@@ -156,7 +156,7 @@ export function MobileCtaBar() {
           <Phone className="size-5 text-brand" />
         </a>
         <a
-          href="#contacts"
+          href="/#contacts"
           className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-bold uppercase tracking-[0.06em] text-brand-foreground"
         >
           Рассчитать стоимость
