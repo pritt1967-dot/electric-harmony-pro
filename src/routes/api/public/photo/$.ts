@@ -13,14 +13,16 @@ export const Route = createFileRoute("/api/public/photo/$")({
           return new Response("Not found", { status: 404 });
         }
 
-        const { supabaseAdmin } = await import(
-          "@/integrations/supabase/client.server"
+        const { createPublicSupabaseClient } = await import(
+          "@/lib/supabase-public"
         );
-        const { data, error } = await supabaseAdmin.storage
+        const supabase = createPublicSupabaseClient();
+        const { data, error } = await supabase.storage
           .from("projects")
           .download(path);
 
         if (error || !data) return new Response("Not found", { status: 404 });
+
 
         return new Response(await data.arrayBuffer(), {
           headers: {
