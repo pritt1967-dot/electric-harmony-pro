@@ -50,7 +50,7 @@ export type PriceHighlight = {
 
 export type SiteData = {
   services: ServiceRow[];
-  works: WorkRow[];
+  
   projects: ProjectRow[];
   reviews: ReviewRow[];
   content: Record<string, string>;
