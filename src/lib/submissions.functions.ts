@@ -1,24 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 import { notifyTelegram } from "./submissions.server";
+import { submissionSchema } from "./submissions.schemas";
 import { createPublicSupabaseClient } from "@/lib/supabase-public";
-
-const submissionSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  phone: z
-    .string()
-    .trim()
-    .min(6)
-    .max(30)
-    .regex(/^[0-9+()\-\s]+$/),
-  comment: z.string().trim().max(600).optional().default(""),
-});
 
 /** Public endpoint: saves a request from the site form + notifies Telegram. */
 export const createSubmission = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submissionSchema.parse(data))
   .handler(async ({ data }) => {
+    console.log("SUBMISSION_START");
     let saved = false;
     let saveError: string | null = null;
 
@@ -34,6 +23,7 @@ export const createSubmission = createServerFn({ method: "POST" })
         console.error("[createSubmission] db insert failed:", error.message);
       } else {
         saved = true;
+        console.log("SUBMISSION_SAVED");
       }
     } catch (e) {
       saveError = e instanceof Error ? e.message : String(e);
