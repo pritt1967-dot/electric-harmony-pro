@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +85,7 @@ function AuthPage() {
         <Link to="/" className="flex items-center justify-center gap-2">
           <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-foreground">
             <img
-              src={logoAsset.url}
+              src={LOGO_URL}
               alt="S&M Electric — логотип"
               width={40}
               height={40}

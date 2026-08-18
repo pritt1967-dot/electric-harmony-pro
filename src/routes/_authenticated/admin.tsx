@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Toaster } from "sonner";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { claimAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ function AdminPage() {
           <div className="flex min-w-0 items-center gap-2">
             <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-foreground">
               <img
-                src={logoAsset.url}
+                src={LOGO_URL}
                 alt="S&M Electric — логотип"
                 width={32}
                 height={32}
