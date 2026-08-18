@@ -42,11 +42,16 @@ export const getWorks = createServerFn({ method: "GET" }).handler(
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("projects")
       .select(SELECT)
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
+
+    if (error) {
+      throw new Error(`Не удалось загрузить объекты: ${error.message}`);
+    }
+
 
     type Raw = Omit<WorkProject, "images"> & { project_images: WorkImage[] };
     return ((data ?? []) as unknown as Raw[]).map(({ project_images, ...p }) => ({
