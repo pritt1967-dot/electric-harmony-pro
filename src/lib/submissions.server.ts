@@ -3,13 +3,25 @@
  * Silently no-ops when the bot token / chat id are not configured, so the
  * form keeps working even before notifications are set up.
  */
+export type TelegramNotifyResult =
+  | { sent: true }
+  | { sent: false; reason: "missing_env" | "api_error" | "request_failed"; detail?: string };
+
+/** Reads the Telegram credentials from the server runtime (never exposed to the client). */
+export function getTelegramConfig(): { token?: string; chatId?: string } {
+  const env = process.env;
+  return {
+    token: env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_TOKEN || undefined,
+    chatId: env.TELEGRAM_CHAT_ID || env.TELEGRAM_CHATID || undefined,
+  };
+}
+
 export async function notifyTelegram(submission: {
   name: string;
   phone: string;
   comment: string;
-}): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+}): Promise<TelegramNotifyResult> {
+  const { token, chatId } = getTelegramConfig();
   if (!token || !chatId) {
     console.error(
       "[notifyTelegram] missing env",
@@ -18,7 +30,7 @@ export async function notifyTelegram(submission: {
       "chatId:",
       Boolean(chatId),
     );
-    return;
+    return { sent: false, reason: "missing_env" };
   }
 
   const lines = [
@@ -45,9 +57,12 @@ export async function notifyTelegram(submission: {
     if (!res.ok) {
       const body = await res.text();
       console.error("[notifyTelegram] Telegram API error", res.status, body);
+      return { sent: false, reason: "api_error", detail: `${res.status}` };
     }
+    return { sent: true };
   } catch (error) {
     console.error("[notifyTelegram] request failed", error);
+    return { sent: false, reason: "request_failed" };
   }
 }
 
