@@ -23,13 +23,10 @@ export async function notifyTelegram(submission: {
 }): Promise<TelegramNotifyResult> {
   const { token, chatId } = getTelegramConfig();
   if (!token || !chatId) {
-    console.error(
-      "[notifyTelegram] missing env",
-      "token:",
-      Boolean(token),
-      "chatId:",
-      Boolean(chatId),
-    );
+    console.error("TELEGRAM_ERROR", "missing_env", {
+      hasToken: Boolean(token),
+      hasChatId: Boolean(chatId),
+    });
     return { sent: false, reason: "missing_env" };
   }
 
@@ -43,26 +40,85 @@ export async function notifyTelegram(submission: {
     lines.push(`💬 <b>Комментарий:</b> ${escapeHtml(submission.comment)}`);
   }
 
+  const text = lines.join("\n");
+  if (!text.trim()) {
+    console.error("TELEGRAM_ERROR", "empty_message");
+    return { sent: false, reason: "request_failed", detail: "empty_message" };
+  }
+
   try {
+    console.log("TELEGRAM_CALL_START", {
+      method: "sendMessage",
+      hasChatId: true,
+      textLength: text.length,
+    });
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: lines.join("\n"),
+        text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
       }),
     });
+
+    const responseText = await res.text();
+    console.log("TELEGRAM_RESPONSE_STATUS", res.status);
+    console.log(
+      "TELEGRAM_RESPONSE_BODY_WITHOUT_SECRETS",
+      sanitizeTelegramResponse(responseText),
+    );
+
     if (!res.ok) {
-      const body = await res.text();
-      console.error("[notifyTelegram] Telegram API error", res.status, body);
+      console.error("TELEGRAM_ERROR", "api_error", { status: res.status });
       return { sent: false, reason: "api_error", detail: `${res.status}` };
     }
+
+    let telegramOk = false;
+    try {
+      const parsed = JSON.parse(responseText) as { ok?: boolean };
+      telegramOk = parsed.ok === true;
+    } catch {
+      console.error("TELEGRAM_ERROR", "invalid_json", { status: res.status });
+      return { sent: false, reason: "api_error", detail: "invalid_json" };
+    }
+
+    if (!telegramOk) {
+      console.error("TELEGRAM_ERROR", "telegram_ok_false", { status: res.status });
+      return { sent: false, reason: "api_error", detail: "telegram_ok_false" };
+    }
+
+    console.log("TELEGRAM_SENT");
     return { sent: true };
   } catch (error) {
-    console.error("[notifyTelegram] request failed", error);
-    return { sent: false, reason: "request_failed" };
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("TELEGRAM_ERROR", "request_failed", detail);
+    return { sent: false, reason: "request_failed", detail };
+  }
+}
+
+function sanitizeTelegramResponse(responseText: string): string {
+  try {
+    const body = JSON.parse(responseText) as {
+      ok?: boolean;
+      error_code?: number;
+      description?: string;
+      result?: { message_id?: number; chat?: { type?: string } };
+    };
+    return JSON.stringify({
+      ok: body.ok === true,
+      error_code: body.error_code ?? null,
+      description: body.description ?? null,
+      result: body.result
+        ? {
+            message_id: body.result.message_id ?? null,
+            chat_type: body.result.chat?.type ?? null,
+          }
+        : null,
+    });
+  } catch {
+    return JSON.stringify({ parseable: false, bodyLength: responseText.length });
   }
 }
 
