@@ -24,15 +24,46 @@ export const Route = createFileRoute("/api/public/telegram-health")({
 
         let botOk = false;
         let status = 0;
+        let botId: number | null = null;
         try {
           const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
           status = res.status;
           botOk = res.ok;
+          const body = (await res.json().catch(() => ({}))) as {
+            result?: { id?: number };
+          };
+          botId = body.result?.id ?? null;
         } catch {
           botOk = false;
         }
 
-        return Response.json({ hasToken, hasChatId, botOk, status });
+        // Проверяем, что chat_id указывает на реальный чат (а не на самого бота).
+        let chatType: string | null = null;
+        let chatOk = false;
+        let chatError: string | null = null;
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${token}/getChat`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId }),
+          });
+          const body = (await res.json().catch(() => ({}))) as {
+            ok?: boolean;
+            description?: string;
+            result?: { id?: number; type?: string };
+          };
+          chatOk = body.ok === true;
+          chatType = body.result?.type ?? null;
+          chatError = body.description ?? null;
+          if (chatOk && botId !== null && body.result?.id === botId) {
+            chatOk = false;
+            chatError = "chat_id указывает на самого бота";
+          }
+        } catch (error) {
+          chatError = error instanceof Error ? error.message : String(error);
+        }
+
+        return Response.json({ hasToken, hasChatId, botOk, status, chatOk, chatType, chatError });
       },
       // Проверка реальной доставки: отправляет тестовое сообщение в чат.
       POST: async () => {
