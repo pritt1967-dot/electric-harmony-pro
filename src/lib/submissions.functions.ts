@@ -29,11 +29,15 @@ export const createSubmission = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    await notifyTelegram({
+    const notify = await notifyTelegram({
       name: data.name,
       phone: data.phone,
       comment: data.comment ?? "",
     });
 
-    return { ok: true };
+    if (!notify.sent) {
+      console.error("[createSubmission] telegram not sent:", notify.reason, notify.detail ?? "");
+    }
+
+    return { ok: true, notified: notify.sent };
   });
