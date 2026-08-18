@@ -9,7 +9,7 @@ export function About({ title, text }: { title: string; text: string }) {
         <Reveal>
           <div className="overflow-hidden rounded-3xl border border-border soft-shadow">
             <img
-              src={workGrounding.url}
+              src="/about-work.jpg"
               alt="Электромонтажные работы S&M Electric на объекте"
               loading="lazy"
               className="aspect-[4/3] w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
