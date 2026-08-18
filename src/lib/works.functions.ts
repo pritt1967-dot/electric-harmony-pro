@@ -42,11 +42,16 @@ export const getWorks = createServerFn({ method: "GET" }).handler(
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("projects")
       .select(SELECT)
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
+
+    if (error) {
+      throw new Error(`Не удалось загрузить объекты: ${error.message}`);
+    }
+
 
     type Raw = Omit<WorkProject, "images"> & { project_images: WorkImage[] };
     return ((data ?? []) as unknown as Raw[]).map(({ project_images, ...p }) => ({
@@ -64,9 +69,14 @@ export const getCategoryMinPrices = createServerFn({ method: "GET" }).handler(
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("price_items")
       .select("category, name, price, unit");
+
+    if (error) {
+      throw new Error(`Не удалось загрузить цены: ${error.message}`);
+    }
+
 
     const out: Record<string, { price: number; unit: string; name: string }> = {};
     for (const row of data ?? []) {
