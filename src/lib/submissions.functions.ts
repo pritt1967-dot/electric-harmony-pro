@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { notifyTelegram } from "./submissions.server";
+import { createPublicSupabaseClient } from "@/lib/supabase-public";
 
 const submissionSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -19,17 +20,7 @@ const submissionSchema = z.object({
 export const createSubmission = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => submissionSchema.parse(data))
   .handler(async ({ data }) => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      {
-        auth: {
-          storage: undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = createPublicSupabaseClient();
 
     const { error } = await supabase.from("submissions").insert({
       name: data.name,
