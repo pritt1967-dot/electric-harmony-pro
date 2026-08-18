@@ -1,4 +1,3 @@
-import workGrounding from "@/assets/work-grounding.jpg.asset.json";
 import { Reveal } from "./Reveal";
 import { Eyebrow } from "./SectionHeading";
 import { CONTACTS } from "./contacts";
