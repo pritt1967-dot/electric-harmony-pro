@@ -4,11 +4,10 @@ import type { Database } from "@/integrations/supabase/types";
 /**
  * Публичный (anon / publishable) клиент Supabase для серверных функций.
  *
- * На некоторых хостингах (например Vercel) серверные переменные
- * SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY не заданы — там доступны только
- * VITE_* переменные, которые Vite инлайнит на этапе сборки.
- * Поэтому берём значения с фолбэком, чтобы обе среды работали с одним
- * и тем же backend-проектом.
+ * Публичные VITE_* значения — каноническая конфигурация сайта: Vite
+ * фиксирует их в production build. На Vercel одноимённые server runtime
+ * variables могут остаться от другого проекта, поэтому они используются
+ * только как fallback и не могут переопределить backend готовой сборки.
  */
 function envValue(...values: (string | undefined)[]): string | undefined {
   for (const v of values) {
@@ -21,14 +20,14 @@ export function getPublicSupabaseConfig(): { url: string; key: string } {
   const penv = typeof process !== "undefined" ? process.env : ({} as Record<string, string | undefined>);
 
   const url = envValue(
-    penv["SUPABASE_URL"],
-    penv["VITE_SUPABASE_URL"],
     import.meta.env.VITE_SUPABASE_URL as string | undefined,
+    penv["VITE_SUPABASE_URL"],
+    penv["SUPABASE_URL"],
   );
   const key = envValue(
-    penv["SUPABASE_PUBLISHABLE_KEY"],
-    penv["VITE_SUPABASE_PUBLISHABLE_KEY"],
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined,
+    penv["VITE_SUPABASE_PUBLISHABLE_KEY"],
+    penv["SUPABASE_PUBLISHABLE_KEY"],
   );
 
   if (!url || !key) {
