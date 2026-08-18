@@ -69,9 +69,14 @@ export const getCategoryMinPrices = createServerFn({ method: "GET" }).handler(
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("price_items")
       .select("category, name, price, unit");
+
+    if (error) {
+      throw new Error(`Не удалось загрузить цены: ${error.message}`);
+    }
+
 
     const out: Record<string, { price: number; unit: string; name: string }> = {};
     for (const row of data ?? []) {
