@@ -31,7 +31,7 @@ export async function notifyTelegram(submission: {
   }
 
   const lines = [
-    "🔔 <b>Новая заявка с сайта S&M electric</b>",
+    "🔔 <b>Новая заявка с сайта S&amp;M electric</b>",
     "",
     `👤 <b>Имя:</b> ${escapeHtml(submission.name)}`,
     `📞 <b>Телефон:</b> ${escapeHtml(submission.phone)}`,
@@ -73,6 +73,19 @@ export async function notifyTelegram(submission: {
 
     if (!res.ok) {
       console.error("TELEGRAM_ERROR", "api_error", { status: res.status });
+      // Фолбэк: если Telegram не смог разобрать HTML — шлём обычным текстом.
+      const plain = text.replace(/<\/?b>/g, "");
+      const retry = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        signal: AbortSignal.timeout(10000),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: plain, disable_web_page_preview: true }),
+      });
+      const retryBody = (await retry.json().catch(() => ({}))) as { ok?: boolean };
+      if (retry.ok && retryBody.ok === true) {
+        console.log("TELEGRAM_SENT", "plain_fallback");
+        return { sent: true };
+      }
       return { sent: false, reason: "api_error", detail: `${res.status}` };
     }
 
