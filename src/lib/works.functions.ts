@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { createPublicSupabaseClient } from "@/lib/supabase-public";
 
 export type WorkImage = {
   id: string;
@@ -37,11 +37,7 @@ const SELECT =
 
 export const getWorks = createServerFn({ method: "GET" }).handler(
   async (): Promise<WorkProject[]> => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+    const supabase = createPublicSupabaseClient();
     const { data, error } = await supabase
       .from("projects")
       .select(SELECT)
@@ -64,11 +60,7 @@ export const getWorks = createServerFn({ method: "GET" }).handler(
 
 export const getCategoryMinPrices = createServerFn({ method: "GET" }).handler(
   async (): Promise<Record<string, { price: number; unit: string; name: string }>> => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+    const supabase = createPublicSupabaseClient();
     const { data, error } = await supabase
       .from("price_items")
       .select("category, name, price, unit");

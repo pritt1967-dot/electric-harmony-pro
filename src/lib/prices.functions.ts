@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { createPublicSupabaseClient } from "@/lib/supabase-public";
 
 export type PublicPriceItem = {
   id: string;
@@ -30,17 +30,7 @@ export const PUBLIC_CATEGORIES = [
 
 export const getPublicPrices = createServerFn({ method: "GET" }).handler(
   async (): Promise<PublicPriceItem[]> => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      {
-        auth: {
-          storage: undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = createPublicSupabaseClient();
 
     const { data } = await supabase
       .from("price_items")

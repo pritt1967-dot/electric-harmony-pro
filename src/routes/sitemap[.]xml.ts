@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 
 import { SERVICE_PAGES } from "@/lib/services-seo";
 import { SITE_URL } from "@/lib/seo";
+import { createPublicSupabaseClient } from "@/lib/supabase-public";
 
 interface SitemapEntry {
   path: string;
@@ -27,11 +27,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         ];
 
         try {
-          const supabase = createClient(
-            process.env.SUPABASE_URL!,
-            process.env.SUPABASE_PUBLISHABLE_KEY!,
-            { auth: { persistSession: false, autoRefreshToken: false } },
-          );
+          const supabase = createPublicSupabaseClient();
           const { data } = await supabase
             .from("projects")
             .select("slug")

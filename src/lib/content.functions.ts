@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { createPublicSupabaseClient } from "@/lib/supabase-public";
 
 export type ServiceRow = {
   id: string;
@@ -80,17 +80,7 @@ const PRICE_DIRECTIONS: { key: string; title: string; category: string }[] = [
 
 export const getSiteData = createServerFn({ method: "GET" }).handler(
   async (): Promise<SiteData> => {
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      {
-        auth: {
-          storage: undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = createPublicSupabaseClient();
 
     const [services, reviews, content, projects, prices] = await Promise.all([
       supabase
