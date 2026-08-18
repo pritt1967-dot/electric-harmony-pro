@@ -12,22 +12,34 @@ export const createSubmission = createServerFn({ method: "POST" })
     let saveError: string | null = null;
 
     try {
+      console.log("SUBMISSION_DB_START");
       const supabase = createPublicSupabaseClient();
-      const { error } = await supabase.from("submissions").insert({
+      const insertPromise = supabase.from("submissions").insert({
         name: data.name,
         phone: data.phone,
         comment: data.comment ?? "",
       });
-      if (error) {
-        saveError = error.message;
-        console.error("[createSubmission] db insert failed:", error.message);
+      // Жёсткий таймаут, чтобы запись в БД не блокировала уведомление.
+      const result = await Promise.race([
+        insertPromise.then((r) => ({ timedOut: false as const, error: r.error })),
+        new Promise<{ timedOut: true }>((resolve) =>
+          setTimeout(() => resolve({ timedOut: true }), 8000),
+        ),
+      ]);
+
+      if (result.timedOut) {
+        saveError = "db_timeout";
+        console.error("SUBMISSION_DB_ERROR", "timeout_8000ms");
+      } else if (result.error) {
+        saveError = result.error.message;
+        console.error("SUBMISSION_DB_ERROR", result.error.message);
       } else {
         saved = true;
-        console.log("SUBMISSION_SAVED");
+        console.log("SUBMISSION_DB_SUCCESS");
       }
     } catch (e) {
       saveError = e instanceof Error ? e.message : String(e);
-      console.error("[createSubmission] db insert threw:", saveError);
+      console.error("SUBMISSION_DB_ERROR", saveError);
     }
 
     // Уведомление отправляется всегда, даже если запись в БД не удалась.
