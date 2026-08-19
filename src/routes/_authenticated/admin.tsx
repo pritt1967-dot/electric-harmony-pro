@@ -22,6 +22,7 @@ import { PanelDesigner } from "@/components/admin/PanelDesigner";
 import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
+import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
