@@ -133,19 +133,11 @@ def geom_paths(shape, tr, c, out):
 
 
 def shape_text(shape):
+    """Отображаемый текст фигуры: литералы + подставленные значения полей Visio."""
     t = shape.find(f'{N}Text')
     if t is None:
         return ''
-    parts = []
-    if t.text:
-        parts.append(t.text)
-    for el in t:
-        if el.tag == f'{N}fld':
-            # значение поля берём из секции Field той же фигуры
-            parts.append(field_value(shape, el.get('IX')))
-        if el.tail:
-            parts.append(el.tail)
-    return ''.join(parts).strip()
+    return ''.join(t.itertext()).strip()
 
 
 def field_value(shape, ix):
