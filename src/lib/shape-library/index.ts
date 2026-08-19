@@ -280,6 +280,14 @@ const FALLBACK: Meta = {
   nominal_current: null,
 };
 
+/** Номинал берётся ТОЛЬКО из Shape Data Visio (Prop.Nominal): «32», «25A». */
+function nominalFromVisio(shape: VisioShapeGeometry): number | null {
+  const raw = shape.visio_props["Nominal"];
+  if (!raw) return null;
+  const n = Number.parseFloat(raw.replace(",", ".").replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
 function build(shape: VisioShapeGeometry): LibraryItem {
   const meta = META[shape.slug] ?? { ...FALLBACK, model: shape.name };
   // Фигура считается готовой, если из Visio извлечена корректная векторная
@@ -287,14 +295,28 @@ function build(shape: VisioShapeGeometry): LibraryItem {
   const geometryOk = shape.paths >= 2 && shape.width_mm > 0 && shape.height_mm > 0;
   const status: LibraryStatus = geometryOk ? "ready" : "manual";
   const notes: string[] = [];
-  if (!geometryOk) notes.push("Требуется ручная конвертация: габариты Visio заданы формулой, геометрия неполная");
+  if (!geometryOk)
+    notes.push("Требуется ручная конвертация: габариты Visio заданы формулой, геометрия неполная");
   if (shape.foreign_parts > 0)
     notes.push(
-      `Внутри ${shape.foreign_parts} растровый/EMF фрагмент (логотип) — в SVG не перенесён`,
+      `Внутри ${shape.foreign_parts} фрагмент(ов) ForeignData не удалось конвертировать — отсутствует в SVG`,
     );
+  const electrical =
+    meta.equipment_type === "breaker" ||
+    meta.equipment_type === "rcd" ||
+    meta.equipment_type === "relay";
+  const nominal = nominalFromVisio(shape);
+  if (electrical && nominal === null)
+    notes.push("Номинал отсутствует в исходном Visio (нет Shape Data «Номинал»)");
+  if (electrical && shape.connection_points.length === 0)
+    notes.push("Точки подключения отсутствуют в исходном Visio Master");
   return {
     ...shape,
     ...meta,
+    nominal_current: nominal,
+    displayed_label: shape.visio_texts[0]?.split("\n")[0] ?? null,
+    curve: shape.visio_props["Curve"] ?? null,
+    article: shape.visio_props["Article"] ?? null,
     modules:
       meta.modules ??
       (shape.width_mm > MODULE_MM * 0.8 && meta.equipment_type === "breaker"
