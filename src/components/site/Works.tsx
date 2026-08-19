@@ -31,14 +31,18 @@ function BaBadge({
 function ImageCaption({
   caption,
   alt,
+  className = "",
 }: {
   caption?: string | null;
   alt?: string | null;
+  className?: string;
 }) {
   const ba = detectBeforeAfter(caption, alt);
   if (!ba) return null;
   return (
-    <figcaption className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+    <figcaption
+      className={`mt-1.5 text-center text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground ${className}`}
+    >
       {beforeAfterLabel(ba)}
     </figcaption>
   );
