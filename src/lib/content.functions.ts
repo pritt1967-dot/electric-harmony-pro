@@ -25,6 +25,7 @@ export type ProjectImage = {
   id: string;
   image_url: string;
   caption: string;
+  alt: string;
   sort_order: number;
 };
 
@@ -95,7 +96,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       supabase
         .from("projects")
         .select(
-          "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, sort_order)",
+          "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)",
         )
         .eq("is_published", true)
         .order("sort_order", { ascending: true }),
