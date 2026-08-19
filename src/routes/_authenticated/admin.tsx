@@ -20,6 +20,7 @@ import { EstimatesList } from "@/components/admin/EstimatesList";
 import { OrdersList } from "@/components/admin/OrdersList";
 import { PanelDesigner } from "@/components/admin/PanelDesigner";
 import { SchematicEditor } from "@/components/admin/SchematicEditor";
+import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
