@@ -263,9 +263,11 @@ function WorkPage() {
                     )}
                   </span>
                 )}
-                {project.images[lightbox].caption && (
-                  <figcaption className="p-3 text-center text-sm text-muted-foreground">
-                    {project.images[lightbox].caption}
+                {(project.images[lightbox].caption || project.images[lightbox].alt) && (
+                  <figcaption className="p-3 text-center text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                    {beforeAfterLabel(
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt),
+                    ) || project.images[lightbox].caption || project.images[lightbox].alt}
                   </figcaption>
                 )}
               </figure>
