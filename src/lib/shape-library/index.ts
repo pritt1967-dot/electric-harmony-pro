@@ -42,7 +42,14 @@ export type LibraryItem = VisioShapeGeometry & {
   equipment_type: EquipmentType;
   poles: number | null;
   modules: number | null;
+  /** Номинал из Shape Data Visio (Prop.Nominal). null = отсутствует в исходном Visio. */
   nominal_current: number | null;
+  /** Надпись, которую Visio показывает на фигуре (текст Master). */
+  displayed_label: string | null;
+  /** Характеристика срабатывания (Prop.Curve), если есть в Visio. */
+  curve: string | null;
+  /** Артикул (Prop.Article) из Visio. */
+  article: string | null;
   svg_asset: string;
   status: LibraryStatus;
   note: string;
@@ -50,8 +57,15 @@ export type LibraryItem = VisioShapeGeometry & {
 
 type Meta = Omit<
   LibraryItem,
-  keyof VisioShapeGeometry | "svg_asset" | "status" | "note"
-> & { note?: string; status?: LibraryStatus };
+  | keyof VisioShapeGeometry
+  | "svg_asset"
+  | "status"
+  | "note"
+  | "displayed_label"
+  | "curve"
+  | "article"
+  | "nominal_current"
+> & { note?: string; status?: LibraryStatus; nominal_current?: number | null };
 
 const MODULE_MM = 17.5;
 
@@ -266,6 +280,14 @@ const FALLBACK: Meta = {
   nominal_current: null,
 };
 
+/** Номинал берётся ТОЛЬКО из Shape Data Visio (Prop.Nominal): «32», «25A». */
+function nominalFromVisio(shape: VisioShapeGeometry): number | null {
+  const raw = shape.visio_props["Nominal"];
+  if (!raw) return null;
+  const n = Number.parseFloat(raw.replace(",", ".").replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
 function build(shape: VisioShapeGeometry): LibraryItem {
   const meta = META[shape.slug] ?? { ...FALLBACK, model: shape.name };
   // Фигура считается готовой, если из Visio извлечена корректная векторная
@@ -273,14 +295,28 @@ function build(shape: VisioShapeGeometry): LibraryItem {
   const geometryOk = shape.paths >= 2 && shape.width_mm > 0 && shape.height_mm > 0;
   const status: LibraryStatus = geometryOk ? "ready" : "manual";
   const notes: string[] = [];
-  if (!geometryOk) notes.push("Требуется ручная конвертация: габариты Visio заданы формулой, геометрия неполная");
+  if (!geometryOk)
+    notes.push("Требуется ручная конвертация: габариты Visio заданы формулой, геометрия неполная");
   if (shape.foreign_parts > 0)
     notes.push(
-      `Внутри ${shape.foreign_parts} растровый/EMF фрагмент (логотип) — в SVG не перенесён`,
+      `Внутри ${shape.foreign_parts} фрагмент(ов) ForeignData не удалось конвертировать — отсутствует в SVG`,
     );
+  const electrical =
+    meta.equipment_type === "breaker" ||
+    meta.equipment_type === "rcd" ||
+    meta.equipment_type === "relay";
+  const nominal = nominalFromVisio(shape);
+  if (electrical && nominal === null)
+    notes.push("Номинал отсутствует в исходном Visio (нет Shape Data «Номинал»)");
+  if (electrical && shape.connection_points.length === 0)
+    notes.push("Точки подключения отсутствуют в исходном Visio Master");
   return {
     ...shape,
     ...meta,
+    nominal_current: nominal,
+    displayed_label: shape.visio_texts[0]?.split("\n")[0] ?? null,
+    curve: shape.visio_props["Curve"] ?? null,
+    article: shape.visio_props["Article"] ?? null,
     modules:
       meta.modules ??
       (shape.width_mm > MODULE_MM * 0.8 && meta.equipment_type === "breaker"
@@ -298,5 +334,7 @@ export const LIBRARY_STATS = {
   total: SHAPE_LIBRARY.length,
   ready: SHAPE_LIBRARY.filter((s) => s.status === "ready").length,
   manual: SHAPE_LIBRARY.filter((s) => s.status === "manual").length,
+  connectionPoints: SHAPE_LIBRARY.reduce((a, s) => a + s.connection_points.length, 0),
+  emfParts: SHAPE_LIBRARY.reduce((a, s) => a + s.emf_vector_parts, 0),
   source: "Щит зарядки.vsdx",
 };

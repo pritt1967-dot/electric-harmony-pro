@@ -50,12 +50,16 @@ export function ShapeLibrary() {
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           Источник: {LIBRARY_STATS.source}. Графика извлечена из реальных Visio
-          Master без перерисовки. К визуализатору щита не подключена.
+          Master без перерисовки: геометрия, EMF-вставки (дисплеи, шильдики), тексты
+          Visio и точки подключения (красные метки на превью). К визуализатору
+          щита не подключена.
         </p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           <Badge variant="secondary">Всего фигур: {LIBRARY_STATS.total}</Badge>
           <Badge variant="secondary">Готовы к визуализации: {LIBRARY_STATS.ready}</Badge>
           <Badge variant="secondary">Требуют ручной конвертации: {LIBRARY_STATS.manual}</Badge>
+          <Badge variant="secondary">Точек подключения: {LIBRARY_STATS.connectionPoints}</Badge>
+          <Badge variant="secondary">EMF-вставок перенесено: {LIBRARY_STATS.emfParts}</Badge>
         </div>
       </div>
 
@@ -77,14 +81,35 @@ export function ShapeLibrary() {
               <Row label="Полюсов" value={item.poles ? String(item.poles) : "—"} />
               <Row label="Модулей" value={item.modules ? String(item.modules) : "—"} />
               <Row
-                label="Номинал"
-                value={item.nominal_current ? `${item.nominal_current} А` : "—"}
+                label="Номинал (Visio)"
+                value={
+                  item.nominal_current
+                    ? `${item.nominal_current} А`
+                    : "отсутствует в исходном Visio"
+                }
               />
+              <Row label="Надпись на фигуре" value={item.displayed_label ?? "—"} />
+              <Row label="Характеристика" value={item.curve ?? "—"} />
+              <Row label="Артикул" value={item.article ?? "—"} />
               <Row
                 label="Габарит"
                 value={`${item.width_mm} × ${item.height_mm} мм`}
               />
-              <Row label="Точек подключения" value={String(item.connection_points.length)} />
+              <Row
+                label="Точек подключения"
+                value={
+                  item.connection_points.length
+                    ? `${item.connection_points.length} (${item.connection_points
+                        .map((p) => `${p.x_mm}×${p.y_mm}`)
+                        .slice(0, 6)
+                        .join(", ")}${item.connection_points.length > 6 ? "…" : ""})`
+                    : "нет в исходном Visio"
+                }
+              />
+              <Row
+                label="Векторных вставок EMF"
+                value={item.emf_vector_parts ? String(item.emf_vector_parts) : "—"}
+              />
               <Row label="Источник Visio" value={item.source_file} />
               <div className="text-[11px] text-muted-foreground">
                 Master: {item.source_master}
