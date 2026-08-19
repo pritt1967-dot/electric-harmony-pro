@@ -6,8 +6,16 @@ import { SectionHeading } from "./SectionHeading";
 import type { ProjectRow } from "@/lib/content.functions";
 import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
 
-function BaBadge({ caption, className = "" }: { caption?: string | null; className?: string }) {
-  const ba = detectBeforeAfter(caption);
+function BaBadge({
+  caption,
+  alt,
+  className = "",
+}: {
+  caption?: string | null;
+  alt?: string | null;
+  className?: string;
+}) {
+  const ba = detectBeforeAfter(caption, alt);
   if (!ba) return null;
   return (
     <span
@@ -17,6 +25,26 @@ function BaBadge({ caption, className = "" }: { caption?: string | null; classNa
     >
       {beforeAfterLabel(ba)}
     </span>
+  );
+}
+
+function ImageCaption({
+  caption,
+  alt,
+  className = "",
+}: {
+  caption?: string | null;
+  alt?: string | null;
+  className?: string;
+}) {
+  const ba = detectBeforeAfter(caption, alt);
+  if (!ba) return null;
+  return (
+    <figcaption
+      className={`mt-1.5 text-center text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground ${className}`}
+    >
+      {beforeAfterLabel(ba)}
+    </figcaption>
   );
 }
 
@@ -116,24 +144,27 @@ function ProjectBlock({
   const flipped = !featured && index % 2 === 0;
 
   const media = cover && (
-    <button
-      type="button"
-      onClick={() => onOpen(coverIdx)}
-      className="group relative block w-full overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-      aria-label={`Открыть фото: ${project.title}`}
-    >
-      <img
-        src={cover.image_url}
-        alt={`${project.title} — электромонтажные работы`}
-        loading={featured ? "eager" : "lazy"}
-        className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
-          featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
-        }`}
-      />
-      <span className="pointer-events-none absolute left-3 top-3 border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand backdrop-blur-sm">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-    </button>
+    <figure className="w-full">
+      <button
+        type="button"
+        onClick={() => onOpen(coverIdx)}
+        className="group relative block w-full overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        aria-label={`Открыть фото: ${project.title}`}
+      >
+        <img
+          src={cover.image_url}
+          alt={cover.alt || `${project.title} — электромонтажные работы`}
+          loading={featured ? "eager" : "lazy"}
+          className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
+            featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
+          }`}
+        />
+        <span className="pointer-events-none absolute left-3 top-3 border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand backdrop-blur-sm">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      </button>
+      <ImageCaption caption={cover.caption} alt={cover.alt} />
+    </figure>
   );
 
   const body = (
@@ -182,21 +213,27 @@ function ProjectBlock({
           {rest.slice(0, featured ? 6 : 3).map((img) => {
             const realIndex = images.findIndex((x) => x.id === img.id);
             return (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() => onOpen(realIndex)}
-                className="group relative overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
-              >
-                <img
-                  src={img.image_url}
-                  alt={img.caption || `${project.title} — фото ${realIndex + 1}`}
-                  loading="lazy"
-                  className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <BaBadge caption={img.caption} className="left-2 top-2 px-2 py-0.5 text-[10px]" />
-              </button>
+              <figure key={img.id} className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => onOpen(realIndex)}
+                  className="group relative overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
+                >
+                  <img
+                    src={img.image_url}
+                    alt={img.alt || img.caption || `${project.title} — фото ${realIndex + 1}`}
+                    loading="lazy"
+                    className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <BaBadge
+                    caption={img.caption}
+                    alt={img.alt}
+                    className="left-2 top-2 px-2 py-0.5 text-[10px]"
+                  />
+                </button>
+                <ImageCaption caption={img.caption} alt={img.alt} />
+              </figure>
             );
           })}
         </div>
@@ -304,12 +341,15 @@ function Lightbox({
           touchX.current = null;
         }}
       >
-        <img
-          src={current.image_url}
-          alt={current.caption || `${project.title} — фото ${index + 1}`}
-          className="max-h-full max-w-full select-none object-contain"
-        />
-        <BaBadge caption={current.caption} className="left-4 top-4" />
+        <figure className="flex max-h-full max-w-full flex-col items-center">
+          <img
+            src={current.image_url}
+            alt={current.alt || current.caption || `${project.title} — фото ${index + 1}`}
+            className="max-h-full max-w-full select-none object-contain"
+          />
+          <ImageCaption caption={current.caption} alt={current.alt} className="text-background/80" />
+        </figure>
+        <BaBadge caption={current.caption} alt={current.alt} className="left-4 top-4" />
 
         {total > 1 && (
           <>

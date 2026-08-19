@@ -195,6 +195,9 @@ function WorkPage() {
               <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {project.images.map((img, i) => {
                   const ba = detectBeforeAfter(img.caption, img.alt);
+                  const captionText = ba
+                    ? beforeAfterLabel(ba)
+                    : img.caption || img.alt || "";
                   return (
                   <figure key={img.id} className="overflow-hidden rounded-xl border border-border bg-background">
                     <button
@@ -225,9 +228,9 @@ function WorkPage() {
                         </span>
                       )}
                     </button>
-                    {img.caption && (
-                      <figcaption className="p-3 text-sm text-muted-foreground">
-                        {img.caption}
+                    {captionText && (
+                      <figcaption className="p-3 text-center text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                        {captionText}
                       </figcaption>
                     )}
                   </figure>
@@ -260,9 +263,11 @@ function WorkPage() {
                     )}
                   </span>
                 )}
-                {project.images[lightbox].caption && (
-                  <figcaption className="p-3 text-center text-sm text-muted-foreground">
-                    {project.images[lightbox].caption}
+                {(project.images[lightbox].caption || project.images[lightbox].alt) && (
+                  <figcaption className="p-3 text-center text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                    {beforeAfterLabel(
+                      detectBeforeAfter(project.images[lightbox].caption, project.images[lightbox].alt),
+                    ) || project.images[lightbox].caption || project.images[lightbox].alt}
                   </figcaption>
                 )}
               </figure>
