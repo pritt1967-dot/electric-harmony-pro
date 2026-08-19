@@ -334,5 +334,7 @@ export const LIBRARY_STATS = {
   total: SHAPE_LIBRARY.length,
   ready: SHAPE_LIBRARY.filter((s) => s.status === "ready").length,
   manual: SHAPE_LIBRARY.filter((s) => s.status === "manual").length,
+  connectionPoints: SHAPE_LIBRARY.reduce((a, s) => a + s.connection_points.length, 0),
+  emfParts: SHAPE_LIBRARY.reduce((a, s) => a + s.emf_vector_parts, 0),
   source: "Щит зарядки.vsdx",
 };
