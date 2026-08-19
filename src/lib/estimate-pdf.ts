@@ -1,9 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import logoAsset from "@/assets/logo.png.asset.json";
-import fontRegular from "@/assets/DejaVuSans.ttf.asset.json";
-import fontBold from "@/assets/DejaVuSans-Bold.ttf.asset.json";
+import { LOGO_URL } from "./logo";
+
+const FONT_REGULAR_URL = "/fonts/DejaVuSans.ttf";
+const FONT_BOLD_URL = "/fonts/DejaVuSans-Bold.ttf";
 import { qrDataUrl } from "./estimate-qr";
 import {
   FOOTER_LINES,
@@ -39,13 +40,13 @@ let logoCache: string | null = null;
 export async function loadAssets(baseUrl?: string) {
   if (!fontCache) {
     const [regular, bold] = await Promise.all([
-      fetchBase64(fontRegular.url, baseUrl),
-      fetchBase64(fontBold.url, baseUrl),
+      fetchBase64(FONT_REGULAR_URL, baseUrl),
+      fetchBase64(FONT_BOLD_URL, baseUrl),
     ]);
     fontCache = { regular, bold };
   }
   if (!logoCache) {
-    logoCache = `data:image/png;base64,${await fetchBase64(logoAsset.url, baseUrl)}`;
+    logoCache = `data:image/png;base64,${await fetchBase64(LOGO_URL, baseUrl)}`;
   }
   return { fonts: fontCache, logo: logoCache };
 }

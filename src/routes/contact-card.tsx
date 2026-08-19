@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Phone, Mail, MapPin, Clock, Printer, Download } from "lucide-react";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { CONTACTS } from "@/components/site/contacts";
 
 export const Route = createFileRoute("/contact-card")({
@@ -58,7 +58,7 @@ function ContactCardPage() {
           <header className="flex items-center gap-5 border-b border-border bg-card px-8 py-8 print:bg-white print:px-6 print:py-4">
             <span className="grid size-28 shrink-0 place-items-center overflow-hidden rounded-2xl bg-foreground p-3 print:size-24">
               <img
-                src={logoAsset.url}
+                src={LOGO_URL}
                 alt="S&M Electric"
                 className="size-full object-contain"
               />
