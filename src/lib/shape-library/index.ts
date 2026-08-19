@@ -42,7 +42,14 @@ export type LibraryItem = VisioShapeGeometry & {
   equipment_type: EquipmentType;
   poles: number | null;
   modules: number | null;
+  /** Номинал из Shape Data Visio (Prop.Nominal). null = отсутствует в исходном Visio. */
   nominal_current: number | null;
+  /** Надпись, которую Visio показывает на фигуре (текст Master). */
+  displayed_label: string | null;
+  /** Характеристика срабатывания (Prop.Curve), если есть в Visio. */
+  curve: string | null;
+  /** Артикул (Prop.Article) из Visio. */
+  article: string | null;
   svg_asset: string;
   status: LibraryStatus;
   note: string;
@@ -50,8 +57,15 @@ export type LibraryItem = VisioShapeGeometry & {
 
 type Meta = Omit<
   LibraryItem,
-  keyof VisioShapeGeometry | "svg_asset" | "status" | "note"
-> & { note?: string; status?: LibraryStatus };
+  | keyof VisioShapeGeometry
+  | "svg_asset"
+  | "status"
+  | "note"
+  | "displayed_label"
+  | "curve"
+  | "article"
+  | "nominal_current"
+> & { note?: string; status?: LibraryStatus; nominal_current?: number | null };
 
 const MODULE_MM = 17.5;
 
