@@ -37,6 +37,7 @@ const TABS = [
   { value: "schematic", label: "Схема (Visio)" },
   { value: "shapes", label: "Библиотека фигур" },
   { value: "assembly-test", label: "Тест сборки щита" },
+  { value: "spec-test", label: "Тест сборки из спецификации" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
