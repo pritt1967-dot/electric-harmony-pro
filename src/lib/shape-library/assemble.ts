@@ -321,20 +321,49 @@ export function compareWithOriginal(a: Assembly) {
     if (Math.abs(src.w_mm - p.w) > 0.51 || Math.abs(src.h_mm - p.h) > 0.51)
       sizeDiff.push(`${p.item.model}: оригинал ${src.w_mm}×${src.h_mm} мм, сборка ${p.w}×${p.h} мм`);
   }
-  // позиции сравниваем по порядку на рейке (сборка укладывает модули вплотную)
+  // Позиции: порядок + смещение относительно левого края рейки (мм).
   const railsCount = a.rails.length;
-  for (let k = 0; k < railsCount; k++) {
-    const o = origEquip
-      .filter((i) => nearestRail(i, orig) === k)
-      .sort((x, y) => x.x_mm - y.x_mm)
-      .map((i) => i.id)
-      .join(",");
-    const s = asmEquip
-      .filter((p) => p.rail === k)
+  const gapsOf = (items: { id: string; x: number; w: number }[]) =>
+    items
+      .slice()
       .sort((x, y) => x.x - y.x)
-      .map((p) => p.instanceId)
-      .join(",");
-    if (o !== s) posDiff.push(`Рейка ${k + 1}: порядок оригинала [${o}] ≠ сборки [${s}]`);
+      .slice(1)
+      .map((it, n, arr2) => it.x - (arr2[n - 1] ?? items.slice().sort((x, y) => x.x - y.x)[n]!).x);
+  let origGaps = 0;
+  let asmGaps = 0;
+  let posExact = 0;
+  const railsOrigSrc = orig.filter((r) => r.slug === "динрейка").sort((x, y) => y.y_mm - x.y_mm);
+  for (let k = 0; k < railsCount; k++) {
+    const rs = railsOrigSrc[k];
+    const o = origEquip.filter((i) => nearestRail(i, orig) === k).sort((x, y) => x.x_mm - y.x_mm);
+    const sArr = asmEquip.filter((p) => p.rail === k).sort((x, y) => x.x - y.x);
+    if (o.map((i) => i.id).join(",") !== sArr.map((p) => p.instanceId).join(","))
+      posDiff.push(
+        `Рейка ${k + 1}: порядок оригинала [${o.map((i) => i.id).join(",")}] ≠ сборки [${sArr
+          .map((p) => p.instanceId)
+          .join(",")}]`,
+      );
+    // свободные промежутки
+    for (let n = 1; n < o.length; n++) {
+      const g = o[n]!.x_mm - (o[n - 1]!.x_mm + o[n - 1]!.w_mm);
+      if (g > 0.6) origGaps += 1;
+    }
+    for (let n = 1; n < sArr.length; n++) {
+      const g = sArr[n]!.x - (sArr[n - 1]!.x + sArr[n - 1]!.w);
+      if (g > 0.6) asmGaps += 1;
+    }
+    // смещение от левого края рейки
+    for (const p of sArr) {
+      const src = o.find((i) => i.id === p.instanceId);
+      if (!src || !rs) continue;
+      const dOrig = src.x_mm - rs.x_mm;
+      const dAsm = p.x - a.rails[k]!.x;
+      if (Math.abs(dOrig - dAsm) <= 0.51) posExact += 1;
+      else
+        posDiff.push(
+          `${p.item.model}: смещение от края рейки — оригинал ${dOrig.toFixed(1)} мм, сборка ${dAsm.toFixed(1)} мм`,
+        );
+    }
   }
 
   const missingConn = orig.reduce((s, i) => {
@@ -364,6 +393,18 @@ export function compareWithOriginal(a: Assembly) {
       original: orig.filter((i) => i.slug === "динрейка").length,
       assembled: a.rails.length,
       match: orig.filter((i) => i.slug === "динрейка").length === a.rails.length,
+    },
+    {
+      label: "Позиции аппаратов (смещение от края рейки)",
+      original: origEquip.length,
+      assembled: posExact,
+      match: posExact === origEquip.length,
+    },
+    {
+      label: "Свободные промежутки между аппаратами",
+      original: origGaps,
+      assembled: asmGaps,
+      match: origGaps === asmGaps,
     },
     {
       label: "Точки подключения",
