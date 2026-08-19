@@ -337,12 +337,15 @@ function Lightbox({
           touchX.current = null;
         }}
       >
-        <img
-          src={current.image_url}
-          alt={current.caption || `${project.title} — фото ${index + 1}`}
-          className="max-h-full max-w-full select-none object-contain"
-        />
-        <BaBadge caption={current.caption} className="left-4 top-4" />
+        <figure className="flex max-h-full max-w-full flex-col items-center">
+          <img
+            src={current.image_url}
+            alt={current.alt || current.caption || `${project.title} — фото ${index + 1}`}
+            className="max-h-full max-w-full select-none object-contain"
+          />
+          <ImageCaption caption={current.caption} alt={current.alt} />
+        </figure>
+        <BaBadge caption={current.caption} alt={current.alt} className="left-4 top-4" />
 
         {total > 1 && (
           <>
