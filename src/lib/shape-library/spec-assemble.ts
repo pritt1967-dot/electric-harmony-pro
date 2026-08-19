@@ -307,7 +307,7 @@ export function assembleFromSpec(
       modules: totalModules,
       capacity,
       free: capacity - totalModules,
-      overflow: rails.length > 1 && placed.length > 0 ? false : false,
+      overflow: totalModules > railModules,
       connectionPoints: cps,
     },
     wirePoints,
