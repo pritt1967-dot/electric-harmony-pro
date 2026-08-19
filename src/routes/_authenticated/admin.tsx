@@ -21,6 +21,7 @@ import { OrdersList } from "@/components/admin/OrdersList";
 import { PanelDesigner } from "@/components/admin/PanelDesigner";
 import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
+import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -34,6 +35,7 @@ const TABS = [
   { value: "panel", label: "Проектировщик щита" },
   { value: "schematic", label: "Схема (Visio)" },
   { value: "shapes", label: "Библиотека фигур" },
+  { value: "assembly-test", label: "Тест сборки щита" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
@@ -201,6 +203,10 @@ function AdminPage() {
               </TabsContent>
               <TabsContent value="shapes" className="mt-6">
                 <ShapeLibrary />
+              </TabsContent>
+
+              <TabsContent value="assembly-test" className="mt-6">
+                <PanelAssemblyTest />
               </TabsContent>
 
               <TabsContent value="texts" className="mt-6">
