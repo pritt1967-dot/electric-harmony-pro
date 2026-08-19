@@ -66,7 +66,7 @@ def emf_to_svg(emf_path):
     os.makedirs(EMF_DIR, exist_ok=True)
     out = os.path.join(EMF_DIR, os.path.basename(emf_path) + '.svg')
     if not os.path.exists(out):
-        subprocess.run(['libemf2svg', '-i', emf_path, '-o', out],
+        subprocess.run(['emf2svg-conv', '-i', emf_path, '-o', out],
                        check=True, capture_output=True)
     txt = open(out).read()
     m = re.search(r'<svg[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"', txt)
