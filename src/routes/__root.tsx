@@ -119,6 +119,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        // Одноразовое восстановление при устаревшем HTML/кеше:
+        // если браузер не может загрузить JS-чанк (старые хэши), перезагружаем страницу без кеша.
+        children: `(function(){try{var K='__stale_reload__';var done=sessionStorage.getItem(K)==='1';function rec(){if(done)return;done=true;try{sessionStorage.setItem(K,'1')}catch(e){}
+if(window.caches&&caches.keys){caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).catch(function(){}).then(function(){location.reload()})}else{location.reload()}}
+window.addEventListener('error',function(e){var t=e&&e.target;if(t&&(t.tagName==='SCRIPT'||t.tagName==='LINK'))rec()},true);
+window.addEventListener('unhandledrejection',function(e){var m=(e&&e.reason&&(e.reason.message||e.reason))+'';if(/dynamically imported module|Importing a module script failed|Loading chunk|error loading dynamically imported/i.test(m))rec()});
+window.addEventListener('load',function(){setTimeout(function(){try{sessionStorage.removeItem(K)}catch(e){}},5000)});}catch(e){}})();`,
+      },
+      {
+
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
