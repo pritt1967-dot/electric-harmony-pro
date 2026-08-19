@@ -111,7 +111,6 @@ export function assemblePanel(): Assembly {
     }
   }
 
-  const railBox = railItem ? svgBox(railItem) : null;
   const railW = railItem?.width_mm ?? 0;
   const railH = railItem?.height_mm ?? 0;
 
@@ -377,8 +376,8 @@ export function compareWithOriginal(a: Assembly) {
     {
       label: "Элементы всего (с рамой и маркировкой)",
       original: orig.length,
-      assembled: a.placed.length + a.rails.length,
-      match: orig.length === a.placed.length + a.rails.length,
+      assembled: a.placed.length,
+      match: orig.length === a.placed.length,
     },
   ];
 
