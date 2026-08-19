@@ -347,7 +347,7 @@ function Lightbox({
             alt={current.alt || current.caption || `${project.title} — фото ${index + 1}`}
             className="max-h-full max-w-full select-none object-contain"
           />
-          <ImageCaption caption={current.caption} alt={current.alt} />
+          <ImageCaption caption={current.caption} alt={current.alt} className="text-background/80" />
         </figure>
         <BaBadge caption={current.caption} alt={current.alt} className="left-4 top-4" />
 
