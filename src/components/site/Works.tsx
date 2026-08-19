@@ -231,7 +231,7 @@ function ProjectBlock({
                 <ImageCaption caption={img.caption} alt={img.alt} />
               </figure>
             );
-          })}</div>
+          })}
         </div>
       )}
     </div>
