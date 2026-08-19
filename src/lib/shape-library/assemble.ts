@@ -323,12 +323,6 @@ export function compareWithOriginal(a: Assembly) {
   }
   // Позиции: порядок + смещение относительно левого края рейки (мм).
   const railsCount = a.rails.length;
-  const gapsOf = (items: { id: string; x: number; w: number }[]) =>
-    items
-      .slice()
-      .sort((x, y) => x.x - y.x)
-      .slice(1)
-      .map((it, n, arr2) => it.x - (arr2[n - 1] ?? items.slice().sort((x, y) => x.x - y.x)[n]!).x);
   let origGaps = 0;
   let asmGaps = 0;
   let posExact = 0;
