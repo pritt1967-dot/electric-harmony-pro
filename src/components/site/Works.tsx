@@ -6,8 +6,16 @@ import { SectionHeading } from "./SectionHeading";
 import type { ProjectRow } from "@/lib/content.functions";
 import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
 
-function BaBadge({ caption, className = "" }: { caption?: string | null; className?: string }) {
-  const ba = detectBeforeAfter(caption);
+function BaBadge({
+  caption,
+  alt,
+  className = "",
+}: {
+  caption?: string | null;
+  alt?: string | null;
+  className?: string;
+}) {
+  const ba = detectBeforeAfter(caption, alt);
   if (!ba) return null;
   return (
     <span
@@ -17,6 +25,22 @@ function BaBadge({ caption, className = "" }: { caption?: string | null; classNa
     >
       {beforeAfterLabel(ba)}
     </span>
+  );
+}
+
+function ImageCaption({
+  caption,
+  alt,
+}: {
+  caption?: string | null;
+  alt?: string | null;
+}) {
+  const ba = detectBeforeAfter(caption, alt);
+  if (!ba) return null;
+  return (
+    <figcaption className="mt-1.5 text-center text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      {beforeAfterLabel(ba)}
+    </figcaption>
   );
 }
 
