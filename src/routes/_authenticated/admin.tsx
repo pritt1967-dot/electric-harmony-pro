@@ -199,6 +199,9 @@ function AdminPage() {
               <TabsContent value="schematic" className="mt-6">
                 <SchematicEditor />
               </TabsContent>
+              <TabsContent value="shapes" className="mt-6">
+                <ShapeLibrary />
+              </TabsContent>
 
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
