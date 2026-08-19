@@ -209,23 +209,29 @@ function ProjectBlock({
           {rest.slice(0, featured ? 6 : 3).map((img) => {
             const realIndex = images.findIndex((x) => x.id === img.id);
             return (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() => onOpen(realIndex)}
-                className="group relative overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
-              >
-                <img
-                  src={img.image_url}
-                  alt={img.caption || `${project.title} — фото ${realIndex + 1}`}
-                  loading="lazy"
-                  className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <BaBadge caption={img.caption} className="left-2 top-2 px-2 py-0.5 text-[10px]" />
-              </button>
+              <figure key={img.id} className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => onOpen(realIndex)}
+                  className="group relative overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  aria-label={`Открыть фото ${realIndex + 1} объекта ${project.title}`}
+                >
+                  <img
+                    src={img.image_url}
+                    alt={img.alt || img.caption || `${project.title} — фото ${realIndex + 1}`}
+                    loading="lazy"
+                    className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <BaBadge
+                    caption={img.caption}
+                    alt={img.alt}
+                    className="left-2 top-2 px-2 py-0.5 text-[10px]"
+                  />
+                </button>
+                <ImageCaption caption={img.caption} alt={img.alt} />
+              </figure>
             );
-          })}
+          })}</div>
         </div>
       )}
     </div>
