@@ -211,6 +211,10 @@ function AdminPage() {
                 <PanelAssemblyTest />
               </TabsContent>
 
+              <TabsContent value="spec-test" className="mt-6">
+                <SpecAssemblyTest />
+              </TabsContent>
+
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
               </TabsContent>
