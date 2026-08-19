@@ -174,7 +174,7 @@ export function assemblePanel(): Assembly {
     if (!item) continue;
     const k = railOf(mk);
     const host = placed
-      .filter((p) => p.rail === k)
+      .filter((p) => p.rail === k && ELECTRICAL.has(p.item.equipment_type))
       .map((p) => ({ p, src: instances.find((i) => i.id === p.instanceId)! }))
       .sort((a, b) => Math.abs(a.src.x_mm - mk.x_mm) - Math.abs(b.src.x_mm - mk.x_mm))[0];
     if (!host) continue;
@@ -239,9 +239,25 @@ export function assemblePanel(): Assembly {
   };
 
   const body: string[] = [];
-  if (railItem && railBox)
-    for (const r of rails) body.push(put(railItem, r.x, r.y));
   for (const p of placed) body.push(put(p.item, p.x, p.y));
+
+  // Свободные концы: в оригинале провод не привязан к точке подключения —
+  // рисуем культю реальной длины и направления из Visio, пунктиром.
+  for (let i = 0; i < wires.length; i++) {
+    const w = wires[i]!;
+    const src = ORIGINAL_PANEL.wires[i]!;
+    if (w.resolved || (!w.from && !w.to)) continue;
+    const known = (w.from ?? w.to)!;
+    const dx = src.x2_mm - src.x1_mm;
+    const dy = src.y2_mm - src.y1_mm;
+    const sign = w.from ? 1 : -1;
+    const ex = known.x + sign * dx;
+    const ey = known.y - sign * dy;
+    body.push(
+      `<path d="M ${known.x.toFixed(2)} ${known.y.toFixed(2)} L ${ex.toFixed(2)} ${ey.toFixed(2)}" ` +
+        `fill="none" stroke="#1d4ed8" stroke-width="0.5" stroke-dasharray="2 1.5" stroke-linecap="round"/>`,
+    );
+  }
 
   for (const w of wires) {
     if (!w.from || !w.to) continue;
