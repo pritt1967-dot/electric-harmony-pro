@@ -124,6 +124,23 @@ export function assemblePanel(): Assembly {
   const placed: Placed[] = [];
   const railCursor = rails.map((r) => r.x + 5);
 
+  // DIN-рейки — реальная фигура библиотеки, левая и правая точки подключения её собственные.
+  if (railItem)
+    railsSrc.forEach((src, k) => {
+      const r = rails[k]!;
+      placed.push({
+        instanceId: src.id,
+        slug: src.slug,
+        item: railItem,
+        x: r.x,
+        y: r.y,
+        w: railW,
+        h: railH,
+        rail: k,
+      });
+    });
+
+
   const ordered = [...devicesSrc].sort((a, b) => {
     const ra = railOf(a);
     const rb = railOf(b);
