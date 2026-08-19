@@ -121,7 +121,15 @@ export function assemblePanel(): Assembly {
   }));
 
   const placed: Placed[] = [];
-  const railCursor = rails.map((r) => r.x + 5);
+  /** Перенос исходных координат Visio в систему сборки (y вниз) для рейки k. */
+  const fromOriginal = (src: OriginalInstance, k: number, item: LibraryItem) => {
+    const rs = railsSrc[k]!;
+    const r = rails[k]!;
+    return {
+      x: r.x + (src.x_mm - rs.x_mm),
+      y: r.y + (rs.y_mm + railH - (src.y_mm + item.height_mm)),
+    };
+  };
 
   // DIN-рейки — реальная фигура библиотеки, левая и правая точки подключения её собственные.
   if (railItem)
@@ -152,37 +160,33 @@ export function assemblePanel(): Assembly {
     const k = railOf(d);
     const rail = rails[k];
     if (!rail) continue;
-    const x = railCursor[k]!;
-    const railCenter = rail.y + railH / 2;
+    // Позиция берётся из оригинального Visio — сохраняются свободные модули между аппаратами.
+    const pos = fromOriginal(d, k, item);
     placed.push({
       instanceId: d.id,
       slug: d.slug,
       item,
-      x,
-      y: railCenter - item.height_mm / 2,
+      x: pos.x,
+      y: pos.y,
       w: item.width_mm,
       h: item.height_mm,
       rail: k,
     });
-    railCursor[k] = x + item.width_mm;
   }
 
-  // Маркировка ставится под ближайшим по исходному X аппаратом той же рейки.
+  // Маркировка — тоже по исходным координатам Visio.
   for (const mk of markersSrc) {
     const item = BY_SLUG.get(mk.slug);
     if (!item) continue;
     const k = railOf(mk);
-    const host = placed
-      .filter((p) => p.rail === k && ELECTRICAL.has(p.item.equipment_type))
-      .map((p) => ({ p, src: instances.find((i) => i.id === p.instanceId)! }))
-      .sort((a, b) => Math.abs(a.src.x_mm - mk.x_mm) - Math.abs(b.src.x_mm - mk.x_mm))[0];
-    if (!host) continue;
+    if (!rails[k]) continue;
+    const pos = fromOriginal(mk, k, item);
     placed.push({
       instanceId: mk.id,
       slug: mk.slug,
       item,
-      x: host.p.x + host.p.w / 2 - item.width_mm / 2,
-      y: host.p.y + host.p.h + 3,
+      x: pos.x,
+      y: pos.y,
       w: item.width_mm,
       h: item.height_mm,
       rail: k,
