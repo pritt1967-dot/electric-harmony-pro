@@ -140,24 +140,27 @@ function ProjectBlock({
   const flipped = !featured && index % 2 === 0;
 
   const media = cover && (
-    <button
-      type="button"
-      onClick={() => onOpen(coverIdx)}
-      className="group relative block w-full overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-      aria-label={`Открыть фото: ${project.title}`}
-    >
-      <img
-        src={cover.image_url}
-        alt={`${project.title} — электромонтажные работы`}
-        loading={featured ? "eager" : "lazy"}
-        className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
-          featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
-        }`}
-      />
-      <span className="pointer-events-none absolute left-3 top-3 border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand backdrop-blur-sm">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-    </button>
+    <figure className="w-full">
+      <button
+        type="button"
+        onClick={() => onOpen(coverIdx)}
+        className="group relative block w-full overflow-hidden rounded-2xl border border-border soft-shadow transition-transform duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        aria-label={`Открыть фото: ${project.title}`}
+      >
+        <img
+          src={cover.image_url}
+          alt={cover.alt || `${project.title} — электромонтажные работы`}
+          loading={featured ? "eager" : "lazy"}
+          className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
+            featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
+          }`}
+        />
+        <span className="pointer-events-none absolute left-3 top-3 border border-brand/40 bg-ink/70 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-brand backdrop-blur-sm">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      </button>
+      <ImageCaption caption={cover.caption} alt={cover.alt} />
+    </figure>
   );
 
   const body = (
