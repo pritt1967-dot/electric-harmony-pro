@@ -13,7 +13,7 @@ const BY_SLUG = new Map<string, LibraryItem>(SHAPE_LIBRARY.map((s) => [s.slug, s
 
 const PX_PER_MM = 100 / 25.4; // масштаб SVG библиотеки (100 px на дюйм)
 const RAIL_GAP_MM = 60; // расстояние между DIN-рейками в сборке
-const MARGIN_MM = 20;
+const MARGIN_MM = 30;
 
 export type Placed = {
   instanceId: string;
