@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -96,7 +96,7 @@ function Consent() {
         <div className="flex items-center justify-center gap-2">
           <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-foreground">
             <img
-              src={logoAsset.url}
+              src={LOGO_URL}
               alt="S&M Electric — логотип"
               width={40}
               height={40}

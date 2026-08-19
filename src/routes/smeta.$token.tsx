@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, CreditCard, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
-import logoAsset from "@/assets/logo.png.asset.json";
+import { LOGO_URL } from "@/lib/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,7 +183,7 @@ function PublicEstimatePage() {
 
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4 sm:px-6">
-          <img src={logoAsset.url} alt="S&M Electric" className="size-10 object-contain" />
+          <img src={LOGO_URL} alt="S&M Electric" className="size-10 object-contain" />
           <div className="min-w-0">
             <p className="truncate font-extrabold">S&M Electric</p>
             <p className="truncate text-xs text-muted-foreground">
