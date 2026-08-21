@@ -22,6 +22,7 @@ import { PanelDesigner } from "@/components/admin/PanelDesigner";
 import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 import { SchematicSymbolLibrary } from "@/components/admin/SchematicSymbolLibrary";
+import { DeviceCatalog } from "@/components/admin/DeviceCatalog";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
 import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
