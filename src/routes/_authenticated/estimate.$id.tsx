@@ -132,9 +132,19 @@ function EstimateEditor() {
   useEffect(() => {
     const token = estimate?.public_token;
     if (!token) return;
+    let active = true;
     const url = estimatePublicUrl(token);
     setPublicUrl(url);
-    qrDataUrl(url, 220).then(setQr).catch(() => setQr(null));
+    qrDataUrl(url, 220)
+      .then((value) => {
+        if (active) setQr(value);
+      })
+      .catch(() => {
+        if (active) setQr(null);
+      });
+    return () => {
+      active = false;
+    };
   }, [estimate?.public_token]);
 
   const categories = useMemo(
