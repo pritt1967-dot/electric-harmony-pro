@@ -30,19 +30,25 @@ import {
 import { fetchPriceItems, type PriceRow } from "@/components/admin/PriceEditor";
 import {
   STATUS_LABEL,
+  SURCHARGE_KEYS,
+  SURCHARGE_META,
   UNITS,
   type DiscountType,
   type Estimate,
   type EstimateItem,
   type EstimateStatus,
-  discountAmount,
+  type SurchargeKey,
+  type Surcharges,
+  computeEstimateTotals,
+  defaultSurcharges,
   emptyEstimate,
-  grandTotal,
   lineTotal,
   money,
   nextNumber,
-  subtotal,
+  packItems,
+  unpackItems,
 } from "@/lib/estimates";
+import { fetchSurchargePercents } from "@/lib/surcharge-settings";
 import { downloadEstimatePdf, printEstimatePdf } from "@/lib/estimate-pdf";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimateDocx } from "@/lib/estimate-docx";
@@ -77,27 +83,34 @@ function EstimateEditor() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [items, existing, all] = await Promise.all([
+      const [items, existing, all, percents] = await Promise.all([
         fetchPriceItems(),
         id === "new"
           ? Promise.resolve(null)
           : supabase.from("estimates").select("*").eq("id", id).maybeSingle(),
         supabase.from("estimates").select("number"),
+        fetchSurchargePercents(),
       ]);
       if (!active) return;
       setPrice(items);
       if (existing?.data) {
         const d = existing.data;
+        const unpacked = unpackItems(d.items);
         setEstimate({
           ...d,
           total: Number(d.total),
           discount_value: Number(d.discount_value),
           discount_type: d.discount_type as DiscountType,
           status: d.status as EstimateStatus,
-          items: (d.items ?? []) as unknown as EstimateItem[],
+          items: unpacked.items,
+          // Уже созданная смета сохраняет свои фактические проценты.
+          surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
         } as Estimate);
       } else {
-        setEstimate(emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))));
+        setEstimate({
+          ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
+          surcharges: defaultSurcharges(percents),
+        });
       }
     })();
     return () => {
@@ -161,9 +174,27 @@ function EstimateEditor() {
     );
   }
 
-  const sub = subtotal(est.items);
-  const disc = discountAmount(est.items, est.discount_type, est.discount_value);
-  const total = grandTotal(est.items, est.discount_type, est.discount_value);
+  const totals = computeEstimateTotals(
+    est.items,
+    est.discount_type,
+    est.discount_value,
+    est.surcharges,
+  );
+  const sub = totals.subtotal;
+  const disc = totals.discount;
+  const total = totals.total;
+  const surcharges = est.surcharges ?? defaultSurcharges();
+
+  function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
+    set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
+  }
+
+  function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
+    set(
+      "items",
+      est.items.map((i) => (i.id === itemId ? { ...i, [field]: !i[field] } : i)),
+    );
+  }
 
   async function save(silent = false) {
     if (est.approved_at) {
@@ -185,7 +216,7 @@ function EstimateEditor() {
       discount_value: est.discount_value,
       status: est.status,
       total,
-      items: est.items as never,
+      items: packItems(est.items, surcharges) as never,
     };
     if (est.id) {
       const { error } = await supabase.from("estimates").update(payload).eq("id", est.id);
@@ -227,7 +258,7 @@ function EstimateEditor() {
         discount_value: est.discount_value,
         status: "draft",
         total,
-        items: est.items as never,
+        items: packItems(est.items, surcharges) as never,
       })
       .select("id")
       .single();
