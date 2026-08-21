@@ -732,7 +732,10 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
-                  const base = surchargeBase(est.items, key);
+                  // Диагностика должна показывать ту же базу, что уходит в расчёт
+                  // (позиции после внутреннего увеличения), иначе на широком
+                  // экране цифры расходились с итогом справа.
+                  const base = surchargeBase(markedUpItems, key);
                   const percent = Number(surcharges[key].percent) || 0;
                   const calcAmount = Math.round(((base * percent) / 100) * 100) / 100;
                   const flag: "at_height" | "commissioning" | null =
