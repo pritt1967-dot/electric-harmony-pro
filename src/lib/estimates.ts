@@ -197,3 +197,108 @@ export const FOOTER_LINES = [
   "Электроизмерения",
   "Гарантия на выполненные работы",
 ];
+
+/* ── Дополнительные начисления ─────────────────────────────── */
+
+const SURCHARGE_META_MARK = "__sm_surcharges__";
+
+type SurchargeMetaRecord = { id: string; __meta: string; surcharges: Surcharges };
+
+function isSurchargeMeta(row: unknown): row is SurchargeMetaRecord {
+  return (
+    !!row &&
+    typeof row === "object" &&
+    (row as { __meta?: string }).__meta === SURCHARGE_META_MARK
+  );
+}
+
+/**
+ * Сметы хранятся в существующей колонке `items` (jsonb) — новых таблиц и
+ * колонок не создаём. Настройки начислений кладём отдельной служебной
+ * записью в конец массива.
+ */
+export function packItems(items: EstimateItem[], surcharges?: Surcharges): unknown[] {
+  const clean = items.filter((i) => !isSurchargeMeta(i));
+  if (!surcharges) return clean;
+  return [
+    ...clean,
+    { id: SURCHARGE_META_MARK, __meta: SURCHARGE_META_MARK, surcharges },
+  ];
+}
+
+export function unpackItems(raw: unknown): {
+  items: EstimateItem[];
+  surcharges?: Surcharges;
+} {
+  const arr = Array.isArray(raw) ? raw : [];
+  const meta = arr.find(isSurchargeMeta);
+  const items = arr.filter((r) => !isSurchargeMeta(r)) as EstimateItem[];
+  const s = meta?.surcharges;
+  if (!s) return { items };
+  const merged = defaultSurcharges();
+  for (const key of SURCHARGE_KEYS) {
+    if (s[key]) {
+      merged[key] = {
+        enabled: Boolean(s[key].enabled),
+        percent: Number(s[key].percent) || 0,
+      };
+    }
+  }
+  return { items, surcharges: merged };
+}
+
+export type SurchargeLine = {
+  key: SurchargeKey;
+  label: string;
+  percent: number;
+  base: number;
+  amount: number;
+};
+
+export type EstimateTotals = {
+  subtotal: number;
+  discount: number;
+  surchargeLines: SurchargeLine[];
+  surchargeTotal: number;
+  total: number;
+};
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
+export function surchargeBase(items: EstimateItem[], key: SurchargeKey) {
+  if (key === "transport") return subtotal(items);
+  const flag: keyof EstimateItem = key === "height" ? "at_height" : "commissioning";
+  return round2(
+    items.filter((i) => i[flag]).reduce((s, i) => s + lineTotal(i), 0),
+  );
+}
+
+export function computeEstimateTotals(
+  items: EstimateItem[],
+  discountType: DiscountType,
+  discountValue: number,
+  surcharges?: Surcharges,
+): EstimateTotals {
+  const sub = subtotal(items);
+  const disc = discountAmount(items, discountType, discountValue);
+  const lines: SurchargeLine[] = [];
+  for (const key of SURCHARGE_KEYS) {
+    const s = surcharges?.[key];
+    if (!s?.enabled) continue;
+    const percent = Number(s.percent) || 0;
+    const base = surchargeBase(items, key);
+    const amount = round2((base * percent) / 100);
+    if (!amount) continue;
+    lines.push({ key, label: SURCHARGE_META[key].label, percent, base, amount });
+  }
+  const surchargeTotal = round2(lines.reduce((s, l) => s + l.amount, 0));
+  return {
+    subtotal: sub,
+    discount: disc,
+    surchargeLines: lines,
+    surchargeTotal,
+    total: round2(sub - disc + surchargeTotal),
+  };
+}
