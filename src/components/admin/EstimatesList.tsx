@@ -35,7 +35,12 @@ import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 import { SurchargeSettings } from "@/components/admin/SurchargeSettings";
 
-type Row = Estimate & { id: string; public_token: string };
+type Row = Estimate & {
+  id: string;
+  public_token: string;
+  /** Исходные цены до внутреннего увеличения (не колонка БД). */
+  baseItems?: EstimateItem[];
+};
 
 export async function fetchEstimates(): Promise<Row[]> {
   const { data } = await supabase
