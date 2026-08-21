@@ -2,14 +2,12 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  applyItemSurcharges,
   applyMarkup,
   computeEstimateTotals,
   defaultSurcharges,
   lineTotal,
   legacySurcharges,
   packItems,
-  selectiveSurchargeAmount,
   unpackItems,
   type EstimateItem,
 } from "./estimates";
@@ -55,46 +53,21 @@ describe("selective estimate charges", () => {
     assert.equal(reopened.surcharges?.commissioning.percent, 10);
   });
 
-  it("applies height and commissioning only to selected items", () => {
+  it("calculates transport, height, and commissioning through the same totals path", () => {
     const surcharges = defaultSurcharges({ height: 20, commissioning: 10 });
+    surcharges.transport.enabled = true;
+    surcharges.transport.percent = 5;
     surcharges.height.enabled = true;
     surcharges.commissioning.enabled = true;
-
-    const result = applyItemSurcharges(
-      [
-        item("A", 10_000, { at_height: true }),
-        item("B", 20_000),
-        item("C", 30_000, { commissioning: true }),
-      ],
-      surcharges,
-    );
-
-    assert.deepEqual(result.map(lineTotal), [12_000, 20_000, 33_000]);
-    assert.equal(computeEstimateTotals(result, "percent", 0, surcharges).total, 65_000);
-  });
-
-  it("calculates height amount directly from the existing at_height flag", () => {
-    const surcharges = defaultSurcharges({ height: 5 });
-    surcharges.height.enabled = true;
     const rows = [
-      item("height", 9_000, { at_height: true }),
-      item("regular", 20_000),
+      item("A", 10_000, { at_height: true }),
+      item("B", 20_000),
+      item("C", 30_000, { commissioning: true }),
     ];
+    const totals = computeEstimateTotals(rows, "percent", 0, surcharges);
 
-    assert.equal(selectiveSurchargeAmount(rows, "height", surcharges), 450);
-    surcharges.height.percent = 10;
-    assert.equal(selectiveSurchargeAmount(rows, "height", surcharges), 900);
-  });
-
-  it("applies both stages sequentially to one item", () => {
-    const surcharges = defaultSurcharges({ height: 20, commissioning: 10 });
-    surcharges.height.enabled = true;
-    surcharges.commissioning.enabled = true;
-    const [result] = applyItemSurcharges(
-      [item("A", 10_000, { at_height: true, commissioning: true })],
-      surcharges,
-    );
-    assert.equal(result ? lineTotal(result) : 0, 13_200);
+    assert.deepEqual(totals.surchargeLines.map((line) => line.amount), [3_000, 2_000, 3_000]);
+    assert.equal(totals.total, 68_000);
   });
 
   it("preserves flags and final prices through save and reopen", () => {
@@ -103,10 +76,9 @@ describe("selective estimate charges", () => {
     surcharges.commissioning.enabled = true;
     const base = [item("A", 5_000, { at_height: true, commissioning: true })];
     const markedUp = applyMarkup(base, { percent: 100, fixed: 0 });
-    const final = applyItemSurcharges(markedUp, surcharges);
-    const reopened = unpackItems(packItems(final, surcharges, { percent: 100, fixed: 0 }, base));
+    const reopened = unpackItems(packItems(markedUp, surcharges, { percent: 100, fixed: 0 }, base));
 
-    assert.equal(reopened.items[0]?.price, 13_200);
+    assert.equal(reopened.items[0]?.price, 10_000);
     assert.equal(reopened.baseItems[0]?.price, 5_000);
     assert.equal(reopened.baseItems[0]?.at_height, true);
     assert.equal(reopened.baseItems[0]?.commissioning, true);
@@ -116,10 +88,9 @@ describe("selective estimate charges", () => {
     const surcharges = defaultSurcharges({ height: 20 });
     surcharges.height.enabled = true;
     const base = [item("A", 10_000, { at_height: true })];
-    const final = applyItemSurcharges(base, surcharges);
-    const reopened = unpackItems(packItems(final, surcharges, undefined, base));
+    const reopened = unpackItems(packItems(base, surcharges, undefined, base));
 
-    assert.equal(reopened.items[0]?.price, 12_000);
+    assert.equal(reopened.items[0]?.price, 10_000);
     assert.equal(reopened.baseItems[0]?.price, 10_000);
     assert.equal(reopened.baseItems[0]?.at_height, true);
   });
@@ -127,12 +98,8 @@ describe("selective estimate charges", () => {
   it("keeps quantity recalculation exact and applies discount afterward", () => {
     const surcharges = defaultSurcharges({ height: 20 });
     surcharges.height.enabled = true;
-    const final = applyItemSurcharges(
-      [{ ...item("A", 1_000, { at_height: true }), qty: 3 }],
-      surcharges,
-    );
-    assert.equal(lineTotal(final[0]), 3_600);
-    assert.equal(computeEstimateTotals(final, "percent", 10, surcharges).total, 3_240);
+    const rows = [{ ...item("A", 1_000, { at_height: true }), qty: 3 }];
+    assert.equal(computeEstimateTotals(rows, "percent", 10, surcharges).total, 3_300);
   });
 });
 describe("percent settings actually change the total", () => {
@@ -140,32 +107,48 @@ describe("percent settings actually change the total", () => {
     const s = defaultSurcharges({ transport, height, commissioning: 10 });
     s.transport.enabled = true;
     s.height.enabled = true;
-    const items = applyItemSurcharges(
-      [
-        item("1", 10_000, { at_height: true }),
-        item("2", 20_000),
-        item("3", 30_000, { at_height: true }),
-      ],
-      s,
-    );
+    const items = [
+      item("1", 10_000, { at_height: true }),
+      item("2", 20_000),
+      item("3", 30_000, { at_height: true }),
+    ];
     return { items, totals: computeEstimateTotals(items, "percent", 0, s) };
   };
 
   it("transport 5% and height 20%", () => {
     const { items, totals } = build(5, 20);
-    assert.deepEqual(items.map((i) => i.price), [12_000, 20_000, 36_000]);
-    assert.equal(totals.subtotal, 68_000);
-    assert.equal(totals.surchargeLines[0]?.amount, 3_400);
-    assert.equal(totals.total, 71_400);
+    assert.deepEqual(items.map((i) => i.price), [10_000, 20_000, 30_000]);
+    assert.equal(totals.subtotal, 60_000);
+    assert.deepEqual(totals.surchargeLines.map((line) => line.amount), [3_000, 8_000]);
+    assert.equal(totals.total, 71_000);
   });
 
   it("raising transport to 10% raises the total", () => {
-    assert.equal(build(10, 20).totals.total, 74_800);
+    assert.equal(build(10, 20).totals.total, 74_000);
   });
 
   it("raising height to 30% raises works and total", () => {
     const { totals } = build(10, 30);
-    assert.equal(totals.subtotal, 72_000);
-    assert.equal(totals.total, 79_200);
+    assert.equal(totals.subtotal, 60_000);
+    assert.equal(totals.total, 78_000);
+  });
+
+  it("doubles selective amounts exactly from 5% to 10% and includes all three in total", () => {
+    const rows = [
+      item("height", 9_000, { at_height: true }),
+      item("commissioning", 15_000, { commissioning: true }),
+      item("regular", 6_000),
+    ];
+    const s = defaultSurcharges({ transport: 5, height: 5, commissioning: 5 });
+    for (const key of ["transport", "height", "commissioning"] as const) s[key].enabled = true;
+    const at5 = computeEstimateTotals(rows, "percent", 0, s);
+    assert.deepEqual(at5.surchargeLines.map((line) => line.amount), [1_500, 450, 750]);
+    assert.equal(at5.total, 32_700);
+
+    s.height.percent = 10;
+    s.commissioning.percent = 10;
+    const at10 = computeEstimateTotals(rows, "percent", 0, s);
+    assert.deepEqual(at10.surchargeLines.map((line) => line.amount), [1_500, 900, 1_500]);
+    assert.equal(at10.total, 33_900);
   });
 });
