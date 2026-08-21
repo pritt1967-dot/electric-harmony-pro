@@ -216,6 +216,11 @@ function AdminPage() {
                 <SchematicSymbolLibrary />
               </TabsContent>
 
+              <TabsContent value="device-catalog" className="mt-6">
+                <DeviceCatalog />
+              </TabsContent>
+
+
               <TabsContent value="assembly-test" className="mt-6">
                 <PanelAssemblyTest />
               </TabsContent>
