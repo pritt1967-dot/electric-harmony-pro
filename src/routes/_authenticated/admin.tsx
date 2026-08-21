@@ -23,6 +23,7 @@ import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 import { SchematicSymbolLibrary } from "@/components/admin/SchematicSymbolLibrary";
 import { DeviceCatalog } from "@/components/admin/DeviceCatalog";
+import { ModularDeviceLibrary } from "@/components/admin/ModularDeviceLibrary";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
 import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
@@ -41,6 +42,7 @@ const TABS = [
   { value: "shapes", label: "Библиотека фигур" },
   { value: "ugo-library", label: "Библиотека УГО (VSS)" },
   { value: "device-catalog", label: "Каталог оборудования" },
+  { value: "device-library", label: "Библиотека модульных устройств" },
   { value: "assembly-test", label: "Тест сборки щита" },
   { value: "spec-test", label: "Тест сборки из спецификации" },
   { value: "group-test", label: "Тест группировки щита" },
@@ -220,6 +222,12 @@ function AdminPage() {
               <TabsContent value="device-catalog" className="mt-6">
                 <DeviceCatalog />
               </TabsContent>
+
+              <TabsContent value="device-library" className="mt-6">
+                <ModularDeviceLibrary />
+              </TabsContent>
+
+
 
 
               <TabsContent value="assembly-test" className="mt-6">
