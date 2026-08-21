@@ -21,6 +21,7 @@ import { OrdersList } from "@/components/admin/OrdersList";
 import { PanelDesigner } from "@/components/admin/PanelDesigner";
 import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
+import { SchematicSymbolLibrary } from "@/components/admin/SchematicSymbolLibrary";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
 import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
@@ -37,6 +38,7 @@ const TABS = [
   { value: "panel", label: "Проектировщик щита" },
   { value: "schematic", label: "Схема (Visio)" },
   { value: "shapes", label: "Библиотека фигур" },
+  { value: "ugo-library", label: "Библиотека УГО (VSS)" },
   { value: "assembly-test", label: "Тест сборки щита" },
   { value: "spec-test", label: "Тест сборки из спецификации" },
   { value: "group-test", label: "Тест группировки щита" },
@@ -207,6 +209,10 @@ function AdminPage() {
               </TabsContent>
               <TabsContent value="shapes" className="mt-6">
                 <ShapeLibrary />
+              </TabsContent>
+
+              <TabsContent value="ugo-library" className="mt-6">
+                <SchematicSymbolLibrary />
               </TabsContent>
 
               <TabsContent value="assembly-test" className="mt-6">
