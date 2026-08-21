@@ -47,6 +47,7 @@ import {
   defaultSurcharges,
   emptyEstimate,
   lineTotal,
+  legacySurcharges,
   money,
   nextNumber,
   packItems,
@@ -111,7 +112,9 @@ function EstimateEditor() {
           items: unpacked.baseItems,
           markup: unpacked.markup,
           // Уже созданная смета сохраняет свои фактические проценты.
-          surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
+          // Старые сметы без служебных полей открываются с 0/false. Значения
+          // существуют только в памяти и не записываются без явного сохранения.
+          surcharges: unpacked.surcharges ?? legacySurcharges(),
         } as Estimate);
       } else {
         setEstimate({
@@ -129,9 +132,19 @@ function EstimateEditor() {
   useEffect(() => {
     const token = estimate?.public_token;
     if (!token) return;
+    let active = true;
     const url = estimatePublicUrl(token);
     setPublicUrl(url);
-    qrDataUrl(url, 220).then(setQr).catch(() => setQr(null));
+    qrDataUrl(url, 220)
+      .then((value) => {
+        if (active) setQr(value);
+      })
+      .catch(() => {
+        if (active) setQr(null);
+      });
+    return () => {
+      active = false;
+    };
   }, [estimate?.public_token]);
 
   const categories = useMemo(

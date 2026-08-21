@@ -7,6 +7,7 @@ import {
   computeEstimateTotals,
   defaultSurcharges,
   lineTotal,
+  legacySurcharges,
   packItems,
   unpackItems,
   type EstimateItem,
@@ -19,6 +20,40 @@ const item = (
 ): EstimateItem => ({ id, name: `Работа ${id}`, unit: "шт", qty: 1, price, ...flags });
 
 describe("selective estimate charges", () => {
+  it("opens a legacy estimate without new fields using safe in-memory defaults", () => {
+    const reopened = unpackItems([
+      { id: "old", name: "Старая работа", unit: "шт", qty: 2, price: 500 },
+    ]);
+    const surcharges = reopened.surcharges ?? legacySurcharges();
+
+    assert.equal(reopened.items[0]?.at_height, false);
+    assert.equal(reopened.items[0]?.commissioning, false);
+    assert.equal(surcharges.height.enabled, false);
+    assert.equal(surcharges.height.percent, 0);
+    assert.equal(surcharges.commissioning.enabled, false);
+    assert.equal(surcharges.commissioning.percent, 0);
+    assert.equal(computeEstimateTotals(reopened.items, "percent", 0, surcharges).total, 1_000);
+  });
+
+  it("restores new fields when they exist", () => {
+    const surcharges = defaultSurcharges({ height: 20, commissioning: 10 });
+    surcharges.height.enabled = true;
+    surcharges.commissioning.enabled = true;
+    const reopened = unpackItems(
+      packItems(
+        [item("new", 1_320, { at_height: true, commissioning: true })],
+        surcharges,
+        undefined,
+        [item("new", 1_000, { at_height: true, commissioning: true })],
+      ),
+    );
+
+    assert.equal(reopened.baseItems[0]?.at_height, true);
+    assert.equal(reopened.baseItems[0]?.commissioning, true);
+    assert.equal(reopened.surcharges?.height.percent, 20);
+    assert.equal(reopened.surcharges?.commissioning.percent, 10);
+  });
+
   it("applies height and commissioning only to selected items", () => {
     const surcharges = defaultSurcharges({ height: 20, commissioning: 10 });
     surcharges.height.enabled = true;
