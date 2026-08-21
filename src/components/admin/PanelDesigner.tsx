@@ -304,7 +304,7 @@ export function PanelDesigner() {
 
       const { data: existing } = await supabase.from("estimates").select("number");
       const number = nextNumber((existing ?? []).map((e) => e.number));
-      const base = emptyEstimate(number);
+      const { surcharges: _sc, ...base } = emptyEstimate(number);
       const { data, error } = await supabase
         .from("estimates")
         .insert({

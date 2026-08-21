@@ -24,14 +24,16 @@ import {
 import {
   STATUS_LABEL,
   type Estimate,
-  type EstimateItem,
   type EstimateStatus,
   formatDate,
   money,
   nextNumber,
+  packItems,
+  unpackItems,
 } from "@/lib/estimates";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
+import { SurchargeSettings } from "@/components/admin/SurchargeSettings";
 
 type Row = Estimate & { id: string; public_token: string };
 
@@ -46,7 +48,7 @@ export async function fetchEstimates(): Promise<Row[]> {
     discount_value: Number(r.discount_value),
     discount_type: r.discount_type as Estimate["discount_type"],
     status: r.status as EstimateStatus,
-    items: (r.items ?? []) as unknown as EstimateItem[],
+    ...unpackItems(r.items),
   })) as Row[];
 }
 
@@ -99,6 +101,7 @@ export function EstimatesList() {
       public_token: _t,
       approved_at: _a,
       approved_by_name: _n,
+      surcharges: _s,
       ...rest
     } = row;
     const { data, error } = await supabase
@@ -108,7 +111,7 @@ export function EstimatesList() {
         approved_snapshot: null,
         number,
         status: "draft",
-        items: row.items as never,
+        items: packItems(row.items, row.surcharges) as never,
       })
       .select("*")
       .single();
@@ -120,7 +123,7 @@ export function EstimatesList() {
           ...(data as unknown as Row),
           total: Number(data.total),
           discount_value: Number(data.discount_value),
-          items: (data.items ?? []) as unknown as EstimateItem[],
+          ...unpackItems(data.items),
         },
         ...r,
       ]);
@@ -164,6 +167,8 @@ export function EstimatesList() {
           <Plus className="mr-2 size-4" /> Новая смета
         </Link>
       </Button>
+
+      <SurchargeSettings />
 
       {rows.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">

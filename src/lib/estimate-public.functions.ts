@@ -3,7 +3,7 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { formatOrderNumber } from "./orders";
-import type { EstimateItem, EstimateStatus } from "./estimates";
+import { unpackItems, type EstimateItem, type EstimateStatus, type Surcharges } from "./estimates";
 
 export type PublicEstimate = {
   token: string;
@@ -20,6 +20,7 @@ export type PublicEstimate = {
   status: EstimateStatus;
   total: number;
   items: EstimateItem[];
+  surcharges?: Surcharges;
   version: number;
   approved_at: string | null;
   approved_by_name: string;
@@ -85,7 +86,7 @@ function toPublic(
     discount_value: Number(snapshot?.discount_value ?? row.discount_value),
     status: row.status as EstimateStatus,
     total: Number(snapshot?.total ?? row.total),
-    items: (snapshot?.items ?? (row.items as EstimateItem[]) ?? []) as EstimateItem[],
+    ...unpackItems(snapshot?.items ?? row.items),
     version: Number(row.version ?? 1),
     approved_at: row.approved_at,
     approved_by_name: row.approved_by_name ?? "",

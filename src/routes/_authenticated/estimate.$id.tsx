@@ -30,19 +30,25 @@ import {
 import { fetchPriceItems, type PriceRow } from "@/components/admin/PriceEditor";
 import {
   STATUS_LABEL,
+  SURCHARGE_KEYS,
+  SURCHARGE_META,
   UNITS,
   type DiscountType,
   type Estimate,
   type EstimateItem,
   type EstimateStatus,
-  discountAmount,
+  type SurchargeKey,
+  type Surcharges,
+  computeEstimateTotals,
+  defaultSurcharges,
   emptyEstimate,
-  grandTotal,
   lineTotal,
   money,
   nextNumber,
-  subtotal,
+  packItems,
+  unpackItems,
 } from "@/lib/estimates";
+import { fetchSurchargePercents } from "@/lib/surcharge-settings";
 import { downloadEstimatePdf, printEstimatePdf } from "@/lib/estimate-pdf";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimateDocx } from "@/lib/estimate-docx";
@@ -77,27 +83,34 @@ function EstimateEditor() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [items, existing, all] = await Promise.all([
+      const [items, existing, all, percents] = await Promise.all([
         fetchPriceItems(),
         id === "new"
           ? Promise.resolve(null)
           : supabase.from("estimates").select("*").eq("id", id).maybeSingle(),
         supabase.from("estimates").select("number"),
+        fetchSurchargePercents(),
       ]);
       if (!active) return;
       setPrice(items);
       if (existing?.data) {
         const d = existing.data;
+        const unpacked = unpackItems(d.items);
         setEstimate({
           ...d,
           total: Number(d.total),
           discount_value: Number(d.discount_value),
           discount_type: d.discount_type as DiscountType,
           status: d.status as EstimateStatus,
-          items: (d.items ?? []) as unknown as EstimateItem[],
+          items: unpacked.items,
+          // Уже созданная смета сохраняет свои фактические проценты.
+          surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
         } as Estimate);
       } else {
-        setEstimate(emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))));
+        setEstimate({
+          ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
+          surcharges: defaultSurcharges(percents),
+        });
       }
     })();
     return () => {
@@ -161,9 +174,27 @@ function EstimateEditor() {
     );
   }
 
-  const sub = subtotal(est.items);
-  const disc = discountAmount(est.items, est.discount_type, est.discount_value);
-  const total = grandTotal(est.items, est.discount_type, est.discount_value);
+  const totals = computeEstimateTotals(
+    est.items,
+    est.discount_type,
+    est.discount_value,
+    est.surcharges,
+  );
+  const sub = totals.subtotal;
+  const disc = totals.discount;
+  const total = totals.total;
+  const surcharges = est.surcharges ?? defaultSurcharges();
+
+  function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
+    set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
+  }
+
+  function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
+    set(
+      "items",
+      est.items.map((i) => (i.id === itemId ? { ...i, [field]: !i[field] } : i)),
+    );
+  }
 
   async function save(silent = false) {
     if (est.approved_at) {
@@ -185,7 +216,7 @@ function EstimateEditor() {
       discount_value: est.discount_value,
       status: est.status,
       total,
-      items: est.items as never,
+      items: packItems(est.items, surcharges) as never,
     };
     if (est.id) {
       const { error } = await supabase.from("estimates").update(payload).eq("id", est.id);
@@ -227,7 +258,7 @@ function EstimateEditor() {
         discount_value: est.discount_value,
         status: "draft",
         total,
-        items: est.items as never,
+        items: packItems(est.items, surcharges) as never,
       })
       .select("id")
       .single();
@@ -536,9 +567,78 @@ function EstimateEditor() {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-3 flex flex-wrap gap-4">
+                    <label className="flex cursor-pointer items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-[hsl(var(--brand))]"
+                        checked={Boolean(item.at_height)}
+                        onChange={() => toggleItemFlag(item.id, "at_height")}
+                      />
+                      Работы на высоте от 3 м
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-[hsl(var(--brand))]"
+                        checked={Boolean(item.commissioning)}
+                        onChange={() => toggleItemFlag(item.id, "commissioning")}
+                      />
+                      Требуется пусконаладка
+                    </label>
+                  </div>
                 </div>
 
               ))}
+            </div>
+
+            {/* Дополнительные расходы */}
+            <div className="mt-5 rounded-xl border border-border p-4">
+              <h3 className="font-bold">Дополнительные расходы</h3>
+              <div className="mt-3 space-y-3">
+                {SURCHARGE_KEYS.map((key) => {
+                  const line = totals.surchargeLines.find((l) => l.key === key);
+                  return (
+                    <div
+                      key={key}
+                      className="flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <label className="flex min-w-0 cursor-pointer items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-[hsl(var(--brand))]"
+                          checked={surcharges[key].enabled}
+                          onChange={(e) =>
+                            patchSurcharge(key, { enabled: e.target.checked })
+                          }
+                        />
+                        <span className="min-w-0">
+                          {SURCHARGE_META[key].label}
+                          <span className="block text-xs text-muted-foreground">
+                            {SURCHARGE_META[key].hint}
+                          </span>
+                        </span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          className="w-24"
+                          value={surcharges[key].percent}
+                          onChange={(e) =>
+                            patchSurcharge(key, { percent: Number(e.target.value) })
+                          }
+                        />
+                        <span className="text-sm text-muted-foreground">%</span>
+                        <span className="w-28 text-right text-sm font-semibold">
+                          {money(line?.amount ?? 0)} ₽
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Итоги */}
@@ -596,13 +696,21 @@ function EstimateEditor() {
               </div>
               <div className="self-start rounded-xl border border-border bg-secondary/50 p-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Итого</span>
+                  <span className="text-muted-foreground">Работы</span>
                   <span>{money(sub)} ₽</span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
                   <span className="text-muted-foreground">Скидка</span>
                   <span>− {money(disc)} ₽</span>
                 </div>
+                {totals.surchargeLines.map((line) => (
+                  <div key={line.key} className="mt-2 flex justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">
+                      {line.label} ({line.percent}%)
+                    </span>
+                    <span>{money(line.amount)} ₽</span>
+                  </div>
+                ))}
                 <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-extrabold text-brand">
                   <span>К оплате</span>
                   <span>{money(total)} ₽</span>
