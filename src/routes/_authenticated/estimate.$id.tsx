@@ -131,7 +131,7 @@ function EstimateEditor() {
       } else {
         setEstimate({
           ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
-          surcharges: defaultSurcharges(percents),
+          surcharges: activeSurcharges(percents),
           markup: emptyMarkup(),
         });
       }
