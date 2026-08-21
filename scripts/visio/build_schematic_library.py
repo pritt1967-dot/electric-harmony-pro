@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 VSS = os.environ.get("VSS_PATH", "/mnt/user-uploads/electricaldiagramTimVisio.vss")
 DOC1 = os.environ.get("DOC1_PATH", "/tmp/vss/doc1")
 TMP = "/tmp/vss/build"
+BIN = os.environ.get("LIBVISIO_BIN", "/nix/store/fmz1cmjy80xa86ln04vdmqs942vancf6-libvisio-0.1.8-bin/bin")
 MM = 25.4
 
 # ---------------------------------------------------------------- категории
@@ -52,14 +53,14 @@ def categorize(name: str) -> str:
 # ---------------------------------------------------------------- vss → svg
 def run_xhtml(path: str) -> str:
     os.makedirs(TMP, exist_ok=True)
-    out = subprocess.run(["vss2xhtml", path], capture_output=True)
+    out = subprocess.run([os.path.join(BIN, "vss2xhtml"), path], capture_output=True)
     if out.returncode != 0:
         raise SystemExit(out.stderr.decode()[:2000])
     return out.stdout.decode("utf-8", "replace")
 
 
 def run_raw_names(path: str):
-    out = subprocess.run(["vss2raw", path], capture_output=True)
+    out = subprocess.run([os.path.join(BIN, "vss2raw"), path], capture_output=True)
     txt = out.stdout.decode("utf-8", "replace")
     return re.findall(r"startPage\(draw:name: (.*?), svg:height", txt)
 
