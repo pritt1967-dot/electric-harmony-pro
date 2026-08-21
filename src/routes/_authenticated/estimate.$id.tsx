@@ -39,6 +39,9 @@ import {
   type EstimateStatus,
   type SurchargeKey,
   type Surcharges,
+  type Markup,
+  applyMarkup,
+  emptyMarkup,
   computeEstimateTotals,
   defaultSurcharges,
   emptyEstimate,
@@ -46,6 +49,7 @@ import {
   money,
   nextNumber,
   packItems,
+  subtotal,
   unpackItems,
 } from "@/lib/estimates";
 import { fetchSurchargePercents } from "@/lib/surcharge-settings";
@@ -102,7 +106,9 @@ function EstimateEditor() {
           discount_value: Number(d.discount_value),
           discount_type: d.discount_type as DiscountType,
           status: d.status as EstimateStatus,
-          items: unpacked.items,
+          // Редактор работает с исходными ценами, заказчик — с итоговыми.
+          items: unpacked.baseItems,
+          markup: unpacked.markup,
           // Уже созданная смета сохраняет свои фактические проценты.
           surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
         } as Estimate);
@@ -110,6 +116,7 @@ function EstimateEditor() {
         setEstimate({
           ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
           surcharges: defaultSurcharges(percents),
+          markup: emptyMarkup(),
         });
       }
     })();
@@ -174,8 +181,12 @@ function EstimateEditor() {
     );
   }
 
+  const markup = est.markup ?? emptyMarkup();
+  /** Итоговые позиции с уже распределённым внутренним увеличением. */
+  const finalItems = applyMarkup(est.items, markup);
+  const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
-    est.items,
+    finalItems,
     est.discount_type,
     est.discount_value,
     est.surcharges,
@@ -184,6 +195,12 @@ function EstimateEditor() {
   const disc = totals.discount;
   const total = totals.total;
   const surcharges = est.surcharges ?? defaultSurcharges();
+  /** Документы для заказчика — только итоговые цены. */
+  const exportEstimate: Estimate = { ...est, items: finalItems, total: totals.total };
+
+  function patchMarkup(patch: Partial<Markup>) {
+    set("markup", { ...markup, ...patch });
+  }
 
   function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
     set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
@@ -216,7 +233,7 @@ function EstimateEditor() {
       discount_value: est.discount_value,
       status: est.status,
       total,
-      items: packItems(est.items, surcharges) as never,
+      items: packItems(finalItems, surcharges, markup, est.items) as never,
     };
     if (est.id) {
       const { error } = await supabase.from("estimates").update(payload).eq("id", est.id);
@@ -258,7 +275,7 @@ function EstimateEditor() {
         discount_value: est.discount_value,
         status: "draft",
         total,
-        items: packItems(est.items, surcharges) as never,
+        items: packItems(finalItems, surcharges, markup, est.items) as never,
       })
       .select("id")
       .single();
@@ -323,7 +340,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo, publicUrl || undefined))}
+              onClick={() => withBusy("pdf", () => downloadEstimatePdf(exportEstimate, logo, publicUrl || undefined))}
               disabled={busy === "pdf"}
             >
               {busy === "pdf" ? (
@@ -337,7 +354,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("print", () => printEstimatePdf(est, logo, publicUrl || undefined))}
+              onClick={() => withBusy("print", () => printEstimatePdf(exportEstimate, logo, publicUrl || undefined))}
               disabled={busy === "print"}
             >
               <Printer className="mr-2 size-4" /> Печать
@@ -346,7 +363,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("docx", () => downloadEstimateDocx(est))}
+              onClick={() => withBusy("docx", () => downloadEstimateDocx(exportEstimate))}
               disabled={busy === "docx"}
             >
               <FileDown className="mr-2 size-4" /> Word
@@ -552,7 +569,7 @@ function EstimateEditor() {
                       />
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label className="text-xs">Цена, ₽</Label>
+                      <Label className="text-xs">Исходная цена, ₽</Label>
                       <Input
                         type="number"
                         min={0}
@@ -561,9 +578,16 @@ function EstimateEditor() {
                       />
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label className="text-xs">Стоимость</Label>
+                      <Label className="text-xs">Цена / стоимость</Label>
                       <div className="flex h-9 items-center justify-end overflow-hidden rounded-md bg-secondary px-3 text-sm font-semibold">
-                        {money(lineTotal(item))} ₽
+                        {money(finalPrice.get(item.id) ?? item.price)} ₽ ·{" "}
+                        {money(
+                          lineTotal({
+                            ...item,
+                            price: finalPrice.get(item.id) ?? item.price,
+                          }),
+                        )}{" "}
+                        ₽
                       </div>
                     </div>
                   </div>
@@ -590,6 +614,47 @@ function EstimateEditor() {
                 </div>
 
               ))}
+            </div>
+
+            {/* Внутреннее увеличение — заказчик его не видит */}
+            <div className="mt-5 rounded-xl border border-border p-4">
+              <h3 className="font-bold">Увеличение (только для администратора)</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Увеличение распределяется по всем позициям сметы. В документах
+                заказчика видны только итоговые цены.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Увеличение, %</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={markup.percent}
+                    onChange={(e) => patchMarkup({ percent: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Увеличение, ₽</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="1"
+                    value={markup.fixed}
+                    onChange={(e) => patchMarkup({ fixed: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Стоимость работ до увеличения
+                </span>
+                <span>{money(subtotal(est.items))} ₽</span>
+              </div>
+              <div className="mt-1 flex justify-between text-sm font-semibold">
+                <span>Стоимость работ после увеличения</span>
+                <span>{money(sub)} ₽</span>
+              </div>
             </div>
 
             {/* Дополнительные расходы */}
