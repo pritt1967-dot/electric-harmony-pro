@@ -185,6 +185,13 @@ function EstimateEditor() {
   const markup = est.markup ?? emptyMarkup();
   /** Итоговые позиции со всеми внутренними увеличениями в цене позиции. */
   const markedUpItems = applyMarkup(est.items, markup);
+  const heightOnlyItems = applyItemSurcharges(markedUpItems, {
+    ...(est.surcharges ?? defaultSurcharges()),
+    commissioning: {
+      ...(est.surcharges ?? defaultSurcharges()).commissioning,
+      enabled: false,
+    },
+  });
   const finalItems = applyItemSurcharges(markedUpItems, est.surcharges);
   const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
@@ -665,16 +672,16 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
-                  const selectiveAmount =
-                    key === "transport"
-                      ? line?.amount ?? 0
-                      : finalItems.reduce((sum, item, index) => {
-                          const before = markedUpItems[index];
-                          if (!before) return sum;
-                          const selected =
-                            key === "height" ? item.at_height : item.commissioning;
-                          return selected ? sum + lineTotal(item) - lineTotal(before) : sum;
-                        }, 0);
+                  const beforeItems = key === "commissioning" ? heightOnlyItems : markedUpItems;
+                  const afterItems = key === "height" ? heightOnlyItems : finalItems;
+                  const selectiveAmount = key === "transport"
+                    ? line?.amount ?? 0
+                    : afterItems.reduce((sum, item, index) => {
+                        const before = beforeItems[index];
+                        if (!before) return sum;
+                        const selected = key === "height" ? item.at_height : item.commissioning;
+                        return selected ? sum + lineTotal(item) - lineTotal(before) : sum;
+                      }, 0);
                   return (
                     <div
                       key={key}
