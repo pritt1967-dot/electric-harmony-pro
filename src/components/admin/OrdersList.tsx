@@ -86,7 +86,7 @@ export function OrdersList() {
           ...r,
           total: Number(r.total),
           paid_amount: Number((r as { paid_amount?: number }).paid_amount ?? 0),
-          items: (r.items ?? []) as unknown as EstimateItem[],
+          items: unpackItems(r.items).items,
         })) as unknown as OrderRow[],
       );
       setEvents((log.data ?? []) as unknown as EventRow[]);

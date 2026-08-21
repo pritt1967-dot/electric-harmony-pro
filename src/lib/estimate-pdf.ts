@@ -10,7 +10,6 @@ import {
   FOOTER_LINES,
   type Estimate,
   computeEstimateTotals,
-  discountAmount,
   formatDate,
   lineTotal,
   money,
