@@ -5,11 +5,72 @@ export type EstimateItem = {
   qty: number;
   price: number;
   comment?: string;
+  /** Работа выполняется на высоте от 3 м */
+  at_height?: boolean;
+  /** Позиция требует пусконаладочных работ */
+  commissioning?: boolean;
 };
 
 export type DiscountType = "percent" | "fixed";
 
 export type EstimateStatus = "draft" | "sent" | "approved" | "done";
+
+/** Дополнительные начисления в процентах. */
+export type SurchargeKey = "transport" | "height" | "commissioning";
+
+export type SurchargeState = { enabled: boolean; percent: number };
+
+export type Surcharges = Record<SurchargeKey, SurchargeState>;
+
+export const SURCHARGE_KEYS: SurchargeKey[] = [
+  "transport",
+  "height",
+  "commissioning",
+];
+
+export const SURCHARGE_META: Record<
+  SurchargeKey,
+  { label: string; hint: string; settingKey: string; defaultPercent: number }
+> = {
+  transport: {
+    label: "Транспортные расходы",
+    hint: "Процент от общей стоимости работ",
+    settingKey: "surcharge_transport_percent",
+    defaultPercent: 5,
+  },
+  height: {
+    label: "Работы на высоте от 3 м",
+    hint: "Процент от позиций, отмеченных как высотные",
+    settingKey: "surcharge_height_percent",
+    defaultPercent: 20,
+  },
+  commissioning: {
+    label: "Пусконаладочные работы",
+    hint: "Процент от позиций, требующих пусконаладки",
+    settingKey: "surcharge_commissioning_percent",
+    defaultPercent: 10,
+  },
+};
+
+export function defaultSurcharges(
+  percents?: Partial<Record<SurchargeKey, number>>,
+): Surcharges {
+  return {
+    transport: {
+      enabled: false,
+      percent: percents?.transport ?? SURCHARGE_META.transport.defaultPercent,
+    },
+    height: {
+      enabled: false,
+      percent: percents?.height ?? SURCHARGE_META.height.defaultPercent,
+    },
+    commissioning: {
+      enabled: false,
+      percent:
+        percents?.commissioning ?? SURCHARGE_META.commissioning.defaultPercent,
+    },
+  };
+}
 
 export type Estimate = {
   id?: string;
@@ -28,6 +89,8 @@ export type Estimate = {
   status: EstimateStatus;
   total: number;
   items: EstimateItem[];
+  /** Фактические проценты и флаги, зафиксированные в момент создания сметы. */
+  surcharges?: Surcharges;
   version?: number;
   public_token?: string;
   approved_at?: string | null;
@@ -43,6 +106,7 @@ export const STATUS_LABEL: Record<EstimateStatus, string> = {
 
 
 export const UNITS = ["шт", "м", "м²", "компл", "точка", "линия", "изм", "усл", "ч"];
+
 
 export function lineTotal(item: EstimateItem) {
   return Math.round(item.qty * item.price * 100) / 100;
