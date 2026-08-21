@@ -244,8 +244,13 @@ function EstimateEditor() {
   }
 
   function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
-    set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
+    const next = { ...surcharges[key], ...patch };
+    // Ввод процента > 0 сразу включает начисление: раньше в ранее сохранённых
+    // сметах (выключено/0%) процент отображался, но в расчёт не попадал.
+    if (patch.percent !== undefined && patch.percent > 0) next.enabled = true;
+    set("surcharges", { ...surcharges, [key]: next });
   }
+
 
   function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
     const nextItems = est.items.map((i) =>
@@ -724,21 +729,24 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
-                  const beforeItems = key === "commissioning" ? heightOnlyItems : markedUpItems;
-                  const afterItems = key === "height" ? heightOnlyItems : finalItems;
-                  const selectiveAmount = key === "transport"
-                    ? line?.amount ?? 0
-                    : afterItems.reduce((sum, item, index) => {
-                        const before = beforeItems[index];
-                        if (!before) return sum;
-                        const selected = key === "height" ? item.at_height : item.commissioning;
-                        return selected ? sum + lineTotal(item) - lineTotal(before) : sum;
-                      }, 0);
+                  const selectiveAmount = (() => {
+                    if (key === "transport") return line?.amount ?? 0;
+                    const s = surcharges[key];
+                    const percent = Number(s.percent) || 0;
+                    if (!s.enabled || !percent) return 0;
+                    // База — стоимость позиций с соответствующим признаком
+                    // (высота — до ПНР, ПНР — после высоты).
+                    const base = (key === "height" ? markedUpItems : heightOnlyItems)
+                      .filter((i) => (key === "height" ? i.at_height : i.commissioning))
+                      .reduce((sum, i) => sum + lineTotal(i), 0);
+                    return Math.round(((base * percent) / 100) * 100) / 100;
+                  })();
                   return (
                     <div
                       key={key}
                       className="flex flex-wrap items-center justify-between gap-3"
                     >
+
                       <label className="flex min-w-0 cursor-pointer items-center gap-2 text-sm">
                         <input
                           type="checkbox"
