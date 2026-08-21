@@ -202,7 +202,20 @@ export const FOOTER_LINES = [
 
 const SURCHARGE_META_MARK = "__sm_surcharges__";
 
-type SurchargeMetaRecord = { id: string; __meta: string; surcharges: Surcharges };
+/** Внутреннее увеличение цен (видит только администратор). */
+export type Markup = { percent: number; fixed: number };
+
+export function emptyMarkup(): Markup {
+  return { percent: 0, fixed: 0 };
+}
+
+type SurchargeMetaRecord = {
+  id: string;
+  __meta: string;
+  surcharges?: Surcharges;
+  markup?: Markup;
+  base?: { id: string; price: number }[];
+};
 
 function isSurchargeMeta(row: unknown): row is SurchargeMetaRecord {
   return (
@@ -217,24 +230,54 @@ function isSurchargeMeta(row: unknown): row is SurchargeMetaRecord {
  * колонок не создаём. Настройки начислений кладём отдельной служебной
  * записью в конец массива.
  */
-export function packItems(items: EstimateItem[], surcharges?: Surcharges): unknown[] {
+export function packItems(
+  items: EstimateItem[],
+  surcharges?: Surcharges,
+  markup?: Markup,
+  baseItems?: EstimateItem[],
+): unknown[] {
   const clean = items.filter((i) => !isSurchargeMeta(i));
-  if (!surcharges) return clean;
+  const hasMarkup = Boolean(markup && (markup.percent || markup.fixed));
+  if (!surcharges && !hasMarkup) return clean;
   return [
     ...clean,
-    { id: SURCHARGE_META_MARK, __meta: SURCHARGE_META_MARK, surcharges },
+    {
+      id: SURCHARGE_META_MARK,
+      __meta: SURCHARGE_META_MARK,
+      ...(surcharges ? { surcharges } : {}),
+      ...(hasMarkup ? { markup } : {}),
+      ...(hasMarkup && baseItems
+        ? { base: baseItems.map((i) => ({ id: i.id, price: i.price })) }
+        : {}),
+    },
   ];
 }
 
 export function unpackItems(raw: unknown): {
+  /** Итоговые цены — именно их видит заказчик. */
   items: EstimateItem[];
   surcharges?: Surcharges;
+  markup: Markup;
+  /** Цены до внутреннего увеличения (для редактора). */
+  baseItems: EstimateItem[];
 } {
   const arr = Array.isArray(raw) ? raw : [];
   const meta = arr.find(isSurchargeMeta);
   const items = arr.filter((r) => !isSurchargeMeta(r)) as EstimateItem[];
+
+  const markup: Markup = {
+    percent: Number(meta?.markup?.percent) || 0,
+    fixed: Number(meta?.markup?.fixed) || 0,
+  };
+  const baseMap = new Map(
+    (meta?.base ?? []).map((b) => [b.id, Number(b.price) || 0] as const),
+  );
+  const baseItems = items.map((i) =>
+    baseMap.has(i.id) ? { ...i, price: baseMap.get(i.id)! } : { ...i },
+  );
+
   const s = meta?.surcharges;
-  if (!s) return { items };
+  if (!s) return { items, markup, baseItems };
   const merged = defaultSurcharges();
   for (const key of SURCHARGE_KEYS) {
     if (s[key]) {
@@ -244,7 +287,57 @@ export function unpackItems(raw: unknown): {
       };
     }
   }
-  return { items, surcharges: merged };
+  return { items, surcharges: merged, markup, baseItems };
+}
+
+/**
+ * Применяет внутреннее увеличение к позициям: сначала процент к цене каждой
+ * позиции, затем фиксированная сумма — пропорционально уже увеличенным
+ * стоимостям. Остаток округления добавляется к самой крупной позиции, чтобы
+ * сумма позиций точно совпадала с итогом.
+ */
+export function applyMarkup(items: EstimateItem[], markup?: Markup): EstimateItem[] {
+  const percent = Number(markup?.percent) || 0;
+  const fixed = Number(markup?.fixed) || 0;
+  if (!percent && !fixed) return items;
+
+  const stage1 = items.map((i) => ({
+    ...i,
+    price: Math.round(i.price * (1 + percent / 100) * 100) / 100,
+  }));
+  if (!fixed) return stage1;
+
+  const sum1 = subtotal(stage1);
+  if (sum1 <= 0) return stage1;
+
+  const k = (sum1 + fixed) / sum1;
+  const scaled = stage1.map((i) => ({
+    ...i,
+    price: Math.round(i.price * k * 100) / 100,
+  }));
+
+  const target = round2(sum1 + fixed);
+  const delta = round2(target - subtotal(scaled));
+  if (delta) {
+    let idx = -1;
+    let max = 0;
+    scaled.forEach((i, n) => {
+      const t = lineTotal(i);
+      if (t > max && i.qty) {
+        max = t;
+        idx = n;
+      }
+    });
+    if (idx >= 0) {
+      const item = scaled[idx]!;
+      const lineTarget = round2(lineTotal(item) + delta);
+      scaled[idx] = {
+        ...item,
+        price: Math.round((lineTarget / item.qty) * 1e6) / 1e6,
+      };
+    }
+  }
+  return scaled;
 }
 
 export type SurchargeLine = {
