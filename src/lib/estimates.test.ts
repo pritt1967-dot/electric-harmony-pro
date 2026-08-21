@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 
 import {
   applyItemSurcharges,
@@ -32,8 +33,8 @@ describe("selective estimate charges", () => {
       surcharges,
     );
 
-    expect(result.map(lineTotal)).toEqual([12_000, 20_000, 33_000]);
-    expect(computeEstimateTotals(result, "percent", 0, surcharges).total).toBe(65_000);
+    assert.deepEqual(result.map(lineTotal), [12_000, 20_000, 33_000]);
+    assert.equal(computeEstimateTotals(result, "percent", 0, surcharges).total, 65_000);
   });
 
   it("applies both stages sequentially to one item", () => {
@@ -44,7 +45,7 @@ describe("selective estimate charges", () => {
       [item("A", 10_000, { at_height: true, commissioning: true })],
       surcharges,
     );
-    expect(result ? lineTotal(result) : 0).toBe(13_200);
+    assert.equal(result ? lineTotal(result) : 0, 13_200);
   });
 
   it("preserves flags and final prices through save and reopen", () => {
@@ -56,10 +57,10 @@ describe("selective estimate charges", () => {
     const final = applyItemSurcharges(markedUp, surcharges);
     const reopened = unpackItems(packItems(final, surcharges, { percent: 100, fixed: 0 }, base));
 
-    expect(reopened.items[0]?.price).toBe(13_200);
-    expect(reopened.baseItems[0]?.price).toBe(5_000);
-    expect(reopened.baseItems[0]?.at_height).toBe(true);
-    expect(reopened.baseItems[0]?.commissioning).toBe(true);
+    assert.equal(reopened.items[0]?.price, 13_200);
+    assert.equal(reopened.baseItems[0]?.price, 5_000);
+    assert.equal(reopened.baseItems[0]?.at_height, true);
+    assert.equal(reopened.baseItems[0]?.commissioning, true);
   });
 
   it("preserves original prices on reopen even without general markup", () => {
@@ -69,9 +70,9 @@ describe("selective estimate charges", () => {
     const final = applyItemSurcharges(base, surcharges);
     const reopened = unpackItems(packItems(final, surcharges, undefined, base));
 
-    expect(reopened.items[0]?.price).toBe(12_000);
-    expect(reopened.baseItems[0]?.price).toBe(10_000);
-    expect(reopened.baseItems[0]?.at_height).toBe(true);
+    assert.equal(reopened.items[0]?.price, 12_000);
+    assert.equal(reopened.baseItems[0]?.price, 10_000);
+    assert.equal(reopened.baseItems[0]?.at_height, true);
   });
 
   it("keeps quantity recalculation exact and applies discount afterward", () => {
@@ -81,7 +82,7 @@ describe("selective estimate charges", () => {
       [{ ...item("A", 1_000, { at_height: true }), qty: 3 }],
       surcharges,
     );
-    expect(lineTotal(final[0])).toBe(3_600);
-    expect(computeEstimateTotals(final, "percent", 10, surcharges).total).toBe(3_240);
+    assert.equal(lineTotal(final[0]), 3_600);
+    assert.equal(computeEstimateTotals(final, "percent", 10, surcharges).total, 3_240);
   });
 });
