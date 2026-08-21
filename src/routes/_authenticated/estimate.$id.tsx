@@ -93,6 +93,11 @@ function EstimateEditor() {
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [qr, setQr] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState("");
+  /** Проценты из настроек — нужны, чтобы галочка позиции реально работала. */
+  const [settingPercents, setSettingPercents] = useState<Record<SurchargeKey, number> | null>(
+    null,
+  );
+
 
   useEffect(() => {
     setLogo(localStorage.getItem(LOGO_KEY) ?? undefined);
@@ -111,6 +116,8 @@ function EstimateEditor() {
       ]);
       if (!active) return;
       setPrice(items);
+      setSettingPercents(percents);
+
       if (existing?.data) {
         const d = existing.data;
         const unpacked = unpackItems(d.items);
@@ -241,11 +248,31 @@ function EstimateEditor() {
   }
 
   function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
-    set(
-      "items",
-      est.items.map((i) => (i.id === itemId ? { ...i, [field]: !i[field] } : i)),
+    const nextItems = est.items.map((i) =>
+      i.id === itemId ? { ...i, [field]: !i[field] } : i,
+    );
+    const key: SurchargeKey = field === "at_height" ? "height" : "commissioning";
+    const turnedOn = nextItems.some((i) => i.id === itemId && i[field]);
+    const current = surcharges[key];
+    // Старые сметы открываются с 0%/выключено — тогда галочка позиции не
+    // влияла на цену. Включаем начисление с процентом из настроек.
+    const needsActivation = turnedOn && (!current.enabled || !current.percent);
+    const percent = current.percent ||
+      settingPercents?.[key] ||
+      SURCHARGE_META[key].defaultPercent;
+    setEstimate((e) =>
+      e
+        ? {
+            ...e,
+            items: nextItems,
+            surcharges: needsActivation
+              ? { ...surcharges, [key]: { enabled: true, percent } }
+              : e.surcharges,
+          }
+        : e,
     );
   }
+
 
   async function save(silent = false) {
     if (est.approved_at) {
