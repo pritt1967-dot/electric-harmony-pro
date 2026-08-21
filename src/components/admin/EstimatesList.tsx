@@ -25,6 +25,7 @@ import {
   STATUS_LABEL,
   type Estimate,
   type EstimateStatus,
+  type EstimateItem,
   formatDate,
   money,
   nextNumber,
