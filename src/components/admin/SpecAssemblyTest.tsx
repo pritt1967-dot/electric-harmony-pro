@@ -8,11 +8,16 @@ import {
   assembleFromSpec,
   compareSpecWithOriginal,
   CHARGING_PANEL_SPEC,
+  UNIFIED_DEMO_SPEC,
   modulesOf,
   type SpecRow,
   type SpecWire,
 } from "@/lib/shape-library/spec-assemble";
+import { buildUnifiedProject, modelWires } from "@/lib/shape-library/unified-model";
+import { buildSingleLine } from "@/lib/shape-library/single-line-build";
+import { compareWithDoc1, verifyProject } from "@/lib/shape-library/verify";
 import { EQUIPMENT_TYPE_LABEL, type EquipmentType } from "@/lib/shape-library";
+
 
 const TYPES: (EquipmentType | "")[] = ["", "breaker", "rcd", "relay", "contactor", "terminal"];
 
