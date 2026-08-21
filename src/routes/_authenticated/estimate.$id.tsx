@@ -244,8 +244,13 @@ function EstimateEditor() {
   }
 
   function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
-    set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
+    const next = { ...surcharges[key], ...patch };
+    // Ввод процента > 0 сразу включает начисление: раньше в ранее сохранённых
+    // сметах (выключено/0%) процент отображался, но в расчёт не попадал.
+    if (patch.percent !== undefined && patch.percent > 0) next.enabled = true;
+    set("surcharges", { ...surcharges, [key]: next });
   }
+
 
   function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
     const nextItems = est.items.map((i) =>
