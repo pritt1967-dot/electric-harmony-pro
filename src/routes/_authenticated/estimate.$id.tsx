@@ -39,6 +39,9 @@ import {
   type EstimateStatus,
   type SurchargeKey,
   type Surcharges,
+  type Markup,
+  applyMarkup,
+  emptyMarkup,
   computeEstimateTotals,
   defaultSurcharges,
   emptyEstimate,
@@ -102,7 +105,9 @@ function EstimateEditor() {
           discount_value: Number(d.discount_value),
           discount_type: d.discount_type as DiscountType,
           status: d.status as EstimateStatus,
-          items: unpacked.items,
+          // Редактор работает с исходными ценами, заказчик — с итоговыми.
+          items: unpacked.baseItems,
+          markup: unpacked.markup,
           // Уже созданная смета сохраняет свои фактические проценты.
           surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
         } as Estimate);
@@ -110,6 +115,7 @@ function EstimateEditor() {
         setEstimate({
           ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
           surcharges: defaultSurcharges(percents),
+          markup: emptyMarkup(),
         });
       }
     })();
@@ -174,8 +180,12 @@ function EstimateEditor() {
     );
   }
 
+  const markup = est.markup ?? emptyMarkup();
+  /** Итоговые позиции с уже распределённым внутренним увеличением. */
+  const finalItems = applyMarkup(est.items, markup);
+  const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
-    est.items,
+    finalItems,
     est.discount_type,
     est.discount_value,
     est.surcharges,
@@ -184,6 +194,12 @@ function EstimateEditor() {
   const disc = totals.discount;
   const total = totals.total;
   const surcharges = est.surcharges ?? defaultSurcharges();
+  /** Документы для заказчика — только итоговые цены. */
+  const exportEstimate: Estimate = { ...est, items: finalItems, total: totals.total };
+
+  function patchMarkup(patch: Partial<Markup>) {
+    set("markup", { ...markup, ...patch });
+  }
 
   function patchSurcharge(key: SurchargeKey, patch: Partial<Surcharges[SurchargeKey]>) {
     set("surcharges", { ...surcharges, [key]: { ...surcharges[key], ...patch } });
@@ -216,7 +232,7 @@ function EstimateEditor() {
       discount_value: est.discount_value,
       status: est.status,
       total,
-      items: packItems(est.items, surcharges) as never,
+      items: packItems(finalItems, surcharges, markup, est.items) as never,
     };
     if (est.id) {
       const { error } = await supabase.from("estimates").update(payload).eq("id", est.id);
@@ -258,7 +274,7 @@ function EstimateEditor() {
         discount_value: est.discount_value,
         status: "draft",
         total,
-        items: packItems(est.items, surcharges) as never,
+        items: packItems(finalItems, surcharges, markup, est.items) as never,
       })
       .select("id")
       .single();
@@ -323,7 +339,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("pdf", () => downloadEstimatePdf(est, logo, publicUrl || undefined))}
+              onClick={() => withBusy("pdf", () => downloadEstimatePdf(exportEstimate, logo, publicUrl || undefined))}
               disabled={busy === "pdf"}
             >
               {busy === "pdf" ? (
@@ -337,7 +353,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("print", () => printEstimatePdf(est, logo, publicUrl || undefined))}
+              onClick={() => withBusy("print", () => printEstimatePdf(exportEstimate, logo, publicUrl || undefined))}
               disabled={busy === "print"}
             >
               <Printer className="mr-2 size-4" /> Печать
@@ -346,7 +362,7 @@ function EstimateEditor() {
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => withBusy("docx", () => downloadEstimateDocx(est))}
+              onClick={() => withBusy("docx", () => downloadEstimateDocx(exportEstimate))}
               disabled={busy === "docx"}
             >
               <FileDown className="mr-2 size-4" /> Word

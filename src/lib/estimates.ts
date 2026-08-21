@@ -91,6 +91,8 @@ export type Estimate = {
   items: EstimateItem[];
   /** Фактические проценты и флаги, зафиксированные в момент создания сметы. */
   surcharges?: Surcharges;
+  /** Внутреннее увеличение — только для администратора. */
+  markup?: Markup;
   version?: number;
   public_token?: string;
   approved_at?: string | null;
