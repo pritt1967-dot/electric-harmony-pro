@@ -121,3 +121,37 @@ describe("selective estimate charges", () => {
     assert.equal(computeEstimateTotals(final, "percent", 10, surcharges).total, 3_240);
   });
 });
+describe("percent settings actually change the total", () => {
+  const build = (transport: number, height: number) => {
+    const s = defaultSurcharges({ transport, height, commissioning: 10 });
+    s.transport.enabled = true;
+    s.height.enabled = true;
+    const items = applyItemSurcharges(
+      [
+        item("1", 10_000, { at_height: true }),
+        item("2", 20_000),
+        item("3", 30_000, { at_height: true }),
+      ],
+      s,
+    );
+    return { items, totals: computeEstimateTotals(items, "percent", 0, s) };
+  };
+
+  it("transport 5% and height 20%", () => {
+    const { items, totals } = build(5, 20);
+    assert.deepEqual(items.map((i) => i.price), [12_000, 20_000, 36_000]);
+    assert.equal(totals.subtotal, 68_000);
+    assert.equal(totals.surchargeLines[0]?.amount, 3_400);
+    assert.equal(totals.total, 71_400);
+  });
+
+  it("raising transport to 10% raises the total", () => {
+    assert.equal(build(10, 20).totals.total, 74_800);
+  });
+
+  it("raising height to 30% raises works and total", () => {
+    const { totals } = build(10, 30);
+    assert.equal(totals.subtotal, 72_000);
+    assert.equal(totals.total, 79_200);
+  });
+});

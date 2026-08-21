@@ -69,6 +69,18 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/**
+ * Новая смета сразу применяет проценты из настроек: иначе администратор видит
+ * проценты, но они не участвуют в расчёте. Высота и пусконаладка влияют только
+ * на отмеченные позиции, поэтому включение по умолчанию безопасно.
+ */
+function activeSurcharges(percents: Record<SurchargeKey, number>): Surcharges {
+  const base = defaultSurcharges(percents);
+  for (const key of SURCHARGE_KEYS) base[key].enabled = true;
+  return base;
+}
+
+
 function EstimateEditor() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -119,7 +131,7 @@ function EstimateEditor() {
       } else {
         setEstimate({
           ...emptyEstimate(nextNumber((all.data ?? []).map((r) => r.number))),
-          surcharges: defaultSurcharges(percents),
+          surcharges: activeSurcharges(percents),
           markup: emptyMarkup(),
         });
       }
