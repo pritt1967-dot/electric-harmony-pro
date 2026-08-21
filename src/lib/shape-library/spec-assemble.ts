@@ -14,6 +14,15 @@ const PX_PER_MM = 100 / 25.4;
 const MARGIN_MM = 20;
 const RAIL_GAP_MM = 60;
 
+/** Роль аппарата в логической структуре щита (для однолинейной схемы). */
+export type SpecRole =
+  | "input-switch"
+  | "meter"
+  | "input-rcbo"
+  | "main-breaker"
+  | "feeder"
+  | "feeder-rcbo";
+
 export type SpecRow = {
   id: string;
   manufacturer: string;
@@ -23,7 +32,22 @@ export type SpecRow = {
   poles: number | null;
   nominal: number | null;
   qty: number;
+  /** --- поля единой модели (используются однолинейной схемой) --- */
+  role?: SpecRole;
+  /** Марка аппарата для подписи (ВА47-29, АД12, ВН32…). */
+  mark?: string;
+  /** Номинал так, как он подписывается на схеме (C16, 63А…). */
+  nominalText?: string;
+  /** Уставка дифзащиты (30mA, 100мА). */
+  leakage?: string;
+  /** Кабель отходящей линии (ВВГнг(А)-LS 3х2,5). */
+  cable?: string;
+  /** Наименование электроприёмника. */
+  load?: string;
+  /** Фаза линии: L1 / L2 / L3 / L1,L2,L3. */
+  phase?: string;
 };
+
 
 export type SpecMatch = {
   row: SpecRow;
@@ -377,6 +401,125 @@ export const CHARGING_PANEL_SPEC: SpecRow[] = [
     qty: 1,
   },
 ];
+
+/**
+ * Демо-спецификация для сквозного теста
+ * СПЕЦИФИКАЦИЯ → ЛОГИКА → ОДНОЛИНЕЙНАЯ СХЕМА → РАСКЛАДКА ЩИТА.
+ * Используются только фигуры, реально существующие в библиотеке.
+ */
+export const UNIFIED_DEMO_SPEC: SpecRow[] = [
+  {
+    id: "u1",
+    manufacturer: "IEK",
+    series: "ВА47-29 KARAT",
+    model: "ВА47-29 3P",
+    equipment_type: "breaker",
+    poles: 3,
+    nominal: 32,
+    qty: 1,
+    role: "main-breaker",
+    mark: "ВА47-29",
+    nominalText: "С32",
+    phase: "L1,L2,L3",
+  },
+  {
+    id: "u2",
+    manufacturer: "DigiTop",
+    series: "VP",
+    model: "VP-3F 63A",
+    equipment_type: "relay",
+    poles: 3,
+    nominal: 63,
+    qty: 1,
+    role: "input-rcbo",
+    mark: "VP-3F",
+    nominalText: "63А",
+    phase: "L1,L2,L3",
+  },
+  {
+    id: "u3",
+    manufacturer: "EKF",
+    series: "PROxima",
+    model: "КБР-80A",
+    equipment_type: "contactor",
+    poles: null,
+    nominal: 80,
+    qty: 1,
+    role: "input-switch",
+    mark: "КБР-80A",
+    nominalText: "80А",
+    cable: "ВВГнг(А)-LS 5х6",
+    phase: "L1,L2,L3",
+  },
+  {
+    id: "u4",
+    manufacturer: "IEK",
+    series: "ВА47-29 KARAT",
+    model: "ВА47-29 3P",
+    equipment_type: "breaker",
+    poles: 3,
+    nominal: 32,
+    qty: 1,
+    role: "feeder",
+    mark: "ВА47-29",
+    nominalText: "C32",
+    cable: "ВВГнг(А)-LS 5х6",
+    load: "Зарядная станция",
+    phase: "L1,L2,L3",
+  },
+  {
+    id: "u5",
+    manufacturer: "IEK",
+    series: "ВД3-63",
+    model: "ВД3-63 4P 6kA тип A",
+    equipment_type: "rcd",
+    poles: 4,
+    nominal: 25,
+    qty: 1,
+    role: "feeder-rcbo",
+    mark: "ВД3-63",
+    nominalText: "C25",
+    leakage: "30mA",
+    cable: "ВВГнг(А)-LS 3х2.5",
+    load: "Розетки мастерской",
+    phase: "L1,L2,L3",
+  },
+  {
+    id: "u6",
+    manufacturer: "IEK",
+    series: "ВД3-63",
+    model: "ВД3-63 2P 6kA тип A",
+    equipment_type: "rcd",
+    poles: 2,
+    nominal: 16,
+    qty: 1,
+    role: "feeder-rcbo",
+    mark: "ВД3-63",
+    nominalText: "C16",
+    leakage: "30mA",
+    cable: "ВВГнг(А)-LS 3х2,5",
+    load: "Розетки бытовые",
+    phase: "L1",
+  },
+  {
+    id: "u7",
+    manufacturer: "IEK",
+    series: "ВА47-29 KARAT",
+    model: "ВА47-29 1P",
+    equipment_type: "breaker",
+    poles: 1,
+    nominal: 16,
+    qty: 3,
+    role: "feeder",
+    mark: "ВА47-29",
+    nominalText: "C16",
+    cable: "ВВГнг(А)-LS 3х1.5",
+    load: "Освещение",
+    phase: "L2",
+  },
+];
+
+
 
 export type SpecCompareRow = {
   label: string;
