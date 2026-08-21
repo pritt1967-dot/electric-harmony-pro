@@ -101,6 +101,7 @@ export function EstimatesList() {
       public_token: _t,
       approved_at: _a,
       approved_by_name: _n,
+      surcharges: _s,
       ...rest
     } = row;
     const { data, error } = await supabase
