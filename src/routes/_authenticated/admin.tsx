@@ -23,6 +23,7 @@ import { SchematicEditor } from "@/components/admin/SchematicEditor";
 import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
+import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -38,6 +39,7 @@ const TABS = [
   { value: "shapes", label: "Библиотека фигур" },
   { value: "assembly-test", label: "Тест сборки щита" },
   { value: "spec-test", label: "Тест сборки из спецификации" },
+  { value: "group-test", label: "Тест группировки щита" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
@@ -214,6 +216,11 @@ function AdminPage() {
               <TabsContent value="spec-test" className="mt-6">
                 <SpecAssemblyTest />
               </TabsContent>
+
+              <TabsContent value="group-test" className="mt-6">
+                <GroupAssemblyTest />
+              </TabsContent>
+
 
               <TabsContent value="texts" className="mt-6">
                 <TextsEditor />
