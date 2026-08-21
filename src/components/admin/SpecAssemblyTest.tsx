@@ -46,6 +46,24 @@ export function SpecAssemblyTest() {
   );
   const cmp = useMemo(() => compareSpecWithOriginal(asm), [asm]);
 
+  /** Единая модель: одна спецификация → логика → однолинейная схема → щит. */
+  const model = useMemo(() => {
+    const draft = buildUnifiedProject(spec, {
+      railModules,
+      reserveModules: reserve,
+      title: "Тест сборки из спецификации",
+    });
+    return buildUnifiedProject(
+      spec,
+      { railModules, reserveModules: reserve, title: "Тест сборки из спецификации" },
+      modelWires(draft),
+    );
+  }, [spec, railModules, reserve]);
+  const single = useMemo(() => buildSingleLine(model), [model]);
+  const checks = useMemo(() => verifyProject(model), [model]);
+  const doc1 = useMemo(() => compareWithDoc1(model, single), [model, single]);
+
+
   const update = (id: string, patch: Partial<SpecRow>) =>
     setSpec((s) => s.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
