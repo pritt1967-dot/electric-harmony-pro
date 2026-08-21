@@ -40,6 +40,7 @@ import {
   type SurchargeKey,
   type Surcharges,
   type Markup,
+  applyItemSurcharges,
   applyMarkup,
   emptyMarkup,
   computeEstimateTotals,
@@ -182,8 +183,9 @@ function EstimateEditor() {
   }
 
   const markup = est.markup ?? emptyMarkup();
-  /** Итоговые позиции с уже распределённым внутренним увеличением. */
-  const finalItems = applyMarkup(est.items, markup);
+  /** Итоговые позиции со всеми внутренними увеличениями в цене позиции. */
+  const markedUpItems = applyMarkup(est.items, markup);
+  const finalItems = applyItemSurcharges(markedUpItems, est.surcharges);
   const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
     finalItems,
@@ -663,6 +665,16 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
+                  const selectiveAmount =
+                    key === "transport"
+                      ? line?.amount ?? 0
+                      : finalItems.reduce((sum, item, index) => {
+                          const before = markedUpItems[index];
+                          if (!before) return sum;
+                          const selected =
+                            key === "height" ? item.at_height : item.commissioning;
+                          return selected ? sum + lineTotal(item) - lineTotal(before) : sum;
+                        }, 0);
                   return (
                     <div
                       key={key}
@@ -697,7 +709,7 @@ function EstimateEditor() {
                         />
                         <span className="text-sm text-muted-foreground">%</span>
                         <span className="w-28 text-right text-sm font-semibold">
-                          {money(line?.amount ?? 0)} ₽
+                          {money(selectiveAmount)} ₽
                         </span>
                       </div>
                     </div>
