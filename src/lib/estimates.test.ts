@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import {
   applyItemSurcharges,
@@ -60,6 +60,18 @@ describe("selective estimate charges", () => {
     expect(reopened.baseItems[0]?.price).toBe(5_000);
     expect(reopened.baseItems[0]?.at_height).toBe(true);
     expect(reopened.baseItems[0]?.commissioning).toBe(true);
+  });
+
+  it("preserves original prices on reopen even without general markup", () => {
+    const surcharges = defaultSurcharges({ height: 20 });
+    surcharges.height.enabled = true;
+    const base = [item("A", 10_000, { at_height: true })];
+    const final = applyItemSurcharges(base, surcharges);
+    const reopened = unpackItems(packItems(final, surcharges, undefined, base));
+
+    expect(reopened.items[0]?.price).toBe(12_000);
+    expect(reopened.baseItems[0]?.price).toBe(10_000);
+    expect(reopened.baseItems[0]?.at_height).toBe(true);
   });
 
   it("keeps quantity recalculation exact and applies discount afterward", () => {

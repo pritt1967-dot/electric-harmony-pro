@@ -242,6 +242,9 @@ export function packItems(
 ): unknown[] {
   const clean = items.filter((i) => !isSurchargeMeta(i));
   const hasMarkup = Boolean(markup && (markup.percent || markup.fixed));
+  const hasSelectiveCharges = Boolean(
+    surcharges?.height.enabled || surcharges?.commissioning.enabled,
+  );
   if (!surcharges && !hasMarkup) return clean;
   return [
     ...clean,
@@ -250,7 +253,7 @@ export function packItems(
       __meta: SURCHARGE_META_MARK,
       ...(surcharges ? { surcharges } : {}),
       ...(hasMarkup ? { markup } : {}),
-      ...(hasMarkup && baseItems
+      ...((hasMarkup || hasSelectiveCharges) && baseItems
         ? { base: baseItems.map((i) => ({ id: i.id, price: i.price })) }
         : {}),
       itemSurchargesApplied: true,
