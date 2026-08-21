@@ -51,6 +51,7 @@ import {
   nextNumber,
   packItems,
   subtotal,
+  surchargeBase,
   unpackItems,
 } from "@/lib/estimates";
 import { fetchSurchargePercents } from "@/lib/surcharge-settings";
@@ -92,6 +93,7 @@ function EstimateEditor() {
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [qr, setQr] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState("");
+  const [diag, setDiag] = useState(false);
   /** Проценты из настроек — нужны, чтобы галочка позиции реально работала. */
   const [settingPercents, setSettingPercents] = useState<Record<SurchargeKey, number> | null>(
     null,
@@ -715,15 +717,39 @@ function EstimateEditor() {
 
             {/* Дополнительные расходы */}
             <div className="mt-5 rounded-xl border border-border p-4">
-              <h3 className="font-bold">Дополнительные расходы</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-bold">Дополнительные расходы</h3>
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-[hsl(var(--brand))]"
+                    checked={diag}
+                    onChange={(e) => setDiag(e.target.checked)}
+                  />
+                  Режим диагностики
+                </label>
+              </div>
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
+                  const base = surchargeBase(est.items, key);
+                  const percent = Number(surcharges[key].percent) || 0;
+                  const calcAmount = Math.round(((base * percent) / 100) * 100) / 100;
+                  const flag: "at_height" | "commissioning" | null =
+                    key === "height"
+                      ? "at_height"
+                      : key === "commissioning"
+                        ? "commissioning"
+                        : null;
+                  const flagged = flag
+                    ? est.items.filter((i) => (i as never as Record<string, unknown>)[flag]).length
+                    : est.items.length;
                   return (
                     <div
                       key={key}
                       className="flex flex-wrap items-center justify-between gap-3"
                     >
+
 
                       <label className="flex min-w-0 cursor-pointer items-center gap-2 text-sm">
                         <input
@@ -757,6 +783,25 @@ function EstimateEditor() {
                           {money(line?.amount ?? 0)} ₽
                         </span>
                       </div>
+                      {diag && (
+                        <div className="w-full rounded-md bg-muted/60 p-2 font-mono text-[11px] leading-5 text-muted-foreground">
+                          <div>
+                            base = {money(base)} ₽ · percent = {percent}% · amount ={" "}
+                            {money(calcAmount)} ₽
+                          </div>
+                          <div>
+                            позиций в базе: {flagged} из {est.items.length}
+                            {flag ? ` (флаг ${flag} = true)` : " (все позиции)"} ·
+                            enabled = {String(surcharges[key].enabled)} · в итог попало:{" "}
+                            {money(line?.amount ?? 0)} ₽
+                          </div>
+                          {flag && flagged === 0 && (
+                            <div className="text-destructive">
+                              База = 0: ни одна позиция не отмечена флагом «{flag}».
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
