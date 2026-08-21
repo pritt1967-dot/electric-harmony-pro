@@ -81,7 +81,7 @@ function symbolRcbo(x: number, y: number, poles: number | null, leakage: string)
     symbolBreaker(x, y, poles) +
     `<circle cx="${x + 5.5}" cy="${y}" r="3.6" fill="none" stroke="#111" stroke-width="0.5"/>` +
     line(x + 1.9, y, x + 9.1, y, 0.4) +
-    t(x + 12, y + 1.1, leakage, { size: 2.8, anchor: "start" })
+    t(x + 5.5, y + 10, leakage, { size: 2.6 })
   );
 }
 
