@@ -51,6 +51,7 @@ import {
   nextNumber,
   packItems,
   subtotal,
+  surchargeBase,
   unpackItems,
 } from "@/lib/estimates";
 import { fetchSurchargePercents } from "@/lib/surcharge-settings";
