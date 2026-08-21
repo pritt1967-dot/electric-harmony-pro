@@ -217,6 +217,8 @@ type SurchargeMetaRecord = {
   surcharges?: Surcharges;
   markup?: Markup;
   base?: { id: string; price: number }[];
+  /** Height/commissioning are already included in saved item prices. */
+  itemSurchargesApplied?: boolean;
 };
 
 function isSurchargeMeta(row: unknown): row is SurchargeMetaRecord {
@@ -240,6 +242,9 @@ export function packItems(
 ): unknown[] {
   const clean = items.filter((i) => !isSurchargeMeta(i));
   const hasMarkup = Boolean(markup && (markup.percent || markup.fixed));
+  const hasSelectiveCharges = Boolean(
+    surcharges?.height.enabled || surcharges?.commissioning.enabled,
+  );
   if (!surcharges && !hasMarkup) return clean;
   return [
     ...clean,
@@ -248,9 +253,10 @@ export function packItems(
       __meta: SURCHARGE_META_MARK,
       ...(surcharges ? { surcharges } : {}),
       ...(hasMarkup ? { markup } : {}),
-      ...(hasMarkup && baseItems
+      ...((hasMarkup || hasSelectiveCharges) && baseItems
         ? { base: baseItems.map((i) => ({ id: i.id, price: i.price })) }
         : {}),
+      itemSurchargesApplied: true,
     },
   ];
 }
@@ -265,7 +271,7 @@ export function unpackItems(raw: unknown): {
 } {
   const arr = Array.isArray(raw) ? raw : [];
   const meta = arr.find(isSurchargeMeta);
-  const items = arr.filter((r) => !isSurchargeMeta(r)) as EstimateItem[];
+  const storedItems = arr.filter((r) => !isSurchargeMeta(r)) as EstimateItem[];
 
   const markup: Markup = {
     percent: Number(meta?.markup?.percent) || 0,
@@ -274,12 +280,12 @@ export function unpackItems(raw: unknown): {
   const baseMap = new Map(
     (meta?.base ?? []).map((b) => [b.id, Number(b.price) || 0] as const),
   );
-  const baseItems = items.map((i) =>
+  const baseItems = storedItems.map((i) =>
     baseMap.has(i.id) ? { ...i, price: baseMap.get(i.id)! } : { ...i },
   );
 
   const s = meta?.surcharges;
-  if (!s) return { items, markup, baseItems };
+  if (!s) return { items: storedItems, markup, baseItems };
   const merged = defaultSurcharges();
   for (const key of SURCHARGE_KEYS) {
     if (s[key]) {
@@ -289,6 +295,11 @@ export function unpackItems(raw: unknown): {
       };
     }
   }
+  // Compatibility for estimates saved before selective charges were folded
+  // into item prices: expose corrected final prices to customer-facing readers.
+  const items = meta?.itemSurchargesApplied
+    ? storedItems
+    : applyItemSurcharges(storedItems, merged);
   return { items, surcharges: merged, markup, baseItems };
 }
 
@@ -342,6 +353,69 @@ export function applyMarkup(items: EstimateItem[], markup?: Markup): EstimateIte
   return scaled;
 }
 
+/**
+ * Folds selective height and commissioning charges into the marked items.
+ * Stages are deliberately sequential, so an item with both flags receives
+ * height first and commissioning second. No customer-visible charge row is
+ * produced; the returned unit prices are the final prices.
+ */
+export function applyItemSurcharges(
+  items: EstimateItem[],
+  surcharges?: Surcharges,
+): EstimateItem[] {
+  let result = items.map((item) => ({ ...item }));
+
+  const stages: Array<{
+    key: "height" | "commissioning";
+    selected: (item: EstimateItem) => boolean;
+  }> = [
+    { key: "height", selected: (item) => Boolean(item.at_height) },
+    { key: "commissioning", selected: (item) => Boolean(item.commissioning) },
+  ];
+
+  for (const stage of stages) {
+    const setting = surcharges?.[stage.key];
+    const percent = Number(setting?.percent) || 0;
+    if (!setting?.enabled || percent === 0) continue;
+
+    const selectedIndexes = result
+      .map((item, index) => (stage.selected(item) && item.qty ? index : -1))
+      .filter((index) => index >= 0);
+    if (selectedIndexes.length === 0) continue;
+
+    const base = round2(
+      selectedIndexes.reduce((sum, index) => sum + lineTotal(result[index]), 0),
+    );
+    const target = round2(base * (1 + percent / 100));
+
+    result = result.map((item, index) =>
+      selectedIndexes.includes(index)
+        ? { ...item, price: round2(item.price * (1 + percent / 100)) }
+        : item,
+    );
+
+    const actual = round2(
+      selectedIndexes.reduce((sum, index) => sum + lineTotal(result[index]), 0),
+    );
+    const delta = round2(target - actual);
+    if (delta) {
+      const largestIndex = selectedIndexes.reduce((largest, index) =>
+        lineTotal(result[index]) > lineTotal(result[largest]) ? index : largest,
+      );
+      const item = result[largestIndex];
+      if (item?.qty) {
+        const correctedLine = round2(lineTotal(item) + delta);
+        result[largestIndex] = {
+          ...item,
+          price: Math.round((correctedLine / item.qty) * 1e6) / 1e6,
+        };
+      }
+    }
+  }
+
+  return result;
+}
+
 export type SurchargeLine = {
   key: SurchargeKey;
   label: string;
@@ -380,6 +454,9 @@ export function computeEstimateTotals(
   const disc = discountAmount(items, discountType, discountValue);
   const lines: SurchargeLine[] = [];
   for (const key of SURCHARGE_KEYS) {
+    // Selective charges are already folded into the affected item prices.
+    // Transport remains a separate, customer-visible charge as before.
+    if (key === "height" || key === "commissioning") continue;
     const s = surcharges?.[key];
     if (!s?.enabled) continue;
     const percent = Number(s.percent) || 0;
