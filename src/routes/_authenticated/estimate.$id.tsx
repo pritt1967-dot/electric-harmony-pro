@@ -49,6 +49,7 @@ import {
   money,
   nextNumber,
   packItems,
+  subtotal,
   unpackItems,
 } from "@/lib/estimates";
 import { fetchSurchargePercents } from "@/lib/surcharge-settings";
@@ -568,7 +569,7 @@ function EstimateEditor() {
                       />
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label className="text-xs">Цена, ₽</Label>
+                      <Label className="text-xs">Исходная цена, ₽</Label>
                       <Input
                         type="number"
                         min={0}
@@ -577,9 +578,16 @@ function EstimateEditor() {
                       />
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label className="text-xs">Стоимость</Label>
+                      <Label className="text-xs">Цена / стоимость</Label>
                       <div className="flex h-9 items-center justify-end overflow-hidden rounded-md bg-secondary px-3 text-sm font-semibold">
-                        {money(lineTotal(item))} ₽
+                        {money(finalPrice.get(item.id) ?? item.price)} ₽ ·{" "}
+                        {money(
+                          lineTotal({
+                            ...item,
+                            price: finalPrice.get(item.id) ?? item.price,
+                          }),
+                        )}{" "}
+                        ₽
                       </div>
                     </div>
                   </div>
@@ -606,6 +614,47 @@ function EstimateEditor() {
                 </div>
 
               ))}
+            </div>
+
+            {/* Внутреннее увеличение — заказчик его не видит */}
+            <div className="mt-5 rounded-xl border border-border p-4">
+              <h3 className="font-bold">Увеличение (только для администратора)</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Увеличение распределяется по всем позициям сметы. В документах
+                заказчика видны только итоговые цены.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Увеличение, %</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={markup.percent}
+                    onChange={(e) => patchMarkup({ percent: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Увеличение, ₽</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="1"
+                    value={markup.fixed}
+                    onChange={(e) => patchMarkup({ fixed: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Стоимость работ до увеличения
+                </span>
+                <span>{money(subtotal(est.items))} ₽</span>
+              </div>
+              <div className="mt-1 flex justify-between text-sm font-semibold">
+                <span>Стоимость работ после увеличения</span>
+                <span>{money(sub)} ₽</span>
+              </div>
             </div>
 
             {/* Дополнительные расходы */}
