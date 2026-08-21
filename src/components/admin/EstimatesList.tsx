@@ -102,6 +102,8 @@ export function EstimatesList() {
       approved_at: _a,
       approved_by_name: _n,
       surcharges: _s,
+      markup: _m,
+      baseItems: _b,
       ...rest
     } = row;
     const { data, error } = await supabase
@@ -111,7 +113,7 @@ export function EstimatesList() {
         approved_snapshot: null,
         number,
         status: "draft",
-        items: packItems(row.items, row.surcharges) as never,
+        items: packItems(row.items, row.surcharges, row.markup, row.baseItems) as never,
       })
       .select("*")
       .single();
