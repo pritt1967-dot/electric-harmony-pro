@@ -45,7 +45,8 @@ export const DEFAULT_SYMBOL_BY_TYPE: Record<DeviceType, string> = {
   rcbo: "qfd",
   contactor: "km",
   relay: "kv",
-  spd: "fv",
+  // Отдельного УГО ОПН в VSS нет — используется FU (защитный аппарат).
+  spd: "fu",
   meter: "pi",
   terminal: "point",
   other: "ugo",
