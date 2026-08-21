@@ -24,6 +24,7 @@ import {
   type PublicEstimate,
 } from "@/lib/estimate-public.functions";
 import {
+  computeEstimateTotals,
   discountAmount,
   formatDate,
   lineTotal,
@@ -172,6 +173,12 @@ function PublicEstimatePage() {
 
   const sub = subtotal(est.items);
   const disc = discountAmount(est.items, est.discount_type, est.discount_value);
+  const totals = computeEstimateTotals(
+    est.items,
+    est.discount_type,
+    est.discount_value,
+    est.surcharges,
+  );
   const approved = Boolean(est.approved_at);
   const order = est.order;
   const paid = Number(order?.paid_amount ?? 0);
@@ -266,6 +273,14 @@ function PublicEstimatePage() {
               <span className="text-muted-foreground">Скидка</span>
               <span>− {money(disc)} ₽</span>
             </div>
+            {totals.surchargeLines.map((line) => (
+              <div key={line.key} className="mt-2 flex justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">
+                  {line.label} ({line.percent}%)
+                </span>
+                <span>{money(line.amount)} ₽</span>
+              </div>
+            ))}
             <div className="mt-3 flex justify-between border-t border-border pt-3 text-lg font-extrabold text-brand">
               <span>ИТОГО</span>
               <span>{money(est.total)} ₽</span>
