@@ -729,8 +729,6 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
-                  const beforeItems = key === "commissioning" ? heightOnlyItems : markedUpItems;
-                  const afterItems = key === "height" ? heightOnlyItems : finalItems;
                   const selectiveAmount = (() => {
                     if (key === "transport") return line?.amount ?? 0;
                     const s = surcharges[key];
