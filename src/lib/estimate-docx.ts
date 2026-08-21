@@ -17,12 +17,10 @@ import { saveAs } from "file-saver";
 import {
   FOOTER_LINES,
   type Estimate,
-  discountAmount,
+  computeEstimateTotals,
   formatDate,
-  grandTotal,
   lineTotal,
   money,
-  subtotal,
 } from "./estimates";
 import { estimateFileName } from "./estimate-pdf";
 
@@ -51,9 +49,15 @@ function cell(text: string, opts: { bold?: boolean; align?: (typeof AlignmentTyp
 export async function downloadEstimateDocx(estimate: Estimate) {
   const sub0 = 0;
   void sub0;
-  const sub = subtotal(estimate.items);
-  const disc = discountAmount(estimate.items, estimate.discount_type, estimate.discount_value);
-  const total = grandTotal(estimate.items, estimate.discount_type, estimate.discount_value);
+  const totals = computeEstimateTotals(
+    estimate.items,
+    estimate.discount_type,
+    estimate.discount_value,
+    estimate.surcharges,
+  );
+  const sub = totals.subtotal;
+  const disc = totals.discount;
+  const total = totals.total;
 
   const info: Array<[string, string]> = [
     ["Смета №", estimate.number || "—"],
@@ -149,11 +153,19 @@ export async function downloadEstimateDocx(estimate: Estimate) {
             ],
           }),
           new Paragraph({ text: "", spacing: { after: 200 } }),
-          ...[
+          ...([
             ["Итого", `${money(sub)} ₽`, false],
             ["Скидка", `− ${money(disc)} ₽`, false],
+            ...totals.surchargeLines.map(
+              (line) =>
+                [
+                  `${line.label} (${line.percent}%)`,
+                  `${money(line.amount)} ₽`,
+                  false,
+                ] as [string, string, boolean],
+            ),
             ["Итого к оплате", `${money(total)} ₽`, true],
-          ].map(
+          ] as Array<[string, string, boolean]>).map(
             ([label, value, bold]) =>
               new Paragraph({
                 alignment: AlignmentType.RIGHT,

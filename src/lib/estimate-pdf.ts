@@ -9,12 +9,11 @@ import { qrDataUrl } from "./estimate-qr";
 import {
   FOOTER_LINES,
   type Estimate,
+  computeEstimateTotals,
   discountAmount,
   formatDate,
-  grandTotal,
   lineTotal,
   money,
-  subtotal,
 } from "./estimates";
 
 const BLUE: [number, number, number] = [29, 78, 216];
@@ -214,21 +213,19 @@ export async function buildEstimatePdf(
   const lastY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
     .finalY;
   let y = lastY + 8;
-  const sub = subtotal(estimate.items);
-  const disc = discountAmount(
+  const totals = computeEstimateTotals(
     estimate.items,
     estimate.discount_type,
     estimate.discount_value,
+    estimate.surcharges,
   );
-  const total = grandTotal(
-    estimate.items,
-    estimate.discount_type,
-    estimate.discount_value,
-  );
+  const sub = totals.subtotal;
+  const disc = totals.discount;
+  const total = totals.total;
 
   const boxW = 86;
   const boxX = pageW - M - boxW;
-  const boxH = 26;
+  const boxH = 26 + totals.surchargeLines.length * 6.5;
   if (y + boxH > pageH - (qr ? 62 : 32)) {
     doc.addPage();
     y = 20;
@@ -249,14 +246,25 @@ export async function buildEstimatePdf(
   doc.setTextColor(17, 17, 17);
   doc.text(`${money(sub)} ₽`, boxX + boxW - 5, y + 7, { align: "right" });
   doc.text(`− ${money(disc)} ₽`, boxX + boxW - 5, y + 13.5, { align: "right" });
+
+  let sy = y + 13.5;
+  totals.surchargeLines.forEach((line) => {
+    sy += 6.5;
+    doc.setTextColor(90, 98, 112);
+    const label = doc.splitTextToSize(`${line.label} (${line.percent}%):`, boxW - 34);
+    doc.text(label[0]!, boxX + 5, sy);
+    doc.setTextColor(17, 17, 17);
+    doc.text(`${money(line.amount)} ₽`, boxX + boxW - 5, sy, { align: "right" });
+  });
+
   doc.setDrawColor(...BLUE);
   doc.setLineWidth(0.4);
-  doc.line(boxX + 5, y + 16.5, boxX + boxW - 5, y + 16.5);
+  doc.line(boxX + 5, sy + 3, boxX + boxW - 5, sy + 3);
   doc.setFont("DejaVu", "bold");
   doc.setFontSize(11.5);
   doc.setTextColor(...BLUE);
-  doc.text("Итого к оплате:", boxX + 5, y + 23);
-  doc.text(`${money(total)} ₽`, boxX + boxW - 5, y + 23, { align: "right" });
+  doc.text("Итого к оплате:", boxX + 5, sy + 9.5);
+  doc.text(`${money(total)} ₽`, boxX + boxW - 5, sy + 9.5, { align: "right" });
   doc.setFont("DejaVu", "normal");
 
   if (estimate.note) {
