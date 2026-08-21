@@ -118,6 +118,10 @@ export function SpecAssemblyTest() {
         <Button size="sm" variant="outline" onClick={() => setSpec(CHARGING_PANEL_SPEC)}>
           Тестовая спецификация «Щит зарядки — тест №2»
         </Button>
+        <Button size="sm" variant="outline" onClick={() => setSpec(UNIFIED_DEMO_SPEC)}>
+          Демо «СПЕЦ → СХЕМА → ЩИТ»
+        </Button>
+
         <Button size="sm" onClick={() => setShowCompare((v) => !v)}>
           <GitCompare className="mr-2 size-4" />
           {showCompare ? "Скрыть сравнение" : "Сравнить с эталоном"}
