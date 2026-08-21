@@ -93,6 +93,7 @@ function EstimateEditor() {
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [qr, setQr] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState("");
+  const [diag, setDiag] = useState(false);
   /** Проценты из настроек — нужны, чтобы галочка позиции реально работала. */
   const [settingPercents, setSettingPercents] = useState<Record<SurchargeKey, number> | null>(
     null,
