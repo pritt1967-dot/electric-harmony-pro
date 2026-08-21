@@ -116,6 +116,8 @@ function EstimateEditor() {
       ]);
       if (!active) return;
       setPrice(items);
+      setSettingPercents(percents);
+
       if (existing?.data) {
         const d = existing.data;
         const unpacked = unpackItems(d.items);
