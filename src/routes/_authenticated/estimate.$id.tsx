@@ -47,6 +47,7 @@ import {
   defaultSurcharges,
   emptyEstimate,
   lineTotal,
+  legacySurcharges,
   money,
   nextNumber,
   packItems,
@@ -111,7 +112,9 @@ function EstimateEditor() {
           items: unpacked.baseItems,
           markup: unpacked.markup,
           // Уже созданная смета сохраняет свои фактические проценты.
-          surcharges: unpacked.surcharges ?? defaultSurcharges(percents),
+          // Старые сметы без служебных полей открываются с 0/false. Значения
+          // существуют только в памяти и не записываются без явного сохранения.
+          surcharges: unpacked.surcharges ?? legacySurcharges(),
         } as Estimate);
       } else {
         setEstimate({

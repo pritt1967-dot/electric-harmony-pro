@@ -72,6 +72,11 @@ export function defaultSurcharges(
   };
 }
 
+/** Безопасные значения для смет, созданных до появления начислений. */
+export function legacySurcharges(): Surcharges {
+  return defaultSurcharges({ transport: 0, height: 0, commissioning: 0 });
+}
+
 export type Estimate = {
   id?: string;
   number: string;
@@ -271,7 +276,19 @@ export function unpackItems(raw: unknown): {
 } {
   const arr = Array.isArray(raw) ? raw : [];
   const meta = arr.find(isSurchargeMeta);
-  const storedItems = arr.filter((r) => !isSurchargeMeta(r)) as EstimateItem[];
+  const storedItems = arr
+    .filter((r) => !isSurchargeMeta(r))
+    .filter((r): r is Record<string, unknown> => Boolean(r) && typeof r === "object")
+    .map((r) => ({
+      ...r,
+      id: String(r.id ?? ""),
+      name: String(r.name ?? ""),
+      unit: String(r.unit ?? "шт"),
+      qty: Number(r.qty) || 0,
+      price: Number(r.price) || 0,
+      at_height: Boolean(r.at_height),
+      commissioning: Boolean(r.commissioning),
+    })) as EstimateItem[];
 
   const markup: Markup = {
     percent: Number(meta?.markup?.percent) || 0,
@@ -280,13 +297,14 @@ export function unpackItems(raw: unknown): {
   const baseMap = new Map(
     (meta?.base ?? []).map((b) => [b.id, Number(b.price) || 0] as const),
   );
-  const baseItems = storedItems.map((i) =>
-    baseMap.has(i.id) ? { ...i, price: baseMap.get(i.id)! } : { ...i },
-  );
+  const baseItems = storedItems.map((i) => {
+    const basePrice = baseMap.get(i.id);
+    return basePrice !== undefined ? { ...i, price: basePrice } : { ...i };
+  });
 
   const s = meta?.surcharges;
   if (!s) return { items: storedItems, markup, baseItems };
-  const merged = defaultSurcharges();
+  const merged = legacySurcharges();
   for (const key of SURCHARGE_KEYS) {
     if (s[key]) {
       merged[key] = {
