@@ -253,29 +253,27 @@ function EstimateEditor() {
 
 
   function toggleItemFlag(itemId: string, field: "at_height" | "commissioning") {
-    const nextItems = est.items.map((i) =>
-      i.id === itemId ? { ...i, [field]: !i[field] } : i,
-    );
     const key: SurchargeKey = field === "at_height" ? "height" : "commissioning";
-    const turnedOn = nextItems.some((i) => i.id === itemId && i[field]);
-    const current = surcharges[key];
-    // Старые сметы открываются с 0%/выключено — тогда галочка позиции не
-    // влияла на цену. Включаем начисление с процентом из настроек.
-    const needsActivation = turnedOn && (!current.enabled || !current.percent);
-    const percent = current.percent ||
-      settingPercents?.[key] ||
-      SURCHARGE_META[key].defaultPercent;
-    setEstimate((e) =>
-      e
-        ? {
-            ...e,
-            items: nextItems,
-            surcharges: needsActivation
-              ? { ...surcharges, [key]: { enabled: true, percent } }
-              : e.surcharges,
-          }
-        : e,
-    );
+    setEstimate((currentEstimate) => {
+      if (!currentEstimate) return currentEstimate;
+      const nextItems = currentEstimate.items.map((item) =>
+        item.id === itemId ? { ...item, [field]: !item[field] } : item,
+      );
+      const turnedOn = nextItems.some((item) => item.id === itemId && item[field]);
+      const currentSurcharges = currentEstimate.surcharges ?? legacySurcharges();
+      const current = currentSurcharges[key];
+      const needsActivation = turnedOn && (!current.enabled || !current.percent);
+      const percent =
+        current.percent || settingPercents?.[key] || SURCHARGE_META[key].defaultPercent;
+
+      return {
+        ...currentEstimate,
+        items: nextItems,
+        surcharges: needsActivation
+          ? { ...currentSurcharges, [key]: { enabled: true, percent } }
+          : currentSurcharges,
+      };
+    });
   }
 
 
@@ -731,15 +729,11 @@ function EstimateEditor() {
                   const line = totals.surchargeLines.find((l) => l.key === key);
                   const selectiveAmount = (() => {
                     if (key === "transport") return line?.amount ?? 0;
-                    const s = surcharges[key];
-                    const percent = Number(s.percent) || 0;
-                    if (!s.enabled || !percent) return 0;
-                    // База — стоимость позиций с соответствующим признаком
-                    // (высота — до ПНР, ПНР — после высоты).
-                    const base = (key === "height" ? markedUpItems : heightOnlyItems)
-                      .filter((i) => (key === "height" ? i.at_height : i.commissioning))
-                      .reduce((sum, i) => sum + lineTotal(i), 0);
-                    return Math.round(((base * percent) / 100) * 100) / 100;
+                    // Показываем фактическую прибавку, которая уже вошла в
+                    // конечные цены отмеченных позиций.
+                    const before = key === "height" ? markedUpItems : heightOnlyItems;
+                    const after = key === "height" ? heightOnlyItems : finalItems;
+                    return Math.round((subtotal(after) - subtotal(before)) * 100) / 100;
                   })();
                   return (
                     <div
