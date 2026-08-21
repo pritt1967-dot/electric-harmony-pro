@@ -9,6 +9,7 @@ import {
   lineTotal,
   legacySurcharges,
   packItems,
+  selectiveSurchargeAmount,
   unpackItems,
   type EstimateItem,
 } from "./estimates";
@@ -70,6 +71,19 @@ describe("selective estimate charges", () => {
 
     assert.deepEqual(result.map(lineTotal), [12_000, 20_000, 33_000]);
     assert.equal(computeEstimateTotals(result, "percent", 0, surcharges).total, 65_000);
+  });
+
+  it("calculates height amount directly from the existing at_height flag", () => {
+    const surcharges = defaultSurcharges({ height: 5 });
+    surcharges.height.enabled = true;
+    const rows = [
+      item("height", 9_000, { at_height: true }),
+      item("regular", 20_000),
+    ];
+
+    assert.equal(selectiveSurchargeAmount(rows, "height", surcharges), 450);
+    surcharges.height.percent = 10;
+    assert.equal(selectiveSurchargeAmount(rows, "height", surcharges), 900);
   });
 
   it("applies both stages sequentially to one item", () => {
