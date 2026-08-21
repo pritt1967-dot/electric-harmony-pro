@@ -261,7 +261,7 @@ export function packItems(
       ...((hasMarkup || hasSelectiveCharges) && baseItems
         ? { base: baseItems.map((i) => ({ id: i.id, price: i.price })) }
         : {}),
-      itemSurchargesApplied: true,
+      itemSurchargesApplied: false,
     },
   ];
 }
@@ -313,7 +313,12 @@ export function unpackItems(raw: unknown): {
       };
     }
   }
-  return { items: storedItems, surcharges: merged, markup, baseItems };
+  // Estimates saved by the retired model stored selective charges inside item
+  // prices. Rebuild their pre-surcharge prices in memory without changing data.
+  const items = meta?.itemSurchargesApplied
+    ? applyMarkup(baseItems, markup)
+    : storedItems;
+  return { items, surcharges: merged, markup, baseItems };
 }
 
 /**
