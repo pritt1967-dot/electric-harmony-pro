@@ -33,6 +33,7 @@ import {
 } from "@/lib/estimates";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
+import { SurchargeSettings } from "@/components/admin/SurchargeSettings";
 
 type Row = Estimate & { id: string; public_token: string };
 
@@ -165,6 +166,8 @@ export function EstimatesList() {
           <Plus className="mr-2 size-4" /> Новая смета
         </Link>
       </Button>
+
+      <SurchargeSettings />
 
       {rows.length === 0 && (
         <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
