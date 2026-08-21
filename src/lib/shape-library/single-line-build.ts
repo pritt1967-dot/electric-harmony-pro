@@ -153,9 +153,8 @@ export function buildSingleLine(project: UProject): SingleLine {
   chain.forEach((d) => {
     const x = X_INPUT[d.role]!;
     g.push(`<g transform="rotate(-90 ${x} ${SL.yInput})">${deviceSymbol(d, x, SL.yInput)}</g>`);
-    const cap = [d.label, d.mark, d.nominalText].filter(Boolean).join(" ");
-    g.push(t(x, SL.yInput - 16, cap, { size: 3.2, weight: 700 }));
-    if (d.leakage && d.kind !== "QD") g.push(t(x, SL.yInput - 11.5, d.leakage, { size: 2.9 }));
+    const cap = [d.label, d.mark, d.nominalText, d.leakage].filter(Boolean).join(" ");
+    g.push(t(x - 9, SL.yInput - 8, cap, { size: 3, anchor: "start", rot: -90 }));
     els.push({ kind: "input", label: d.label, xMm: x, yMm: SL.yInput });
   });
 
@@ -184,8 +183,9 @@ export function buildSingleLine(project: UProject): SingleLine {
     g.push(`<circle cx="${x}" cy="${SL.yBus}" r="1" fill="#111"/>`);
     g.push(deviceSymbol(d, x, SL.yDevice));
     const cap = [d.label, d.mark, d.nominalText].filter(Boolean).join(" ");
-    g.push(t(x - 7, SL.yDevice - 6, cap, { size: 3, anchor: "middle", rot: -90 }));
+    g.push(t(x - 9, SL.yDevice - 4, cap, { size: 3, anchor: "middle", rot: -90 }));
     g.push(line(x, SL.yDevice + 12, x, SL.yLoad - SL.loadH, 0.6));
+    g.push(line(x, SL.yLoad - SL.loadH, x - SL.loadW / 2, SL.yLoad - SL.loadH, 0.6));
     if (d.cable)
       g.push(t(x - 3, (SL.yDevice + 12 + SL.yLoad - SL.loadH) / 2, d.cable, { size: 2.8, anchor: "middle", rot: -90 }));
 
@@ -194,9 +194,9 @@ export function buildSingleLine(project: UProject): SingleLine {
     g.push(
       `<rect x="${lx - SL.loadW / 2}" y="${SL.yLoad - SL.loadH}" width="${SL.loadW}" height="${SL.loadH}" fill="none" stroke="#111" stroke-width="0.5"/>`,
     );
-    g.push(t(x, SL.yLoad - SL.loadH, "", {}));
-    g.push(`<circle cx="${x}" cy="${SL.yLoad - SL.loadH}" r="3.4" fill="#fff" stroke="#111" stroke-width="0.5"/>`);
-    g.push(t(x, SL.yLoad - SL.loadH + 1.2, String(load.number), { size: 3.2, weight: 700 }));
+    const cx = x - SL.loadW / 2;
+    g.push(`<circle cx="${cx}" cy="${SL.yLoad - SL.loadH}" r="3.6" fill="#fff" stroke="#111" stroke-width="0.5"/>`);
+    g.push(t(cx, SL.yLoad - SL.loadH + 1.2, String(load.number), { size: 3.4, weight: 700 }));
     load.name
       .split(/\s+/)
       .reduce<string[]>((rows, word) => {
@@ -206,7 +206,7 @@ export function buildSingleLine(project: UProject): SingleLine {
         return rows;
       }, [])
       .slice(0, 4)
-      .forEach((row, ri) => g.push(t(x - SL.loadW / 2 + 0.5, SL.yLoad - SL.loadH + 7.5 + ri * 4, row, { size: 2.8 })));
+      .forEach((row, ri) => g.push(t(cx, SL.yLoad - SL.loadH + 9 + ri * 4, row, { size: 2.8 })));
     els.push({ kind: "load", label: load.id, xMm: x - SL.loadW / 2, yMm: SL.yLoad });
     els.push({ kind: "device", label: d.label, xMm: x, yMm: SL.yDevice });
   });
