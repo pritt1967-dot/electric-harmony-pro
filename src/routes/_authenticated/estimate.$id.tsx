@@ -783,6 +783,25 @@ function EstimateEditor() {
                           {money(line?.amount ?? 0)} ₽
                         </span>
                       </div>
+                      {diag && (
+                        <div className="w-full rounded-md bg-muted/60 p-2 font-mono text-[11px] leading-5 text-muted-foreground">
+                          <div>
+                            base = {money(base)} ₽ · percent = {percent}% · amount ={" "}
+                            {money(calcAmount)} ₽
+                          </div>
+                          <div>
+                            позиций в базе: {flagged} из {est.items.length}
+                            {flag ? ` (флаг ${flag} = true)` : " (все позиции)"} ·
+                            enabled = {String(surcharges[key].enabled)} · в итог попало:{" "}
+                            {money(line?.amount ?? 0)} ₽
+                          </div>
+                          {flag && flagged === 0 && (
+                            <div className="text-destructive">
+                              База = 0: ни одна позиция не отмечена флагом «{flag}».
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
