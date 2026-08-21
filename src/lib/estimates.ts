@@ -462,6 +462,21 @@ export function surchargeBase(items: EstimateItem[], key: SurchargeKey) {
   );
 }
 
+/**
+ * Прямая сумма выборочного начисления. Для высоты источником служит только
+ * существующий признак позиции `at_height`; для пусконаладки — `commissioning`.
+ */
+export function selectiveSurchargeAmount(
+  items: EstimateItem[],
+  key: "height" | "commissioning",
+  surcharges?: Surcharges,
+) {
+  const setting = surcharges?.[key];
+  if (!setting?.enabled) return 0;
+  const percent = Number(setting.percent) || 0;
+  return round2((surchargeBase(items, key) * percent) / 100);
+}
+
 export function computeEstimateTotals(
   items: EstimateItem[],
   discountType: DiscountType,

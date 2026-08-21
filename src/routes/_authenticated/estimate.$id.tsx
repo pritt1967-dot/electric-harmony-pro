@@ -51,6 +51,7 @@ import {
   money,
   nextNumber,
   packItems,
+  selectiveSurchargeAmount,
   subtotal,
   unpackItems,
 } from "@/lib/estimates";
@@ -217,13 +218,6 @@ function EstimateEditor() {
   const markup = est.markup ?? emptyMarkup();
   /** Итоговые позиции со всеми внутренними увеличениями в цене позиции. */
   const markedUpItems = applyMarkup(est.items, markup);
-  const heightOnlyItems = applyItemSurcharges(markedUpItems, {
-    ...(est.surcharges ?? defaultSurcharges()),
-    commissioning: {
-      ...(est.surcharges ?? defaultSurcharges()).commissioning,
-      enabled: false,
-    },
-  });
   const finalItems = applyItemSurcharges(markedUpItems, est.surcharges);
   const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
@@ -729,11 +723,14 @@ function EstimateEditor() {
                   const line = totals.surchargeLines.find((l) => l.key === key);
                   const selectiveAmount = (() => {
                     if (key === "transport") return line?.amount ?? 0;
-                    // Показываем фактическую прибавку, которая уже вошла в
-                    // конечные цены отмеченных позиций.
-                    const before = key === "height" ? markedUpItems : heightOnlyItems;
-                    const after = key === "height" ? heightOnlyItems : finalItems;
-                    return Math.round((subtotal(after) - subtotal(before)) * 100) / 100;
+                    // Прямой расчёт по существующим признакам позиции:
+                    // at_height -> heightBase -> heightAmount.
+                    const selectiveKey = key === "height" ? "height" : "commissioning";
+                    return selectiveSurchargeAmount(
+                      markedUpItems,
+                      selectiveKey,
+                      surcharges,
+                    );
                   })();
                   return (
                     <div
