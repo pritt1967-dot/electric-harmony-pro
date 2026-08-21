@@ -663,12 +663,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_public_estimate: {
+        Args: {
+          p_ip?: string
+          p_name?: string
+          p_session?: string
+          p_token: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      public_estimate_by_token: { Args: { p_token: string }; Returns: Json }
+      request_public_order_payment: {
+        Args: { p_kind?: string; p_token: string }
+        Returns: Json
       }
     }
     Enums: {
