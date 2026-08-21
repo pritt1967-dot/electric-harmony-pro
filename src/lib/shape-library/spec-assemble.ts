@@ -14,6 +14,15 @@ const PX_PER_MM = 100 / 25.4;
 const MARGIN_MM = 20;
 const RAIL_GAP_MM = 60;
 
+/** Роль аппарата в логической структуре щита (для однолинейной схемы). */
+export type SpecRole =
+  | "input-switch"
+  | "meter"
+  | "input-rcbo"
+  | "main-breaker"
+  | "feeder"
+  | "feeder-rcbo";
+
 export type SpecRow = {
   id: string;
   manufacturer: string;
@@ -23,7 +32,22 @@ export type SpecRow = {
   poles: number | null;
   nominal: number | null;
   qty: number;
+  /** --- поля единой модели (используются однолинейной схемой) --- */
+  role?: SpecRole;
+  /** Марка аппарата для подписи (ВА47-29, АД12, ВН32…). */
+  mark?: string;
+  /** Номинал так, как он подписывается на схеме (C16, 63А…). */
+  nominalText?: string;
+  /** Уставка дифзащиты (30mA, 100мА). */
+  leakage?: string;
+  /** Кабель отходящей линии (ВВГнг(А)-LS 3х2,5). */
+  cable?: string;
+  /** Наименование электроприёмника. */
+  load?: string;
+  /** Фаза линии: L1 / L2 / L3 / L1,L2,L3. */
+  phase?: string;
 };
+
 
 export type SpecMatch = {
   row: SpecRow;
