@@ -39,6 +39,7 @@ const TABS = [
   { value: "schematic", label: "Схема (Visio)" },
   { value: "shapes", label: "Библиотека фигур" },
   { value: "ugo-library", label: "Библиотека УГО (VSS)" },
+  { value: "device-catalog", label: "Каталог оборудования" },
   { value: "assembly-test", label: "Тест сборки щита" },
   { value: "spec-test", label: "Тест сборки из спецификации" },
   { value: "group-test", label: "Тест группировки щита" },
