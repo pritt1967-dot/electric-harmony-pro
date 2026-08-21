@@ -347,7 +347,126 @@ export function SpecAssemblyTest() {
         )}
       </section>
 
+      {/* ------------------------------------------- логическая структура */}
+      <section className="rounded-xl border bg-card p-4">
+        <h3 className="text-sm font-bold">
+          Логическая структура проекта
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            Project → Board → Groups → Devices → Connections → Loads
+          </span>
+        </h3>
+        <ul className="mt-3 space-y-1 text-xs">
+          <li className="font-semibold">
+            {model.title} · щит {model.board.name} · {model.supply}
+          </li>
+          {model.board.groups.map((g) => (
+            <li key={g.id} className="pl-3">
+              <span className="font-medium">
+                {g.id} · {g.kind === "input" ? "Ввод" : g.name}
+              </span>
+              <ul className="mt-0.5 space-y-0.5 pl-4 text-muted-foreground">
+                {g.deviceIds.map((id) => {
+                  const d = model.board.devices.find((x) => x.id === id)!;
+                  const load = model.board.loads.find((l) => l.deviceId === id);
+                  return (
+                    <li key={id}>
+                      {d.label} · {d.mark} {d.nominalText}
+                      {d.leakage ? ` / ${d.leakage}` : ""} · {d.modules} мод. ·{" "}
+                      {d.rail != null ? `рейка ${d.rail + 1}, позиция ${(d.position ?? 0) + 1}` : "не размещён"}
+                      {d.cable ? ` · ${d.cable}` : ""}
+                      {load ? ` → ${load.id} «${load.name}»` : ""}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Связей: {model.board.connections.length} (логических{" "}
+          {model.board.connections.filter((c) => c.kind === "logical").length}, физических{" "}
+          {model.board.connections.filter((c) => c.kind === "physical").length}). Аппараты схемы и
+          щита — одни и те же объекты.
+        </p>
+      </section>
+
+      {/* ------------------------------------------------ однолинейная схема */}
+      <figure className="rounded-xl border bg-card p-3">
+        <figcaption className="mb-2 text-sm font-semibold">
+          Однолинейная схема (эталон «Документ1.vsdx»)
+          <span className="ml-2 font-normal text-muted-foreground">
+            {single.columns} отходящих линий · шаг колонок 30 мм
+          </span>
+        </figcaption>
+        <div
+          className="overflow-auto rounded-lg bg-white p-2 [&>svg]:h-auto [&>svg]:w-full"
+          dangerouslySetInnerHTML={{ __html: single.svg }}
+        />
+      </figure>
+
+      {/* ------------------------------------------------------- проверки */}
+      <section className="rounded-xl border bg-card p-4">
+        <h3 className="text-sm font-bold">
+          Проверка проекта — пройдено {checks.passed} из {checks.rows.length}
+        </h3>
+        <ul className="mt-3 space-y-1 text-xs">
+          {checks.rows.map((r) => (
+            <li key={r.id} className="flex items-start gap-2">
+              {r.ok ? (
+                <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+              ) : (
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-600" />
+              )}
+              <span>
+                <span className="font-medium">
+                  {r.id}. {r.name}
+                </span>{" "}
+                — <span className="text-muted-foreground">{r.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* --------------------------------- сравнение с эталоном схемы */}
+      {showCompare && (
+        <section className="space-y-3 rounded-xl border bg-card p-4">
+          <h3 className="text-sm font-bold">
+            Сравнение однолинейной схемы с «Документ1.vsdx» — совпадение {doc1.percent}%
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead className="text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="py-1">Показатель</th>
+                  <th className="py-1">Эталон</th>
+                  <th className="py-1">Сгенерировано</th>
+                  <th className="py-1">Совпадение</th>
+                </tr>
+              </thead>
+              <tbody>
+                {doc1.rows.map((r) => (
+                  <tr key={r.label} className="border-t">
+                    <td className="py-1.5">{r.label}</td>
+                    <td className="py-1.5">{r.original}</td>
+                    <td className="py-1.5">{r.built}</td>
+                    <td className="py-1.5">
+                      {r.match ? (
+                        <Check className="size-4 text-emerald-600" />
+                      ) : (
+                        <X className="size-4 text-destructive" />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {/* ---------------------------------------------------------- сравнение */}
+
       {showCompare && (
         <section className="space-y-3 rounded-xl border bg-card p-4">
           <h3 className="text-sm font-bold">
