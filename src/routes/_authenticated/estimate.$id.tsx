@@ -40,7 +40,6 @@ import {
   type SurchargeKey,
   type Surcharges,
   type Markup,
-  applyItemSurcharges,
   applyMarkup,
   emptyMarkup,
   computeEstimateTotals,
@@ -51,7 +50,6 @@ import {
   money,
   nextNumber,
   packItems,
-  selectiveSurchargeAmount,
   subtotal,
   unpackItems,
 } from "@/lib/estimates";
@@ -216,12 +214,12 @@ function EstimateEditor() {
   }
 
   const markup = est.markup ?? emptyMarkup();
-  /** Итоговые позиции со всеми внутренними увеличениями в цене позиции. */
+  /** Итоговые позиции после внутреннего увеличения цены позиции. */
   const markedUpItems = applyMarkup(est.items, markup);
-  const finalItems = applyItemSurcharges(markedUpItems, est.surcharges);
-  const finalPrice = new Map(finalItems.map((i) => [i.id, i.price] as const));
+  const finalItems = markedUpItems;
+  const finalPrice = new Map(markedUpItems.map((i) => [i.id, i.price] as const));
   const totals = computeEstimateTotals(
-    finalItems,
+    markedUpItems,
     est.discount_type,
     est.discount_value,
     est.surcharges,
@@ -721,17 +719,6 @@ function EstimateEditor() {
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
-                  const selectiveAmount = (() => {
-                    if (key === "transport") return line?.amount ?? 0;
-                    // Прямой расчёт по существующим признакам позиции:
-                    // at_height -> heightBase -> heightAmount.
-                    const selectiveKey = key === "height" ? "height" : "commissioning";
-                    return selectiveSurchargeAmount(
-                      markedUpItems,
-                      selectiveKey,
-                      surcharges,
-                    );
-                  })();
                   return (
                     <div
                       key={key}
@@ -767,7 +754,7 @@ function EstimateEditor() {
                         />
                         <span className="text-sm text-muted-foreground">%</span>
                         <span className="w-28 text-right text-sm font-semibold">
-                          {money(selectiveAmount)} ₽
+                          {money(line?.amount ?? 0)} ₽
                         </span>
                       </div>
                     </div>

@@ -222,7 +222,7 @@ type SurchargeMetaRecord = {
   surcharges?: Surcharges;
   markup?: Markup;
   base?: { id: string; price: number }[];
-  /** Height/commissioning are already included in saved item prices. */
+  /** Legacy marker retained for estimates saved by the previous calculation model. */
   itemSurchargesApplied?: boolean;
 };
 
@@ -313,12 +313,7 @@ export function unpackItems(raw: unknown): {
       };
     }
   }
-  // Compatibility for estimates saved before selective charges were folded
-  // into item prices: expose corrected final prices to customer-facing readers.
-  const items = meta?.itemSurchargesApplied
-    ? storedItems
-    : applyItemSurcharges(storedItems, merged);
-  return { items, surcharges: merged, markup, baseItems };
+  return { items: storedItems, surcharges: merged, markup, baseItems };
 }
 
 /**
@@ -371,69 +366,6 @@ export function applyMarkup(items: EstimateItem[], markup?: Markup): EstimateIte
   return scaled;
 }
 
-/**
- * Folds selective height and commissioning charges into the marked items.
- * Stages are deliberately sequential, so an item with both flags receives
- * height first and commissioning second. No customer-visible charge row is
- * produced; the returned unit prices are the final prices.
- */
-export function applyItemSurcharges(
-  items: EstimateItem[],
-  surcharges?: Surcharges,
-): EstimateItem[] {
-  let result = items.map((item) => ({ ...item }));
-
-  const stages: Array<{
-    key: "height" | "commissioning";
-    selected: (item: EstimateItem) => boolean;
-  }> = [
-    { key: "height", selected: (item) => Boolean(item.at_height) },
-    { key: "commissioning", selected: (item) => Boolean(item.commissioning) },
-  ];
-
-  for (const stage of stages) {
-    const setting = surcharges?.[stage.key];
-    const percent = Number(setting?.percent) || 0;
-    if (!setting?.enabled || percent === 0) continue;
-
-    const selectedIndexes = result
-      .map((item, index) => (stage.selected(item) && item.qty ? index : -1))
-      .filter((index) => index >= 0);
-    if (selectedIndexes.length === 0) continue;
-
-    const base = round2(
-      selectedIndexes.reduce((sum, index) => sum + lineTotal(result[index]), 0),
-    );
-    const target = round2(base * (1 + percent / 100));
-
-    result = result.map((item, index) =>
-      selectedIndexes.includes(index)
-        ? { ...item, price: round2(item.price * (1 + percent / 100)) }
-        : item,
-    );
-
-    const actual = round2(
-      selectedIndexes.reduce((sum, index) => sum + lineTotal(result[index]), 0),
-    );
-    const delta = round2(target - actual);
-    if (delta) {
-      const largestIndex = selectedIndexes.reduce((largest, index) =>
-        lineTotal(result[index]) > lineTotal(result[largest]) ? index : largest,
-      );
-      const item = result[largestIndex];
-      if (item?.qty) {
-        const correctedLine = round2(lineTotal(item) + delta);
-        result[largestIndex] = {
-          ...item,
-          price: Math.round((correctedLine / item.qty) * 1e6) / 1e6,
-        };
-      }
-    }
-  }
-
-  return result;
-}
-
 export type SurchargeLine = {
   key: SurchargeKey;
   label: string;
@@ -462,21 +394,6 @@ export function surchargeBase(items: EstimateItem[], key: SurchargeKey) {
   );
 }
 
-/**
- * Прямая сумма выборочного начисления. Для высоты источником служит только
- * существующий признак позиции `at_height`; для пусконаладки — `commissioning`.
- */
-export function selectiveSurchargeAmount(
-  items: EstimateItem[],
-  key: "height" | "commissioning",
-  surcharges?: Surcharges,
-) {
-  const setting = surcharges?.[key];
-  if (!setting?.enabled) return 0;
-  const percent = Number(setting.percent) || 0;
-  return round2((surchargeBase(items, key) * percent) / 100);
-}
-
 export function computeEstimateTotals(
   items: EstimateItem[],
   discountType: DiscountType,
@@ -487,9 +404,6 @@ export function computeEstimateTotals(
   const disc = discountAmount(items, discountType, discountValue);
   const lines: SurchargeLine[] = [];
   for (const key of SURCHARGE_KEYS) {
-    // Selective charges are already folded into the affected item prices.
-    // Transport remains a separate, customer-visible charge as before.
-    if (key === "height" || key === "commissioning") continue;
     const s = surcharges?.[key];
     if (!s?.enabled) continue;
     const percent = Number(s.percent) || 0;
