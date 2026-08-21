@@ -717,15 +717,39 @@ function EstimateEditor() {
 
             {/* Дополнительные расходы */}
             <div className="mt-5 rounded-xl border border-border p-4">
-              <h3 className="font-bold">Дополнительные расходы</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-bold">Дополнительные расходы</h3>
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-[hsl(var(--brand))]"
+                    checked={diag}
+                    onChange={(e) => setDiag(e.target.checked)}
+                  />
+                  Режим диагностики
+                </label>
+              </div>
               <div className="mt-3 space-y-3">
                 {SURCHARGE_KEYS.map((key) => {
                   const line = totals.surchargeLines.find((l) => l.key === key);
+                  const base = surchargeBase(est.items, key);
+                  const percent = Number(surcharges[key].percent) || 0;
+                  const calcAmount = Math.round(((base * percent) / 100) * 100) / 100;
+                  const flag: "at_height" | "commissioning" | null =
+                    key === "height"
+                      ? "at_height"
+                      : key === "commissioning"
+                        ? "commissioning"
+                        : null;
+                  const flagged = flag
+                    ? est.items.filter((i) => (i as never as Record<string, unknown>)[flag]).length
+                    : est.items.length;
                   return (
                     <div
                       key={key}
                       className="flex flex-wrap items-center justify-between gap-3"
                     >
+
 
                       <label className="flex min-w-0 cursor-pointer items-center gap-2 text-sm">
                         <input
