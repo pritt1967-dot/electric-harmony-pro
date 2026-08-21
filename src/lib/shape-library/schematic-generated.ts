@@ -709,7 +709,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "qfd-cable",
     "name": "QFD cable",
-    "category": "breaker",
+    "category": "rcbo",
     "master_id": "9",
     "base_id": "{DD07DA7B-F0F0-443D-952C-823311F0AA13}",
     "shape_id": 13,
@@ -824,7 +824,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "qfd-n-cable",
     "name": "QFD+N cable",
-    "category": "breaker",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 14,
@@ -1677,7 +1677,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "afd-cable",
     "name": "AFD cable",
-    "category": "cable",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 23,
@@ -1774,7 +1774,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "afd-n-cable",
     "name": "AFD+N cable",
-    "category": "cable",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 24,
@@ -1871,7 +1871,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "asd-cable",
     "name": "ASD cable",
-    "category": "cable",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 25,
@@ -1962,7 +1962,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "asd-n-cable",
     "name": "ASD+N cable",
-    "category": "cable",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 26,
@@ -2053,7 +2053,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "q-cable",
     "name": "Q cable",
-    "category": "cable",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 27,
@@ -2137,7 +2137,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "fu-cable",
     "name": "FU cable",
-    "category": "cable",
+    "category": "protection",
     "master_id": null,
     "base_id": null,
     "shape_id": 28,
@@ -2274,7 +2274,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "pv",
     "name": "PV",
-    "category": "misc",
+    "category": "meter",
     "master_id": null,
     "base_id": null,
     "shape_id": 30,
@@ -2316,7 +2316,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "t",
     "name": "T",
-    "category": "misc",
+    "category": "transformer",
     "master_id": null,
     "base_id": null,
     "shape_id": 31,
@@ -2369,7 +2369,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "pa",
     "name": "PA",
-    "category": "misc",
+    "category": "meter",
     "master_id": null,
     "base_id": null,
     "shape_id": 32,
@@ -2411,7 +2411,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "pw",
     "name": "PW",
-    "category": "misc",
+    "category": "meter",
     "master_id": null,
     "base_id": null,
     "shape_id": 33,
@@ -2768,7 +2768,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "hl",
     "name": "HL",
-    "category": "misc",
+    "category": "signal",
     "master_id": null,
     "base_id": null,
     "shape_id": 38,
@@ -2821,7 +2821,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "ta",
     "name": "TA",
-    "category": "misc",
+    "category": "transformer",
     "master_id": null,
     "base_id": null,
     "shape_id": 39,
@@ -2874,7 +2874,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "ru",
     "name": "RU",
-    "category": "misc",
+    "category": "contactor",
     "master_id": null,
     "base_id": null,
     "shape_id": 40,
@@ -2986,7 +2986,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "fu",
     "name": "FU",
-    "category": "misc",
+    "category": "protection",
     "master_id": null,
     "base_id": null,
     "shape_id": 42,
@@ -3033,7 +3033,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "q",
     "name": "Q",
-    "category": "misc",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 43,
@@ -3332,7 +3332,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "qfd",
     "name": "QFD",
-    "category": "breaker",
+    "category": "rcbo",
     "master_id": "15",
     "base_id": "{AE4AA73F-4B1B-49F4-8E13-C3C2DC4656F3}",
     "shape_id": 48,
@@ -3424,7 +3424,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "qfd-n",
     "name": "QFD+N",
-    "category": "breaker",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 49,
@@ -3757,7 +3757,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "afd",
     "name": "AFD",
-    "category": "misc",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 55,
@@ -3883,7 +3883,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "afd-n",
     "name": "AFD N",
-    "category": "misc",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 57,
@@ -3949,7 +3949,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "asd",
     "name": "ASD",
-    "category": "misc",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 58,
@@ -4009,7 +4009,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "asd-n",
     "name": "ASD N",
-    "category": "misc",
+    "category": "rcbo",
     "master_id": null,
     "base_id": null,
     "shape_id": 59,
@@ -4069,7 +4069,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "no",
     "name": "NO",
-    "category": "misc",
+    "category": "contact",
     "master_id": null,
     "base_id": null,
     "shape_id": 60,
@@ -4122,7 +4122,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "nc",
     "name": "NC",
-    "category": "misc",
+    "category": "contact",
     "master_id": null,
     "base_id": null,
     "shape_id": 61,
@@ -4175,7 +4175,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "q-переключатель",
     "name": "Q переключатель",
-    "category": "misc",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 62,
@@ -4228,7 +4228,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "q-n-переключатель",
     "name": "Q+N переключатель",
-    "category": "misc",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 63,
@@ -4281,7 +4281,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "no-c-nc",
     "name": "NO,C,NC",
-    "category": "misc",
+    "category": "contact",
     "master_id": null,
     "base_id": null,
     "shape_id": 64,
@@ -4334,7 +4334,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "q-n-на-2-положения",
     "name": "Q+N на 2 положения",
-    "category": "misc",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 65,
@@ -4387,7 +4387,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "sb",
     "name": "SB",
-    "category": "misc",
+    "category": "contact",
     "master_id": null,
     "base_id": null,
     "shape_id": 66,
@@ -4440,7 +4440,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "kt",
     "name": "KT",
-    "category": "misc",
+    "category": "contactor",
     "master_id": null,
     "base_id": null,
     "shape_id": 67,
@@ -4493,7 +4493,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "kk",
     "name": "KK",
-    "category": "misc",
+    "category": "contactor",
     "master_id": null,
     "base_id": null,
     "shape_id": 68,
@@ -4540,7 +4540,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "pe",
     "name": "PE",
-    "category": "misc",
+    "category": "bus",
     "master_id": null,
     "base_id": null,
     "shape_id": 69,
@@ -4587,7 +4587,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "m",
     "name": "M",
-    "category": "misc",
+    "category": "machine",
     "master_id": null,
     "base_id": null,
     "shape_id": 70,
@@ -4629,7 +4629,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "g",
     "name": "G",
-    "category": "misc",
+    "category": "machine",
     "master_id": null,
     "base_id": null,
     "shape_id": 71,
@@ -4682,7 +4682,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "r",
     "name": "R",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 72,
@@ -4729,7 +4729,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "c",
     "name": "C",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 73,
@@ -4782,7 +4782,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "vd",
     "name": "VD",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 74,
@@ -4835,7 +4835,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "u",
     "name": "U",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 75,
@@ -4894,7 +4894,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "u1",
     "name": "U1",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 76,
@@ -4947,7 +4947,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "u2",
     "name": "U2",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 77,
@@ -5006,7 +5006,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "u3",
     "name": "U3",
-    "category": "misc",
+    "category": "passive",
     "master_id": null,
     "base_id": null,
     "shape_id": 78,
@@ -5065,7 +5065,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "блокировка-механическая",
     "name": "Блокировка механическая",
-    "category": "misc",
+    "category": "switch",
     "master_id": null,
     "base_id": null,
     "shape_id": 79,
@@ -5111,7 +5111,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "щит-шкаф",
     "name": "Щит/Шкаф",
-    "category": "misc",
+    "category": "enclosure",
     "master_id": "22",
     "base_id": "{C0A85AB8-F889-45DC-A1DB-6038804214B9}",
     "shape_id": 80,
@@ -5584,7 +5584,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "обновить",
     "name": "Обновить",
-    "category": "misc",
+    "category": "service",
     "master_id": null,
     "base_id": null,
     "shape_id": 89,
@@ -5624,7 +5624,7 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
   {
     "id": "скрыть-контекстное-меню",
     "name": "Скрыть контекстное меню",
-    "category": "misc",
+    "category": "service",
     "master_id": null,
     "base_id": null,
     "shape_id": 90,
@@ -5660,5 +5660,80 @@ export const SCHEMATIC_SYMBOLS: SchematicSymbol[] = [
       "Точки подключения вычислены по геометрии (мастер отсутствует в Документ1.vsdx)",
       "Текстовые поля в мастере отсутствуют"
     ]
+  }
+];
+
+export const SCHEMATIC_CATEGORIES: { key: string; label: string }[] = [
+  {
+    "key": "service",
+    "label": "Служебные фигуры"
+  },
+  {
+    "key": "bus",
+    "label": "Шины и проводники"
+  },
+  {
+    "key": "rcbo",
+    "label": "Дифавтоматы (QFD)"
+  },
+  {
+    "key": "rcd",
+    "label": "УЗО (QD)"
+  },
+  {
+    "key": "breaker",
+    "label": "Автоматические выключатели (QF)"
+  },
+  {
+    "key": "switch",
+    "label": "Рубильники, разъединители, переключатели"
+  },
+  {
+    "key": "meter",
+    "label": "Приборы учёта и измерения"
+  },
+  {
+    "key": "transformer",
+    "label": "Трансформаторы"
+  },
+  {
+    "key": "contactor",
+    "label": "Контакторы, реле, катушки"
+  },
+  {
+    "key": "contact",
+    "label": "Контакты и кнопки"
+  },
+  {
+    "key": "protection",
+    "label": "Предохранители и защита"
+  },
+  {
+    "key": "signal",
+    "label": "Сигнальная арматура"
+  },
+  {
+    "key": "machine",
+    "label": "Машины и источники"
+  },
+  {
+    "key": "passive",
+    "label": "Пассивные элементы и преобразователи"
+  },
+  {
+    "key": "load",
+    "label": "Электроприёмники"
+  },
+  {
+    "key": "enclosure",
+    "label": "Щиты и шкафы"
+  },
+  {
+    "key": "frame",
+    "label": "Рамки, боковики, оформление"
+  },
+  {
+    "key": "cable",
+    "label": "Кабельные блоки"
   }
 ];

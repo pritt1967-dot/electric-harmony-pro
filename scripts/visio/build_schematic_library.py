@@ -324,7 +324,14 @@ def build():
 if __name__ == "__main__":
     items, total, dup = build()
     out = sys.argv[1] if len(sys.argv) > 1 else "src/lib/shape-library/schematic-generated.ts"
-    ts = HEADER + json.dumps(items, ensure_ascii=False, indent=2) + ";\n"
+    cat_used = [(k, CATEGORY_LABEL[k]) for k, _l, _p in CATEGORY_RULES if any(i["category"] == k for i in items)]
+    ts = (
+        HEADER
+        + json.dumps(items, ensure_ascii=False, indent=2)
+        + ";\n\nexport const SCHEMATIC_CATEGORIES: { key: string; label: string }[] = "
+        + json.dumps([{"key": k, "label": l} for k, l in cat_used], ensure_ascii=False, indent=2)
+        + ";\n"
+    )
     open(out, "w").write(ts)
     cats = {}
     for it in items:
