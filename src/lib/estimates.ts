@@ -391,12 +391,10 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-export function surchargeBase(items: EstimateItem[], key: SurchargeKey) {
-  if (key === "transport") return subtotal(items);
-  const flag: keyof EstimateItem = key === "height" ? "at_height" : "commissioning";
-  return round2(
-    items.filter((i) => i[flag]).reduce((s, i) => s + lineTotal(i), 0),
-  );
+export function surchargeBase(items: EstimateItem[], _key: SurchargeKey) {
+  // Все начисления (транспорт, высота, пусконаладка) считаются
+  // от одного и того же промежуточного итога всех позиций.
+  return subtotal(items);
 }
 
 export function computeEstimateTotals(
