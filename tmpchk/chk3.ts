@@ -1,0 +1,13 @@
+import { PHYSICAL_DEVICES, DEVICE_LIBRARY_STATS, DEVICE_TYPE_LABELS } from "../src/lib/shape-library/device-library-generated";
+console.log("STATS", JSON.stringify(DEVICE_LIBRARY_STATS));
+console.log("TYPES", JSON.stringify(DEVICE_TYPE_LABELS));
+const D:any[] = PHYSICAL_DEVICES as any;
+console.log("noSvg", D.filter(d=>!d.hasSvg).length, "noModules", D.filter(d=>!d.modules).length);
+const byType: Record<string,number> = {};
+for (const d of D) byType[d.deviceType]=(byType[d.deviceType]??0)+1;
+console.log(byType);
+const show=(q:string)=>{const r=D.filter(d=>(d.manufacturer+" "+d.series+" "+d.model).toLowerCase().includes(q));console.log("##",q,r.length, r.slice(0,6).map(d=>`${d.id}|${d.deviceType}|${d.poles}P|${d.modules}m|${d.ratedCurrent}`));};
+["узип","spd","реле напряж","iek ва47-29","вд1-63","ад12","овен","digitop"].forEach(show);
+const cpd = D.filter(d=>(d.connectionPoints?.length??0)>0);
+console.log("withCP", cpd.map(d=>d.id+":"+d.connectionPoints.length));
+console.log(JSON.stringify(cpd[0]?.connectionPoints?.slice(0,4)));
