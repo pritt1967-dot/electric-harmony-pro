@@ -11,7 +11,7 @@ import type { PanelBuild, SpecItem } from "./types";
 
 export * from "./types";
 export { TEST_SPEC_48 } from "./test-spec";
-export { deviceModules, resolveDevice, DRAWABLE_DEVICES } from "./device-resolve";
+export { deviceModules, resolveDevice, DRAWABLE_DEVICES, DEVICES_WITHOUT_SVG } from "./device-resolve";
 export { buildConnectionPoints } from "./connection-points";
 export { GROUND_WAVE } from "./render";
 
