@@ -11,10 +11,26 @@ import { MODULE_MM, type Resolution, type SpecItem } from "./types";
 const norm = (s: string) =>
   s.toLowerCase().replace(/ё/g, "е").replace(/[^a-zа-я0-9]+/g, " ").trim();
 
+/**
+ * Исправление ошибок классификации импорта (ЗАДАЧА 3): фиксаторы DIN-рейки
+ * попали в тип «spd» (ограничитель ≠ ограничитель перенапряжения).
+ */
+const MISCLASSIFIED = /ограничител[ья]\s+на\s+динрейку|фиксатор/i;
+
+function fixType(d: PhysicalDevice): PhysicalDevice {
+  if (d.deviceType === "spd" && MISCLASSIFIED.test(d.model)) return { ...d, deviceType: "terminal" };
+  return d;
+}
+
+/** Записи библиотеки без SVG (18 шт.) — к раскладке не допускаются. */
+export const DEVICES_WITHOUT_SVG: PhysicalDevice[] = PHYSICAL_DEVICES.filter(
+  (d) => !d.hasSvg || !d.svgAsset,
+);
+
 /** Аппараты с реальным SVG — только они допускаются к раскладке. */
 export const DRAWABLE_DEVICES: PhysicalDevice[] = PHYSICAL_DEVICES.filter(
   (d) => d.hasSvg && Boolean(d.svgAsset),
-);
+).map(fixType);
 
 /** Реальное число модулей аппарата: из источника либо по ширине мастера. */
 export function deviceModules(d: PhysicalDevice): number {
