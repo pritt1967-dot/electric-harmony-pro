@@ -26,6 +26,7 @@ import { DeviceCatalog } from "@/components/admin/DeviceCatalog";
 import { ModularDeviceLibrary } from "@/components/admin/ModularDeviceLibrary";
 import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
+import { PanelBuildTest } from "@/components/admin/PanelBuildTest";
 import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -46,6 +47,7 @@ const TABS = [
   { value: "assembly-test", label: "Тест сборки щита" },
   { value: "spec-test", label: "Тест сборки из спецификации" },
   { value: "group-test", label: "Тест группировки щита" },
+  { value: "build-test", label: "Сборка щита v2 (тест)" },
   { value: "texts", label: "Тексты" },
   { value: "services", label: "Услуги" },
   { value: "works", label: "Работы" },
@@ -236,6 +238,10 @@ function AdminPage() {
 
               <TabsContent value="spec-test" className="mt-6">
                 <SpecAssemblyTest />
+              </TabsContent>
+
+              <TabsContent value="build-test" className="mt-6">
+                <PanelBuildTest />
               </TabsContent>
 
               <TabsContent value="group-test" className="mt-6">
