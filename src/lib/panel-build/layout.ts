@@ -145,6 +145,9 @@ export function layoutPanel(spec: SpecItem[], opts: LayoutOptions): Layout {
     left -= take;
   }
 
+  // пустые рейки в конце не показываем — щит подбирается под спецификацию
+  while (railList.length > 1 && railList[railList.length - 1]!.used === 0) railList.pop();
+
   const lastRail = railList[railList.length - 1]!;
   const busN = lastRail.y + RAIL_PITCH_MM * 0.42;
   const busPE = busN + 14;
