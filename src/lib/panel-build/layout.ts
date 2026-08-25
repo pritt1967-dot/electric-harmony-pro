@@ -17,7 +17,7 @@ import { deviceHeightMm, deviceWidthMm, deviceModules, resolveDevice } from "./d
 import { buildConnectionPoints } from "./connection-points";
 
 export const FRAME_PAD_MM = 22;
-export const RAIL_PITCH_MM = 125;
+export const RAIL_PITCH_MM = 108;
 
 export type LayoutOptions = {
   railModules: number;
@@ -149,7 +149,7 @@ export function layoutPanel(spec: SpecItem[], opts: LayoutOptions): Layout {
   while (railList.length > 1 && railList[railList.length - 1]!.used === 0) railList.pop();
 
   const lastRail = railList[railList.length - 1]!;
-  const busN = lastRail.y + RAIL_PITCH_MM * 0.42;
+  const busN = lastRail.y + 92;
   const busPE = busN + 14;
   const frame = {
     x: FRAME_PAD_MM - 12,
