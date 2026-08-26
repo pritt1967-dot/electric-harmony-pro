@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
+import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/public/supabase-keepalive'
 import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -106,6 +107,12 @@ const ApiPublicTelegramHealthRoute = ApiPublicTelegramHealthRouteImport.update({
   path: '/api/public/telegram-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSupabaseKeepaliveRoute =
+  ApiPublicSupabaseKeepaliveRouteImport.update({
+    id: '/api/public/supabase-keepalive',
+    path: '/api/public/supabase-keepalive',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicContactCardDotpdfRoute =
   ApiPublicContactCardDotpdfRouteImport.update({
     id: '/api/public/contact-card.pdf',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
@@ -173,6 +181,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
@@ -196,6 +205,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
 }
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
     | '/api/public/contact-card.pdf'
+    | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
   fileRoutesByTo: FileRoutesByTo
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
     | '/api/public/contact-card.pdf'
+    | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
   id:
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/estimate/$id'
     | '/api/public/contact-card.pdf'
+    | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
   fileRoutesById: FileRoutesById
@@ -283,6 +296,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicContactCardDotpdfRoute: typeof ApiPublicContactCardDotpdfRoute
+  ApiPublicSupabaseKeepaliveRoute: typeof ApiPublicSupabaseKeepaliveRoute
   ApiPublicTelegramHealthRoute: typeof ApiPublicTelegramHealthRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
 }
@@ -394,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/supabase-keepalive': {
+      id: '/api/public/supabase-keepalive'
+      path: '/api/public/supabase-keepalive'
+      fullPath: '/api/public/supabase-keepalive'
+      preLoaderRoute: typeof ApiPublicSupabaseKeepaliveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-card.pdf': {
       id: '/api/public/contact-card.pdf'
       path: '/api/public/contact-card.pdf'
@@ -463,6 +484,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicContactCardDotpdfRoute: ApiPublicContactCardDotpdfRoute,
+  ApiPublicSupabaseKeepaliveRoute: ApiPublicSupabaseKeepaliveRoute,
   ApiPublicTelegramHealthRoute: ApiPublicTelegramHealthRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
 }
