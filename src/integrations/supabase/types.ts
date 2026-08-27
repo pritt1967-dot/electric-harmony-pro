@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      commercial_offers: {
+        Row: {
+          created_at: string
+          estimate_id: string | null
+          id: string
+          number: string
+          snapshot: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          estimate_id?: string | null
+          id?: string
+          number?: string
+          snapshot?: Json
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          estimate_id?: string | null
+          id?: string
+          number?: string
+          snapshot?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_offers_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estimate_versions: {
         Row: {
           created_at: string
