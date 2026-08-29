@@ -426,12 +426,27 @@ function EstimateEditor() {
             >
               <FileDown className="mr-2 size-4" /> Word
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setOfferOpen(true)}
+            >
+              <FileSignature className="mr-2 size-4" /> Сформировать КП
+            </Button>
             <Button size="sm" variant="ghost" className="shrink-0" onClick={duplicate}>
               <Copy className="mr-2 size-4" /> Дублировать
             </Button>
           </div>
         </div>
       </header>
+
+      <OfferDialog
+        estimate={exportEstimate}
+        open={offerOpen}
+        onOpenChange={setOfferOpen}
+      />
+
 
 
       {publicUrl && (
