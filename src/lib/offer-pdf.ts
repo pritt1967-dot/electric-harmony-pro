@@ -144,9 +144,11 @@ export async function buildOfferPdf(doc0: OfferDoc) {
   cost.forEach(([label, value, bold]) => {
     doc.setFont("DejaVu", bold ? "bold" : "normal");
     doc.setFontSize(bold ? 12 : 10.5);
-    doc.setTextColor(...(bold ? RED : GREY));
+    const labelColor: [number, number, number] = bold ? RED : GREY;
+    doc.setTextColor(...labelColor);
     doc.text(`${label}:`, M + 5, cy);
-    doc.setTextColor(...(bold ? RED : [17, 17, 17]));
+    const valueColor: [number, number, number] = bold ? RED : [17, 17, 17];
+    doc.setTextColor(...valueColor);
     doc.text(`${money(value)} руб.`, pageW - M - 5, cy, { align: "right" });
     cy += bold ? 8 : 7;
   });
