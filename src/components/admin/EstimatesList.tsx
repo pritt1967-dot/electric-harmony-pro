@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Copy,
   Download,
+  FileSignature,
   FileText,
   Link2,
   Loader2,
@@ -35,6 +36,7 @@ import {
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 import { SurchargeSettings } from "@/components/admin/SurchargeSettings";
+import { OfferDialog } from "@/components/admin/OfferDialog";
 
 type Row = Estimate & {
   id: string;
@@ -63,6 +65,7 @@ export function EstimatesList() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [qr, setQr] = useState<Record<string, string>>({});
+  const [offerRow, setOfferRow] = useState<Row | null>(null);
 
   useEffect(() => {
     fetchEstimates().then((r) => {
@@ -261,6 +264,14 @@ export function EstimatesList() {
                 size="sm"
                 variant="outline"
                 className="h-11"
+                onClick={() => setOfferRow(row)}
+              >
+                <FileSignature className="mr-2 size-4" /> КП
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-11"
                 onClick={() => copyLink(row)}
               >
                 <Link2 className="mr-2 size-4" /> Ссылка
@@ -300,6 +311,14 @@ export function EstimatesList() {
           </div>
         ))}
       </div>
+
+      {offerRow && (
+        <OfferDialog
+          estimate={offerRow}
+          open={Boolean(offerRow)}
+          onOpenChange={(v) => !v && setOfferRow(null)}
+        />
+      )}
     </div>
   );
 }
