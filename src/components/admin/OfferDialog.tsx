@@ -179,12 +179,51 @@ export function OfferDialog({ estimate, open, onOpenChange }: Props) {
               />
             </div>
             {d.show_lamps && (
-              <Textarea
-                className="mt-2"
-                rows={4}
-                value={d.lamps_text}
-                onChange={(e) => set("lamps_text", e.target.value)}
-              />
+              <div className="mt-2 space-y-3">
+                <Textarea
+                  rows={4}
+                  value={d.lamps_text}
+                  onChange={(e) => set("lamps_text", e.target.value)}
+                />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <Label>Стоимость с выбранными, ₽</Label>
+                    <Input
+                      type="number"
+                      value={d.lamps_selected_total ?? d.amounts.total}
+                      onChange={(e) =>
+                        set("lamps_selected_total", Number(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Кол-во альтернатив</Label>
+                    <Input
+                      type="number"
+                      value={d.lamps_alt_count ?? 0}
+                      onChange={(e) => set("lamps_alt_count", Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Стоимость с альтернативой, ₽</Label>
+                    <Input
+                      type="number"
+                      value={d.lamps_alt_total ?? 0}
+                      onChange={(e) => set("lamps_alt_total", Number(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Пояснение</Label>
+                  <Input
+                    value={d.lamps_note ?? ""}
+                    onChange={(e) => set("lamps_note", e.target.value)}
+                  />
+                </div>
+                <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+                  {lampsSummaryText(d)}
+                </p>
+              </div>
             )}
           </div>
 
