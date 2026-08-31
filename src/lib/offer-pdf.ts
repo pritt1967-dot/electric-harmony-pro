@@ -3,7 +3,13 @@ import { jsPDF } from "jspdf";
 import { loadAssets } from "./estimate-pdf";
 import { money } from "./estimates";
 import { drawPdfIcon, type OfferIcon } from "./offer-icons";
-import { OFFER_BRAND, type OfferDoc, offerDateLabel, offerFileName } from "./offer";
+import {
+  OFFER_BRAND,
+  type OfferDoc,
+  lampsSummaryText,
+  offerDateLabel,
+  offerFileName,
+} from "./offer";
 
 const RED = OFFER_BRAND.red;
 const GREY: [number, number, number] = [90, 98, 112];
