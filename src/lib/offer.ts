@@ -221,7 +221,7 @@ export function buildOfferDoc(estimate: Estimate, price: PriceRef[]): OfferDoc {
     show_lamps: hasLampAlternatives(estimate.items),
     term: estimate.work_period || OFFER_TERM,
     warranty: OFFER_WARRANTY,
-    amounts: computeOfferAmounts(estimate, price),
+    amounts,
   };
 }
 
