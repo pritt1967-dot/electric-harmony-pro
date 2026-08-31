@@ -3,7 +3,13 @@ import { jsPDF } from "jspdf";
 import { loadAssets } from "./estimate-pdf";
 import { money } from "./estimates";
 import { drawPdfIcon, type OfferIcon } from "./offer-icons";
-import { OFFER_BRAND, type OfferDoc, offerDateLabel, offerFileName } from "./offer";
+import {
+  OFFER_BRAND,
+  type OfferDoc,
+  lampsSummaryText,
+  offerDateLabel,
+  offerFileName,
+} from "./offer";
 
 const RED = OFFER_BRAND.red;
 const GREY: [number, number, number] = [90, 98, 112];
@@ -117,15 +123,22 @@ export async function buildOfferPdf(doc0: OfferDoc) {
   });
 
   /* ── Светильники ──────────────────────────────────────── */
-  if (doc0.show_lamps && doc0.lamps_text.trim()) {
+  if (doc0.show_lamps) {
     y += 4;
     section("СВЕТИЛЬНИКИ", "lamps");
     doc.setFontSize(9.5);
-    doc.setTextColor(...GREY);
-    doc.splitTextToSize(doc0.lamps_text, pageW - M * 2).forEach((l: string) => {
-      doc.text(l, M, y);
-      y += 4.8;
-    });
+    const para = (text: string, color: [number, number, number], gap = 1.6) => {
+      if (!text.trim()) return;
+      doc.setTextColor(...color);
+      doc.splitTextToSize(text, pageW - M * 2).forEach((l: string) => {
+        doc.text(l, M, y);
+        y += 4.8;
+      });
+      y += gap;
+    };
+    para(doc0.lamps_text, GREY);
+    para(lampsSummaryText(doc0), INK);
+    para(doc0.lamps_note ?? "", GREY, 0);
     doc.setTextColor(...INK);
   }
 

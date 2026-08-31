@@ -12,7 +12,7 @@ import {
 export const OFFER_BRAND = {
   name: "S&M Electric",
   slogan: "Электромонтаж без компромиссов.",
-  phone1: "9117335567",
+  phone1: "+7 911 733 55 67",
   phone2: "+7 981 772 66 63",
   email: "fls@inbox.ru",
   site: "sm-electric.ru",
@@ -29,8 +29,9 @@ export const OFFER_LAMPS_TEXT = [
   "Заказчиком были выбраны определённые модели светильников.",
   "По просьбе заказчика S&M Electric дополнительно подобрал альтернативные варианты с сопоставимыми техническими характеристиками и более низкой стоимостью.",
   "Предлагаемые варианты позволяют снизить стоимость комплектации объекта без изменения согласованного объёма работ.",
-  "Окончательный вариант светильников согласовывается с заказчиком.",
 ].join(" ");
+export const OFFER_LAMPS_NOTE =
+  "Окончательный вариант светильников согласовывается с заказчиком.";
 
 /* ── Классификация «работа / материал» ─────────────────────── */
 
@@ -167,13 +168,48 @@ export type OfferDoc = {
   works: string[];
   lamps_text: string;
   show_lamps: boolean;
+  /** Стоимость с выбранными заказчиком светильниками. */
+  lamps_selected_total?: number;
+  /** Количество альтернативных вариантов светильников. */
+  lamps_alt_count?: number;
+  /** Стоимость при выборе альтернативы. */
+  lamps_alt_total?: number;
+  /** Заключительное пояснение блока «Светильники». */
+  lamps_note?: string;
   term: string;
   warranty: string;
   amounts: OfferAmounts;
 };
 
+/** Абзац о стоимости светильников — из редактируемых значений КП. */
+export function lampsSummaryText(doc: OfferDoc): string {
+  const sel = doc.lamps_selected_total ?? doc.amounts.total;
+  const cnt = doc.lamps_alt_count ?? 0;
+  const alt = doc.lamps_alt_total ?? 0;
+  const fmt = (n: number) => new Intl.NumberFormat("ru-RU").format(Math.round(n));
+  const parts = [
+    `Общая стоимость работ и материалов с выбранными заказчиком светильниками — ${fmt(sel)} руб.`,
+  ];
+  if (cnt > 0) {
+    parts.push(
+      `В качестве альтернативы предлагаем ${cnt} варианта светильников с сопоставимыми техническими характеристиками и меньшей стоимостью.`,
+    );
+    if (alt > 0) {
+      parts.push(
+        `При выборе одного из альтернативных вариантов общая стоимость составит — ${fmt(alt)} руб.`,
+      );
+    }
+  }
+  return parts.join(" ");
+}
+
 export function buildOfferDoc(estimate: Estimate, price: PriceRef[]): OfferDoc {
+  const amounts = computeOfferAmounts(estimate, price);
   return {
+    lamps_selected_total: amounts.total,
+    lamps_alt_count: 0,
+    lamps_alt_total: 0,
+    lamps_note: OFFER_LAMPS_NOTE,
     number: `КП-${(estimate.number || "").replace(/^EST-/i, "") || todayISO()}`,
     estimate_number: estimate.number || "",
     date: todayISO(),
@@ -185,7 +221,7 @@ export function buildOfferDoc(estimate: Estimate, price: PriceRef[]): OfferDoc {
     show_lamps: hasLampAlternatives(estimate.items),
     term: estimate.work_period || OFFER_TERM,
     warranty: OFFER_WARRANTY,
-    amounts: computeOfferAmounts(estimate, price),
+    amounts,
   };
 }
 

@@ -15,7 +15,13 @@ import { saveAs } from "file-saver";
 import { LOGO_URL } from "./logo";
 import { money } from "./estimates";
 import { iconPng, type OfferIcon } from "./offer-icons";
-import { OFFER_BRAND, type OfferDoc, offerDateLabel, offerFileName } from "./offer";
+import {
+  OFFER_BRAND,
+  type OfferDoc,
+  lampsSummaryText,
+  offerDateLabel,
+  offerFileName,
+} from "./offer";
 
 const RED = OFFER_BRAND.redHex;
 const GREY = "5A6270";
@@ -182,12 +188,32 @@ export async function downloadOfferDocx(offer: OfferDoc) {
               }),
           ),
 
-          ...(offer.show_lamps && offer.lamps_text.trim()
+          ...(offer.show_lamps
             ? [
                 heading("СВЕТИЛЬНИКИ", icLamps),
+                ...(offer.lamps_text.trim()
+                  ? [
+                      new Paragraph({
+                        spacing: { after: 80 },
+                        children: [
+                          new TextRun({ text: offer.lamps_text, size: 19, color: GREY }),
+                        ],
+                      }),
+                    ]
+                  : []),
                 new Paragraph({
-                  children: [new TextRun({ text: offer.lamps_text, size: 19, color: GREY })],
+                  spacing: { after: 80 },
+                  children: [new TextRun({ text: lampsSummaryText(offer), size: 20 })],
                 }),
+                ...(offer.lamps_note?.trim()
+                  ? [
+                      new Paragraph({
+                        children: [
+                          new TextRun({ text: offer.lamps_note, size: 19, color: GREY }),
+                        ],
+                      }),
+                    ]
+                  : []),
               ]
             : []),
 
