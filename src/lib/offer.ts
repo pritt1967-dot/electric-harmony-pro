@@ -168,13 +168,48 @@ export type OfferDoc = {
   works: string[];
   lamps_text: string;
   show_lamps: boolean;
+  /** Стоимость с выбранными заказчиком светильниками. */
+  lamps_selected_total?: number;
+  /** Количество альтернативных вариантов светильников. */
+  lamps_alt_count?: number;
+  /** Стоимость при выборе альтернативы. */
+  lamps_alt_total?: number;
+  /** Заключительное пояснение блока «Светильники». */
+  lamps_note?: string;
   term: string;
   warranty: string;
   amounts: OfferAmounts;
 };
 
+/** Абзац о стоимости светильников — из редактируемых значений КП. */
+export function lampsSummaryText(doc: OfferDoc): string {
+  const sel = doc.lamps_selected_total ?? doc.amounts.total;
+  const cnt = doc.lamps_alt_count ?? 0;
+  const alt = doc.lamps_alt_total ?? 0;
+  const fmt = (n: number) => new Intl.NumberFormat("ru-RU").format(Math.round(n));
+  const parts = [
+    `Общая стоимость работ и материалов с выбранными заказчиком светильниками — ${fmt(sel)} руб.`,
+  ];
+  if (cnt > 0) {
+    parts.push(
+      `В качестве альтернативы предлагаем ${cnt} варианта светильников с сопоставимыми техническими характеристиками и меньшей стоимостью.`,
+    );
+    if (alt > 0) {
+      parts.push(
+        `При выборе одного из альтернативных вариантов общая стоимость составит — ${fmt(alt)} руб.`,
+      );
+    }
+  }
+  return parts.join(" ");
+}
+
 export function buildOfferDoc(estimate: Estimate, price: PriceRef[]): OfferDoc {
+  const amounts = computeOfferAmounts(estimate, price);
   return {
+    lamps_selected_total: amounts.total,
+    lamps_alt_count: 0,
+    lamps_alt_total: 0,
+    lamps_note: OFFER_LAMPS_NOTE,
     number: `КП-${(estimate.number || "").replace(/^EST-/i, "") || todayISO()}`,
     estimate_number: estimate.number || "",
     date: todayISO(),
