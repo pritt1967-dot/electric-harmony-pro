@@ -12,7 +12,7 @@ import {
 export const OFFER_BRAND = {
   name: "S&M Electric",
   slogan: "Электромонтаж без компромиссов.",
-  phone1: "9117335567",
+  phone1: "+7 911 733 55 67",
   phone2: "+7 981 772 66 63",
   email: "fls@inbox.ru",
   site: "sm-electric.ru",
