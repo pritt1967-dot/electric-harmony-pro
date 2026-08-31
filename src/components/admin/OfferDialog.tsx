@@ -21,6 +21,7 @@ import {
   type PriceRef,
   buildOfferDoc,
   fetchOffers,
+  lampsSummaryText,
   fetchPriceRefs,
   releaseOffer,
 } from "@/lib/offer";
