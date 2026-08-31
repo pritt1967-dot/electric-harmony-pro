@@ -182,12 +182,32 @@ export async function downloadOfferDocx(offer: OfferDoc) {
               }),
           ),
 
-          ...(offer.show_lamps && offer.lamps_text.trim()
+          ...(offer.show_lamps
             ? [
                 heading("СВЕТИЛЬНИКИ", icLamps),
+                ...(offer.lamps_text.trim()
+                  ? [
+                      new Paragraph({
+                        spacing: { after: 80 },
+                        children: [
+                          new TextRun({ text: offer.lamps_text, size: 19, color: GREY }),
+                        ],
+                      }),
+                    ]
+                  : []),
                 new Paragraph({
-                  children: [new TextRun({ text: offer.lamps_text, size: 19, color: GREY })],
+                  spacing: { after: 80 },
+                  children: [new TextRun({ text: lampsSummaryText(offer), size: 20 })],
                 }),
+                ...(offer.lamps_note?.trim()
+                  ? [
+                      new Paragraph({
+                        children: [
+                          new TextRun({ text: offer.lamps_note, size: 19, color: GREY }),
+                        ],
+                      }),
+                    ]
+                  : []),
               ]
             : []),
 
