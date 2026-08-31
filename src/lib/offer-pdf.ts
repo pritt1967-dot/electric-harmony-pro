@@ -117,15 +117,22 @@ export async function buildOfferPdf(doc0: OfferDoc) {
   });
 
   /* ── Светильники ──────────────────────────────────────── */
-  if (doc0.show_lamps && doc0.lamps_text.trim()) {
+  if (doc0.show_lamps) {
     y += 4;
     section("СВЕТИЛЬНИКИ", "lamps");
     doc.setFontSize(9.5);
-    doc.setTextColor(...GREY);
-    doc.splitTextToSize(doc0.lamps_text, pageW - M * 2).forEach((l: string) => {
-      doc.text(l, M, y);
-      y += 4.8;
-    });
+    const para = (text: string, color: [number, number, number], gap = 1.6) => {
+      if (!text.trim()) return;
+      doc.setTextColor(...color);
+      doc.splitTextToSize(text, pageW - M * 2).forEach((l: string) => {
+        doc.text(l, M, y);
+        y += 4.8;
+      });
+      y += gap;
+    };
+    para(doc0.lamps_text, GREY);
+    para(lampsSummaryText(doc0), INK);
+    para(doc0.lamps_note ?? "", GREY, 0);
     doc.setTextColor(...INK);
   }
 
