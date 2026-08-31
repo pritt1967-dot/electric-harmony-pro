@@ -15,7 +15,13 @@ import { saveAs } from "file-saver";
 import { LOGO_URL } from "./logo";
 import { money } from "./estimates";
 import { iconPng, type OfferIcon } from "./offer-icons";
-import { OFFER_BRAND, type OfferDoc, offerDateLabel, offerFileName } from "./offer";
+import {
+  OFFER_BRAND,
+  type OfferDoc,
+  lampsSummaryText,
+  offerDateLabel,
+  offerFileName,
+} from "./offer";
 
 const RED = OFFER_BRAND.redHex;
 const GREY = "5A6270";
