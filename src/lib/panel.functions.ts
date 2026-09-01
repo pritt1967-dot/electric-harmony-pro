@@ -115,18 +115,11 @@ export const designPanel = createServerFn({ method: "POST" })
 ${data.lines_text}`;
 
     async function askModel(extra: string): Promise<string> {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Lovable-API-Key": key!, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-3.6-flash",
-          temperature: 0.2,
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: prompt + extra },
-          ],
-        }),
+      const res = await callGateway("design", {
+        system: SYSTEM,
+        prompt: prompt + extra,
       });
+
       if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
       if (res.status === 402) throw new Error("Закончились кредиты AI");
       if (!res.ok) throw new Error("Не удалось выполнить расчёт");
