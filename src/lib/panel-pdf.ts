@@ -25,7 +25,10 @@ export async function buildPanelPdf(design: PanelDesign, imageDataUrl?: string) 
   doc.setFillColor(...BLUE);
   doc.rect(0, 0, pageW, 26, "F");
   try {
-    doc.addImage(logo, "PNG", M, 5, 16, 16);
+    const props = doc.getImageProperties(logo);
+    const h = 16;
+    const w = (h * props.width) / props.height;
+    doc.addImage(logo, "PNG", M, 5, w, h);
   } catch {
     /* логотип не критичен */
   }

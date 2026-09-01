@@ -73,15 +73,22 @@ export async function buildEstimatePdf(
   const M = 15;
 
   // ── Header ────────────────────────────────────────────────
+  // Логотип — компактный размер, строго с сохранением исходных пропорций.
+  let textX = M;
   try {
-    doc.addImage(logoDataUrl || logo, "PNG", M, 12, 22, 22);
+    const img = logoDataUrl || logo;
+    const props = doc.getImageProperties(img);
+    const h = 22;
+    const w = (h * props.width) / props.height;
+    doc.addImage(img, "PNG", M, 12, w, h);
+    textX = M + w + 5;
   } catch {
     /* logo optional */
   }
   doc.setFont("DejaVu", "bold");
   doc.setFontSize(18);
   doc.setTextColor(17, 17, 17);
-  doc.text("S&M Electric", M + 27, 21);
+  doc.text("S&M Electric", textX, 21);
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(90, 98, 112);

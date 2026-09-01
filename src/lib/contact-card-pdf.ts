@@ -33,9 +33,12 @@ export async function buildContactCardPdf(baseUrl?: string) {
   doc.setFillColor(...LIGHT);
   doc.rect(0, 0, pageW, 52, "F");
 
-  // Logo
+  // Logo — пропорции оригинала сохраняются
   try {
-    doc.addImage(logo, "PNG", M, 15, 22, 22);
+    const props = doc.getImageProperties(logo);
+    const h = 22;
+    const w = (h * props.width) / props.height;
+    doc.addImage(logo, "PNG", M, 15, w, h);
   } catch {
     /* logo optional */
   }
