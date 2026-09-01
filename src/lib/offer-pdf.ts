@@ -34,8 +34,8 @@ export async function buildOfferPdf(doc0: OfferDoc) {
   // Логотип — оригинальный файл, пропорции сохраняются, без фона и обрезки.
   try {
     const props = doc.getImageProperties(logo);
-    const maxH = 20;
-    const maxW = 52;
+    const maxH = 32;
+    const maxW = 83;
     const ratio = props.width / props.height;
     let h = maxH;
     let w = h * ratio;

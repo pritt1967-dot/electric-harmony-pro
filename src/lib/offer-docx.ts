@@ -40,8 +40,8 @@ async function logoAsset(): Promise<{ data: Uint8Array; w: number; h: number } |
     } catch {
       /* ignore */
     }
-    const maxH = 52;
-    const maxW = 150;
+    const maxH = 83;
+    const maxW = 240;
     let h = maxH;
     let w = Math.round(h * ratio);
     if (w > maxW) {
