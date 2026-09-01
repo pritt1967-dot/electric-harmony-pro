@@ -48,9 +48,9 @@ export const requirePanelAuth = createMiddleware({ type: "function" }).server(
     }
 
     const backend = createClient<Database>(backendUrl, publishableKey, {
+      accessToken: async () => token,
       global: {
         fetch: createBackendFetch(publishableKey),
-        headers: { Authorization: `Bearer ${token}` },
       },
       auth: {
         storage: undefined,
