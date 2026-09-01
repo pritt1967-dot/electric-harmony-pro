@@ -97,8 +97,8 @@ export const designPanel = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<PanelDesign> => {
     await assertAdmin(context as never);
 
-    const key = process.env["LOVABLE_API_KEY"];
-    if (!key) throw new Error("AI недоступен: нет ключа");
+
+
 
 
     const prompt = `ИСХОДНЫЕ ДАННЫЕ
