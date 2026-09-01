@@ -43,6 +43,54 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
   if (!data) throw new Error("Доступ только для администратора");
 }
 
+/**
+ * Транспорт к Lovable AI Gateway.
+ * Внутри Lovable ключ доступен локально — идём напрямую.
+ * На внешнем деплое (Vercel) ключа нет: запрос уходит через AI-реле
+ * (маршрут /api/public/ai-relay в инфраструктуре Lovable).
+ * Логика проектировщика, промпты и модели при этом не меняются.
+ */
+async function callGateway(
+  kind: "design" | "image",
+  payload: { system?: string; prompt: string },
+): Promise<Response> {
+  const key = process.env["LOVABLE_API_KEY"];
+  if (key) {
+    const body =
+      kind === "design"
+        ? {
+            model: "google/gemini-3.6-flash",
+            temperature: 0.2,
+            messages: [
+              { role: "system", content: payload.system },
+              { role: "user", content: payload.prompt },
+            ],
+          }
+        : {
+            model: "google/gemini-3-pro-image",
+            messages: [{ role: "user", content: payload.prompt }],
+            modalities: ["image", "text"],
+          };
+
+    return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Lovable-API-Key": key, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  const relayUrl = process.env["AI_RELAY_URL"];
+  const relaySecret = process.env["AI_RELAY_SECRET"];
+  if (!relayUrl || !relaySecret) throw new Error("AI недоступен: нет ключа");
+
+  return fetch(relayUrl.replace(/\/+$/, ""), {
+    method: "POST",
+    headers: { "X-Relay-Secret": relaySecret, "Content-Type": "application/json" },
+    body: JSON.stringify({ kind, ...payload }),
+  });
+}
+
+
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: PanelInput) => input)
