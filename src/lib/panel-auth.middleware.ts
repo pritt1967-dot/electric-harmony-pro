@@ -8,7 +8,7 @@ function isOpaqueApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
 
-function createBackendFetch(apiKey: string): typeof fetch {
+function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
       typeof Request !== "undefined" && input instanceof Request
@@ -22,6 +22,7 @@ function createBackendFetch(apiKey: string): typeof fetch {
       headers.delete("Authorization");
     }
     headers.set("apikey", apiKey);
+    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(input, { ...init, headers });
   };
 }
@@ -48,9 +49,8 @@ export const requirePanelAuth = createMiddleware({ type: "function" }).server(
     }
 
     const backend = createClient<Database>(backendUrl, publishableKey, {
-      accessToken: async () => token,
       global: {
-        fetch: createBackendFetch(publishableKey),
+        fetch: createBackendFetch(publishableKey, token),
       },
       auth: {
         storage: undefined,
