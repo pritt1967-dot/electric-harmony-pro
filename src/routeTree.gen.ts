@@ -26,6 +26,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
 import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/public/supabase-keepalive'
 import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
+import { Route as ApiPublicAiRelayRouteImport } from './routes/api/public/ai-relay'
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -119,6 +120,11 @@ const ApiPublicContactCardDotpdfRoute =
     path: '/api/public/contact-card.pdf',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAiRelayRoute = ApiPublicAiRelayRouteImport.update({
+  id: '/api/public/ai-relay',
+  path: '/api/public/ai-relay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedEstimateIdRoute = AuthenticatedEstimateIdRouteImport.update({
   id: '/estimate/$id',
   path: '/estimate/$id',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
+  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
+    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
+    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/estimate/$id'
+    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   RabotyIndexRoute: typeof RabotyIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicAiRelayRoute: typeof ApiPublicAiRelayRoute
   ApiPublicContactCardDotpdfRoute: typeof ApiPublicContactCardDotpdfRoute
   ApiPublicSupabaseKeepaliveRoute: typeof ApiPublicSupabaseKeepaliveRoute
   ApiPublicTelegramHealthRoute: typeof ApiPublicTelegramHealthRoute
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicContactCardDotpdfRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ai-relay': {
+      id: '/api/public/ai-relay'
+      path: '/api/public/ai-relay'
+      fullPath: '/api/public/ai-relay'
+      preLoaderRoute: typeof ApiPublicAiRelayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/estimate/$id': {
       id: '/_authenticated/estimate/$id'
       path: '/estimate/$id'
@@ -483,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   RabotyIndexRoute: RabotyIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicAiRelayRoute: ApiPublicAiRelayRoute,
   ApiPublicContactCardDotpdfRoute: ApiPublicContactCardDotpdfRoute,
   ApiPublicSupabaseKeepaliveRoute: ApiPublicSupabaseKeepaliveRoute,
   ApiPublicTelegramHealthRoute: ApiPublicTelegramHealthRoute,
