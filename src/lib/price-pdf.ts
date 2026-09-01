@@ -28,7 +28,10 @@ export async function buildPricePdf(rows: PricePdfRow[]) {
   const M = 15;
 
   try {
-    doc.addImage(logo, "PNG", M, 12, 20, 20);
+    const props = doc.getImageProperties(logo);
+    const h = 20;
+    const w = (h * props.width) / props.height;
+    doc.addImage(logo, "PNG", M, 12, w, h);
   } catch {
     /* logo optional */
   }
