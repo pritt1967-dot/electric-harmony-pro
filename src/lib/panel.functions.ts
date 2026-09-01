@@ -161,24 +161,11 @@ export const renderPanelImage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<{ image: string }> => {
     await assertAdmin(context as never);
 
-    const key = process.env["LOVABLE_API_KEY"];
-    if (!key) throw new Error("AI недоступен: нет ключа");
-
     const prompt = `Photorealistic studio photograph of a professionally assembled white modular wall-mounted electrical distribution board with a transparent hinged door open. ${data.prompt}
 Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, neatly combed busbars, colour-coded wiring, separate N (blue) and PE (yellow-green) terminal bars, printed group labels under every breaker, empty reserve modules covered with blank plates, a small engraved plate reading "S&M ELECTRIC" on the enclosure. Sharp focus, even neutral lighting, no fictional components, no text errors.`;
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-image",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
-      }),
-    });
+    const res = await callGateway("image", { prompt });
+
 
     if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
     if (res.status === 402) throw new Error("Закончились кредиты AI");
