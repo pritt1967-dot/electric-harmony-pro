@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePanelAuth } from "./panel-auth.middleware";
 
 import type { PanelDesign, PanelInput } from "./panel";
 
@@ -92,7 +92,7 @@ async function callGateway(
 
 
 export const designPanel = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requirePanelAuth])
   .inputValidator((input: PanelInput) => input)
   .handler(async ({ data, context }): Promise<PanelDesign> => {
     await assertAdmin(context as never);
@@ -156,7 +156,7 @@ ${data.lines_text}`;
 
 
 export const renderPanelImage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requirePanelAuth])
   .inputValidator((input: { prompt: string }) => input)
   .handler(async ({ data, context }): Promise<{ image: string }> => {
     await assertAdmin(context as never);
