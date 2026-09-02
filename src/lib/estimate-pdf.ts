@@ -104,7 +104,7 @@ export async function buildEstimatePdf(
   doc.setFontSize(9.5);
   doc.setTextColor(90, 98, 112);
   doc.text("Профессиональные электромонтажные работы", textX, 27.5);
-  void logoBottom;
+  
 
   doc.setDrawColor(...BLUE);
   doc.setLineWidth(0.8);
