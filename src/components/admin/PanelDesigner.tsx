@@ -89,16 +89,19 @@ export function PanelDesigner() {
     void loadSessions();
   }, [loadSessions]);
 
+  // Прокрутка — только дополнительный эффект, на появление результата не влияет.
   useEffect(() => {
     if (!design) return;
     const timer = window.setTimeout(() => {
-      resultRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      try {
+        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch {
+        /* прокрутка не критична */
+      }
     }, 100);
     return () => window.clearTimeout(timer);
   }, [design]);
+
 
   async function saveSession(asNew = false) {
     setSaving(true);
