@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -60,6 +60,7 @@ export function PanelDesigner() {
   const [busy, setBusy] = useState(false);
   const [imgBusy, setImgBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const set = <K extends keyof PanelInput>(key: K, value: PanelInput[K]) =>
     setInput((p) => ({ ...p, [key]: value }));
@@ -201,6 +202,12 @@ export function PanelDesigner() {
       const res = await run({ data: input });
       setDesign(res);
       toast.success("Щит спроектирован");
+      requestAnimationFrame(() => {
+        resultRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Ошибка расчёта");
     }
@@ -569,7 +576,7 @@ export function PanelDesigner() {
       )}
 
       {design && (
-        <div className="space-y-6">
+        <div ref={resultRef} className="space-y-6">
           <section className="rounded-xl border bg-card p-4 sm:p-6">
             <h3 className="font-semibold">Итог</h3>
             <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
