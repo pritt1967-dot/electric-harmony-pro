@@ -141,10 +141,27 @@ export function PanelSpecVisual({ rows }: { rows: PanelSpecRow[] }) {
   const [useCategoryOrder, setUseCategoryOrder] = useState(true);
   const [checked, setChecked] = useState(false);
 
-  const { items, rails, verify } = useMemo(
-    () => buildVisual(rows, { capacity, useCategoryOrder }),
-    [rows, capacity, useCategoryOrder],
-  );
+  const { items, rails, verify } = useMemo(() => {
+    try {
+      return buildVisual(rows, { capacity, useCategoryOrder });
+    } catch (e) {
+      console.error("[PanelSpecVisual] buildVisual:", e);
+      return {
+        items: [],
+        rails: [],
+        verify: {
+          ok: false,
+          specDevices: 0,
+          specModules: 0,
+          visualDevices: 0,
+          visualModules: 0,
+          rails: 0,
+          checks: [],
+          errors: ["Не удалось построить визуализацию по спецификации."],
+        },
+      } as ReturnType<typeof buildVisual>;
+    }
+  }, [rows, capacity, useCategoryOrder]);
 
   const railW = capacity * MODULE_W;
   const byCategory = useMemo(() => {
