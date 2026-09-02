@@ -78,7 +78,7 @@ function PanelDrawingsContent({ design, title = "" }: Props) {
     [project, errors.length],
   );
   const layout = useMemo(
-    () => safe(() => layoutPanel(project), { total: 0, used: 0, reserve: 0, rails: [] } as ReturnType<typeof layoutPanel>),
+    () => safe(() => layoutPanel(project), { total: 0, used: 0, reserve: 0, capacity: 0, rails: [] } as unknown as ReturnType<typeof layoutPanel>),
     [project],
   );
 
