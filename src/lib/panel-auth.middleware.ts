@@ -2,6 +2,7 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 function isOpaqueApiKey(value: string): boolean {
@@ -11,9 +12,7 @@ function isOpaqueApiKey(value: string): boolean {
 function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request
-        ? input.headers
-        : undefined,
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
     if (init?.headers) {
       new Headers(init.headers).forEach((value, key) => headers.set(key, value));
@@ -28,8 +27,22 @@ function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch 
 }
 
 /** Production-safe authentication used only by the AI panel transport. */
-export const requirePanelAuth = createMiddleware({ type: "function" }).server(
-  async ({ next }) => {
+export const requirePanelAuth = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    const { data, error } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (error || !accessToken) {
+      throw new Error("Unauthorized: No valid Supabase session");
+    }
+
+    return next({
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  })
+  .server(async ({ next }) => {
     const backendUrl =
       process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
     const publishableKey =
@@ -59,8 +72,6 @@ export const requirePanelAuth = createMiddleware({ type: "function" }).server(
       },
     });
 
-    // Validate against the configured Auth service instead of locally parsing
-    // or verifying the JWT. This also supports signing-key rotation.
     const { data, error } = await backend.auth.getUser(token);
     if (error || !data.user) {
       throw new Error("Unauthorized: Invalid token");
@@ -73,5 +84,4 @@ export const requirePanelAuth = createMiddleware({ type: "function" }).server(
         claims: data.user,
       },
     });
-  },
-);
+  });
