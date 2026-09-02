@@ -73,18 +73,31 @@ export async function buildEstimatePdf(
   const M = 15;
 
   // ── Header ────────────────────────────────────────────────
-  // Логотип — компактный размер, строго с сохранением исходных пропорций.
+  // Логотип слева, компактный, строго в исходных пропорциях.
+  // Текстовый блок — справа от логотипа с гарантированным зазором
+  // GAP мм (≈28 px) от правого края логотипа.
+  const GAP = 10;
   let textX = M;
+  let logoBottom = 12;
   try {
     const img = logoDataUrl || logo;
     const props = doc.getImageProperties(img);
-    const h = 22;
-    const w = (h * props.width) / props.height;
+    let h = 19;
+    let w = (h * props.width) / props.height;
+    const maxW = 70; // не даём логотипу занять слишком много ширины
+    if (w > maxW) {
+      w = maxW;
+      h = (w * props.height) / props.width;
+    }
     doc.addImage(img, "PNG", M, 12, w, h);
-    textX = M + w + 5;
+    logoBottom = 12 + h;
+    textX = M + w + GAP;
   } catch {
     /* logo optional */
   }
+  // Название и подзаголовок выровнены по одной левой координате textX,
+  // вертикально по центру шапки; пересечение с логотипом исключено
+  // за счёт GAP и ограничения maxW.
   doc.setFont("DejaVu", "bold");
   doc.setFontSize(18);
   doc.setTextColor(17, 17, 17);
@@ -92,7 +105,8 @@ export async function buildEstimatePdf(
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(90, 98, 112);
-  doc.text("Профессиональные электромонтажные работы", M + 27, 27);
+  doc.text("Профессиональные электромонтажные работы", textX, 27.5);
+  void logoBottom;
 
   doc.setDrawColor(...BLUE);
   doc.setLineWidth(0.8);
