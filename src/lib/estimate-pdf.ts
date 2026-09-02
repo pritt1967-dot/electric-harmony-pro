@@ -89,7 +89,6 @@ export async function buildEstimatePdf(
       h = (w * props.height) / props.width;
     }
     doc.addImage(img, "PNG", M, 12, w, h);
-    logoBottom = 12 + h;
     textX = M + w + GAP;
   } catch {
     /* logo optional */
