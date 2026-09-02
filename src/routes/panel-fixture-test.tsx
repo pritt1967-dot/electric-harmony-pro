@@ -71,4 +71,4 @@ function Page() {
   );
 }
 
-export const Route = createFileRoute("/__panel-fixture-test")({ component: Page });
+export const Route = createFileRoute("/panel-fixture-test")({ component: Page });
