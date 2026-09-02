@@ -29,25 +29,55 @@ function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch 
 /** Production-safe authentication used only by the AI panel transport. */
 export const requirePanelAuth = createMiddleware({ type: "function" })
   .client(async ({ next }) => {
-    const { data, error } = await supabase.auth.getSession();
-    const accessToken = data.session?.access_token;
+    // Desktop browsers can retain an expired/stale access token longer than
+    // mobile browsers. Refresh the session before sending the server request
+    // when there is no usable session, and retry once if the server rejects
+    // the token as invalid.
+    async function getAccessToken(): Promise<string | null> {
+      const { data, error } = await supabase.auth.getSession();
+      if (!error && data.session?.access_token) {
+        return data.session.access_token;
+      }
 
-    if (error || !accessToken) {
+      const refreshed = await supabase.auth.refreshSession();
+      if (refreshed.error || !refreshed.data.session?.access_token) return null;
+      return refreshed.data.session.access_token;
+    }
+
+    let accessToken = await getAccessToken();
+    if (!accessToken) {
       throw new Error("Unauthorized: No valid Supabase session");
     }
 
-    return next({
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const request = () =>
+      next({
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+    try {
+      return await request();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/invalid token/i.test(message)) throw error;
+
+      const refreshed = await supabase.auth.refreshSession();
+      accessToken = refreshed.data.session?.access_token ?? "";
+      if (refreshed.error || !accessToken) {
+        throw new Error("Unauthorized: Session expired. Please sign in again.");
+      }
+
+      return request();
+    }
   })
   .server(async ({ next }) => {
     const backendUrl =
       process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
     const publishableKey =
       process.env["SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
+      process.env["VITE_SUPABASE_ANON_KEY"];
 
     if (!backendUrl || !publishableKey) {
       throw new Error("Unauthorized: Backend authentication is not configured");
