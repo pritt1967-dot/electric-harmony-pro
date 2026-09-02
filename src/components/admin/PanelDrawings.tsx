@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Component, useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, Download, FileDown, Printer, Ruler } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,13 +20,37 @@ import { downloadPdf, downloadPng, downloadSvg, printSheets } from "@/lib/drawin
 
 type View = "scheme" | "panel";
 
-export function PanelDrawings({
-  design,
-  title = "",
-}: {
-  design: PanelDesign;
-  title?: string;
-}) {
+type Props = { design: PanelDesign; title?: string };
+
+class DrawingErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 sm:p-6">
+          <div className="flex items-center gap-2 font-semibold">
+            <AlertTriangle className="h-4 w-4" />
+            Чертежи временно недоступны
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Основной расчёт щита и спецификация не затронуты. Можно продолжить работу и экспортировать проект.
+          </p>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function PanelDrawingsContent({ design, title = "" }: Props) {
   const [view, setView] = useState<View>("scheme");
   const [format, setFormat] = useState<SheetFormat>("A3");
   const [busy, setBusy] = useState(false);
@@ -76,54 +100,23 @@ export function PanelDrawings({
             <div className="flex items-center gap-2">
               <Label className="text-xs">Формат</Label>
               <Select value={format} onValueChange={(v) => setFormat(v as SheetFormat)}>
-                <SelectTrigger className="h-8 w-[84px]">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-8 w-[84px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(["A4", "A3", "A2"] as SheetFormat[]).map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
-                    </SelectItem>
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy || !current.length}
-            onClick={() => run(() => downloadPdf(current, baseName))}
-          >
+          <Button variant="outline" size="sm" disabled={busy || !current.length} onClick={() => run(() => downloadPdf(current, baseName))}>
             <FileDown className="mr-2 h-4 w-4" /> Скачать PDF
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy || !current.length}
-            onClick={() =>
-              run(async () => {
-                for (let i = 0; i < current.length; i++)
-                  await downloadPng(current[i]!, current.length > 1 ? `${baseName} (лист ${i + 1})` : baseName);
-              })
-            }
-          >
+          <Button variant="outline" size="sm" disabled={busy || !current.length} onClick={() => run(async () => { for (let i = 0; i < current.length; i++) await downloadPng(current[i]!, current.length > 1 ? `${baseName} (лист ${i + 1})` : baseName); })}>
             <Download className="mr-2 h-4 w-4" /> Скачать PNG
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!current.length}
-            onClick={() => downloadSvg(current[0]!, baseName)}
-          >
-            SVG
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!current.length}
-            onClick={() => printSheets(current, baseName)}
-          >
+          <Button variant="outline" size="sm" disabled={!current.length} onClick={() => downloadSvg(current[0]!, baseName)}>SVG</Button>
+          <Button variant="outline" size="sm" disabled={!current.length} onClick={() => printSheets(current, baseName)}>
             <Printer className="mr-2 h-4 w-4" /> Печать
           </Button>
         </div>
@@ -131,28 +124,14 @@ export function PanelDrawings({
 
       {!!errors.length && (
         <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          <div className="flex items-center gap-2 font-medium">
-            <AlertTriangle className="h-4 w-4" /> Чертежи не построены — исправьте ошибки проекта
-          </div>
-          <ul className="mt-2 space-y-1">
-            {errors.map((e, i) => (
-              <li key={i}>• {e.text}</li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-2 font-medium"><AlertTriangle className="h-4 w-4" /> Чертежи не построены — исправьте ошибки проекта</div>
+          <ul className="mt-2 space-y-1">{errors.map((e, i) => <li key={i}>• {e.text}</li>)}</ul>
         </div>
       )}
-      {!!warns.length && (
-        <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-          {warns.map((wn, i) => (
-            <li key={i}>⚠ {wn.text}</li>
-          ))}
-        </ul>
-      )}
+      {!!warns.length && <ul className="mt-3 space-y-1 text-xs text-muted-foreground">{warns.map((wn, i) => <li key={i}>⚠ {wn.text}</li>)}</ul>}
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        <span className="rounded border px-2 py-1">
-          <Ruler className="mr-1 inline h-3 w-3" /> Корпус: {layout.total} мод.
-        </span>
+        <span className="rounded border px-2 py-1"><Ruler className="mr-1 inline h-3 w-3" /> Корпус: {layout.total} мод.</span>
         <span className="rounded border px-2 py-1">Занято: {layout.used}</span>
         <span className="rounded border px-2 py-1">Резерв: {layout.reserve}</span>
         <span className="rounded border px-2 py-1">DIN-реек: {layout.rails.length}</span>
@@ -167,24 +146,18 @@ export function PanelDrawings({
         <TabsContent value="scheme" className="mt-3 space-y-4">
           {sheets.map((s, i) => (
             <div key={i} className="overflow-x-auto rounded-lg border bg-white p-2">
-              <div
-                className="[&>svg]:h-auto [&>svg]:w-full [&>svg]:min-w-[900px]"
-                dangerouslySetInnerHTML={{ __html: s }}
-              />
+              <div className="[&>svg]:h-auto [&>svg]:w-full [&>svg]:min-w-[900px]" dangerouslySetInnerHTML={{ __html: s }} />
             </div>
           ))}
         </TabsContent>
         <TabsContent value="panel" className="mt-3">
-          {assembly && (
-            <div className="overflow-x-auto rounded-lg border bg-white p-2">
-              <div
-                className="[&>svg]:h-auto [&>svg]:w-full [&>svg]:min-w-[900px]"
-                dangerouslySetInnerHTML={{ __html: assembly }}
-              />
-            </div>
-          )}
+          {assembly && <div className="overflow-x-auto rounded-lg border bg-white p-2"><div className="[&>svg]:h-auto [&>svg]:w-full [&>svg]:min-w-[900px]" dangerouslySetInnerHTML={{ __html: assembly }} /></div>}
         </TabsContent>
       </Tabs>
     </section>
   );
+}
+
+export function PanelDrawings(props: Props) {
+  return <DrawingErrorBoundary><PanelDrawingsContent {...props} /></DrawingErrorBoundary>;
 }
