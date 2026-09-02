@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PanelDrawings } from "@/components/admin/PanelDrawings";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
+import { ResultErrorBoundary } from "@/components/admin/ResultErrorBoundary";
 import { buildSchematicSvg } from "@/lib/panel-schematic";
 import type { PanelDesign } from "@/lib/panel";
 
@@ -53,6 +54,8 @@ const design: PanelDesign = {
   image_prompt: "",
 };
 
+const broken = { ...design, lines: null, spec: null, rcd_groups: null } as unknown as PanelDesign;
+
 function Page() {
   let svgLen = -1;
   let svgErr = "";
@@ -64,8 +67,12 @@ function Page() {
   return (
     <div className="space-y-6 p-6">
       <div data-testid="svg-status">svg: {svgLen} {svgErr}</div>
-      <PanelDrawings design={design} title="Фикстура" />
-      <PanelSpecVisual rows={[...design.spec, ...design.materials]} />
+      <ResultErrorBoundary title="Чертежи щита недоступны">
+        <PanelDrawings design={broken} title="Фикстура" />
+      </ResultErrorBoundary>
+      <ResultErrorBoundary title="Визуализация щита недоступна">
+        <PanelSpecVisual rows={null as never} />
+      </ResultErrorBoundary>
       <div data-testid="tail">END</div>
     </div>
   );
