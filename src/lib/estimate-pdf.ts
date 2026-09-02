@@ -78,7 +78,6 @@ export async function buildEstimatePdf(
   // GAP мм (≈28 px) от правого края логотипа.
   const GAP = 10;
   let textX = M;
-  let logoBottom = 12;
   try {
     const img = logoDataUrl || logo;
     const props = doc.getImageProperties(img);
