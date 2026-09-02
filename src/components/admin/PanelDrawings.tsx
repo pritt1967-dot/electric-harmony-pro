@@ -55,20 +55,32 @@ function PanelDrawingsContent({ design, title = "" }: Props) {
   const [format, setFormat] = useState<SheetFormat>("A3");
   const [busy, setBusy] = useState(false);
 
+  const safe = <T,>(fn: () => T, fallback: T): T => {
+    try {
+      return fn();
+    } catch (e) {
+      console.error("[PanelDrawings]", e);
+      return fallback;
+    }
+  };
+
   const project = useMemo(() => buildProject(design, title), [design, title]);
-  const issues = useMemo(() => validateProject(project), [project]);
+  const issues = useMemo(() => safe(() => validateProject(project), []), [project]);
   const errors = issues.filter((i) => i.level === "error");
   const warns = issues.filter((i) => i.level === "warn");
 
   const sheets = useMemo(
-    () => (errors.length ? [] : buildSingleLineSheets(project, format)),
+    () => (errors.length ? [] : safe(() => buildSingleLineSheets(project, format), [])),
     [project, format, errors.length],
   );
   const assembly = useMemo(
-    () => (errors.length ? "" : buildAssemblySvg(project)),
+    () => (errors.length ? "" : safe(() => buildAssemblySvg(project), "")),
     [project, errors.length],
   );
-  const layout = useMemo(() => layoutPanel(project), [project]);
+  const layout = useMemo(
+    () => safe(() => layoutPanel(project), { total: 0, used: 0, reserve: 0, rails: [] } as ReturnType<typeof layoutPanel>),
+    [project],
+  );
 
   const current = view === "scheme" ? sheets : assembly ? [assembly] : [];
   const baseName =
