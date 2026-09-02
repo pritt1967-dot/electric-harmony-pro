@@ -27,22 +27,29 @@ export async function buildPricePdf(rows: PricePdfRow[]) {
   const pageW = doc.internal.pageSize.getWidth();
   const M = 15;
 
+  let textX = M + 25;
   try {
     const props = doc.getImageProperties(logo);
-    const h = 20;
-    const w = (h * props.width) / props.height;
+    let h = 19;
+    let w = (h * props.width) / props.height;
+    const maxW = 60;
+    if (w > maxW) {
+      w = maxW;
+      h = (w * props.height) / props.width;
+    }
     doc.addImage(logo, "PNG", M, 12, w, h);
+    textX = M + w + 10; // гарантированный зазор от правого края логотипа
   } catch {
     /* logo optional */
   }
   doc.setFont("DejaVu", "bold");
   doc.setFontSize(17);
   doc.setTextColor(17, 17, 17);
-  doc.text("S&M Electric", M + 25, 20);
+  doc.text("S&M Electric", textX, 20);
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(10);
   doc.setTextColor(90, 98, 112);
-  doc.text("Прайс-лист на электромонтажные работы", M + 25, 27);
+  doc.text("Прайс-лист на электромонтажные работы", textX, 27);
   doc.setFontSize(9);
   doc.text(`от ${formatDate(todayISO())}`, pageW - M, 20, { align: "right" });
 
