@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -62,6 +62,7 @@ export function PanelDesigner() {
   const [imgBusy, setImgBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+  const shouldRevealResultRef = useRef(false);
 
   const set = <K extends keyof PanelInput>(key: K, value: PanelInput[K]) =>
     setInput((p) => ({ ...p, [key]: value }));
@@ -90,18 +91,26 @@ export function PanelDesigner() {
     void loadSessions();
   }, [loadSessions]);
 
-  // Прокрутка — только дополнительный эффект, на появление результата не влияет.
-  useEffect(() => {
-    if (!design) return;
-    const timer = window.setTimeout(() => {
-      try {
-        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch {
-        /* прокрутка не критична */
-      }
-    }, 100);
-    return () => window.clearTimeout(timer);
-  }, [design]);
+  const revealResult = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const result = resultRef.current;
+    if (!result) return;
+    const top = result.getBoundingClientRect().top + window.scrollY - 16;
+    window.scrollTo({ top: Math.max(0, top), behavior });
+  }, []);
+
+  // Сначала ждём завершения расчёта и отрисовки тяжёлых SVG-блоков, затем
+  // гарантированно ставим результат в начало desktop-экрана. Повторная
+  // корректировка компенсирует позднее изменение высоты чертежей.
+  useLayoutEffect(() => {
+    if (!design || busy || !shouldRevealResultRef.current) return;
+    shouldRevealResultRef.current = false;
+    const frame = window.requestAnimationFrame(() => revealResult("auto"));
+    const correction = window.setTimeout(() => revealResult("smooth"), 500);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(correction);
+    };
+  }, [design, busy, revealResult]);
 
 
   async function saveSession(asNew = false) {
@@ -220,6 +229,7 @@ export function PanelDesigner() {
       return;
     }
     setBusy(true);
+    shouldRevealResultRef.current = true;
     setDesign(null);
     setImage("");
     try {
@@ -227,6 +237,7 @@ export function PanelDesigner() {
       setDesign(res);
       toast.success("Щит спроектирован");
     } catch (e) {
+      shouldRevealResultRef.current = false;
       toast.error(e instanceof Error ? e.message : "Ошибка расчёта");
     }
     setBusy(false);
@@ -423,13 +434,13 @@ export function PanelDesigner() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={handleDesign} disabled={busy}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}Спроектировать щит</Button>
-          {design && <><Button variant="outline" onClick={handlePdf} disabled={exporting}><FileDown className="mr-2 h-4 w-4" /> PDF-отчёт</Button><Button variant="outline" onClick={downloadSvg}><Download className="mr-2 h-4 w-4" /> Схема SVG</Button><Button variant="outline" onClick={handleImage} disabled={imgBusy}>{imgBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}Визуализация щита</Button><Button variant="secondary" onClick={toEstimate} disabled={exporting}><ClipboardList className="mr-2 h-4 w-4" /> Перенести в смету</Button></>}
+          {design && <><Button variant="secondary" onClick={() => revealResult()}><Download className="mr-2 h-4 w-4" /> К результату</Button><Button variant="outline" onClick={handlePdf} disabled={exporting}><FileDown className="mr-2 h-4 w-4" /> PDF-отчёт</Button><Button variant="outline" onClick={downloadSvg}><Download className="mr-2 h-4 w-4" /> Схема SVG</Button><Button variant="outline" onClick={handleImage} disabled={imgBusy}>{imgBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}Визуализация щита</Button><Button variant="secondary" onClick={toEstimate} disabled={exporting}><ClipboardList className="mr-2 h-4 w-4" /> Перенести в смету</Button></>}
         </div>
       </div>
 
       {busy && <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Идёт расчёт нагрузок, подбор защиты и компоновка — обычно 20–40 секунд…</div>}
 
-      {design && <div ref={resultRef} className="space-y-6 scroll-mt-4">
+      {design && <div ref={resultRef} data-panel-result className="space-y-6 scroll-mt-4">
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Итог</h3><dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Питание", s?.supply],["Заземление", s?.grounding],["Расчётная мощность", `${s?.calculated_power_kw ?? 0} кВт`],["Вводной автомат", s?.main_breaker],["Занято модулей", String(s?.used_modules ?? 0)],["Резерв", `${s?.reserve_modules ?? 0} мод.`],["Корпус", `${s?.enclosure ?? ""} (${s?.enclosure_modules ?? 0} мод.)`],["IP", s?.ip]].map(([k,v]) => <div key={k as string} className="rounded-lg bg-muted/50 p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="mt-0.5 text-sm font-medium">{v || "—"}</dd></div>)}</dl></section>
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Распределение по фазам</h3><div className="mt-3 grid gap-3 sm:grid-cols-3">{(design.phase_load ?? []).map((p) => <div key={p.phase} className="rounded-lg border p-3"><div className="text-sm font-semibold text-primary">{p.phase}</div><div className="text-sm">{p.kw} кВт · {p.current_a} А</div><div className="mt-1 text-xs text-muted-foreground">{(p.lines ?? []).join(", ")}</div></div>)}</div>{!!(design.protection_chain ?? []).length && <ol className="mt-4 space-y-1 text-sm">{design.protection_chain.map((step,i)=><li key={i} className="text-muted-foreground">{i+1}. {step}</li>)}</ol>}</section>
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Групповые линии</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["Марк.","Линия","кВт","А","Автомат","P","Фаза","УЗО","Кабель","Мод."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{(design.lines ?? []).map(l=><tr key={l.mark} className="border-t"><td className="px-2 py-2 font-medium text-primary">{l.mark}</td><td className="px-2 py-2">{l.name}</td><td className="px-2 py-2">{l.power_kw}</td><td className="px-2 py-2">{l.current_a}</td><td className="px-2 py-2">{l.breaker}</td><td className="px-2 py-2">{l.poles}</td><td className="px-2 py-2">{l.phase}</td><td className="px-2 py-2">{l.rcd}</td><td className="px-2 py-2">{l.cable}</td><td className="px-2 py-2">{l.modules}</td></tr>)}</tbody></table></div></section>
