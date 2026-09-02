@@ -198,7 +198,17 @@ export function PanelDesigner() {
     }
   }
 
-  const svg = useMemo(() => (design ? buildSchematicSvg(design) : ""), [design]);
+  // Построение SVG не должно ломать рендер результата: любая ошибка → пустая схема.
+  const svg = useMemo(() => {
+    if (!design) return "";
+    try {
+      return buildSchematicSvg(design);
+    } catch (e) {
+      console.error("[PanelDesigner] buildSchematicSvg:", e);
+      return "";
+    }
+  }, [design]);
+
 
   async function handleDesign() {
     if (!input.lines_text.trim()) {
