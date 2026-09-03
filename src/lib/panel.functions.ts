@@ -3,6 +3,15 @@ import { requirePanelAuth } from "./panel-auth.middleware";
 
 import type { PanelDesign, PanelInput } from "./panel";
 
+export type PanelAiError = {
+  ok: false;
+  code: "payment_required" | "policy_blocked" | "rate_limited" | "unavailable";
+  message: string;
+};
+
+export type DesignPanelResult = { ok: true; design: PanelDesign } | PanelAiError;
+export type RenderPanelImageResult = { ok: true; image: string } | PanelAiError;
+
 const SYSTEM = `Ты — инженер-проектировщик низковольтных электроустановок (НКУ) и специалист по сборке модульных распределительных щитов, работаешь по ПУЭ 7 и ГОСТ IEC 61439.
 
 Работай строго по этапам и не пропускай их:
@@ -94,7 +103,7 @@ async function callGateway(
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .inputValidator((input: PanelInput) => input)
-  .handler(async ({ data, context }): Promise<PanelDesign> => {
+  .handler(async ({ data, context }): Promise<DesignPanelResult> => {
     await assertAdmin(context as never);
 
 
@@ -114,19 +123,20 @@ export const designPanel = createServerFn({ method: "POST" })
 СПИСОК ЛИНИЙ:
 ${data.lines_text}`;
 
-    async function askModel(extra: string): Promise<string> {
+    async function askModel(extra: string): Promise<{ text?: string; error?: PanelAiError }> {
       const res = await callGateway("design", {
         system: SYSTEM,
         prompt: prompt + extra,
       });
 
-      if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
-      if (res.status === 402) throw new Error("Закончились кредиты AI — пополните баланс в настройках рабочего пространства (Settings → Workspace → Usage)");
-      if (!res.ok) throw new Error("Не удалось выполнить расчёт");
+      if (res.status === 429) return { error: { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." } };
+      if (res.status === 402) return { error: { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." } };
+      if (res.status === 403) return { error: { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." } };
+      if (!res.ok) return { error: { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." } };
       const json = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
       };
-      return json.choices?.[0]?.message?.content ?? "";
+      return { text: json.choices?.[0]?.message?.content ?? "" };
     }
 
     function parse(text: string): PanelDesign | null {
@@ -145,20 +155,21 @@ ${data.lines_text}`;
     }
 
     for (let attempt = 0; attempt < 3; attempt++) {
-      const text = await askModel(
+      const response = await askModel(
         attempt === 0 ? "" : "\n\nВерни ТОЛЬКО JSON-объект без пояснений и markdown.",
       );
-      const design = parse(text);
-      if (design) return design;
+      if (response.error) return response.error;
+      const design = parse(response.text ?? "");
+      if (design) return { ok: true, design };
     }
-    throw new Error("Модель не вернула расчёт, попробуйте ещё раз");
+    return { ok: false, code: "unavailable", message: "Модель не вернула расчёт. Попробуйте ещё раз." };
   });
 
 
 export const renderPanelImage = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .inputValidator((input: { prompt: string }) => input)
-  .handler(async ({ data, context }): Promise<{ image: string }> => {
+  .handler(async ({ data, context }): Promise<RenderPanelImageResult> => {
     await assertAdmin(context as never);
 
     const prompt = `Photorealistic studio photograph of a professionally assembled white modular wall-mounted electrical distribution board with a transparent hinged door open. ${data.prompt}
@@ -167,14 +178,15 @@ Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, nea
     const res = await callGateway("image", { prompt });
 
 
-    if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
-    if (res.status === 402) throw new Error("Закончились кредиты AI — пополните баланс в настройках рабочего пространства (Settings → Workspace → Usage)");
-    if (!res.ok) throw new Error("Не удалось создать визуализацию");
+    if (res.status === 429) return { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." };
+    if (res.status === 402) return { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." };
+    if (res.status === 403) return { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." };
+    if (!res.ok) return { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." };
 
     const json = (await res.json()) as {
       choices?: { message?: { images?: { image_url?: { url?: string } }[] } }[];
     };
     const url = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!url) throw new Error("Модель не вернула изображение");
-    return { image: url };
+    if (!url) return { ok: false, code: "unavailable", message: "Модель не вернула изображение. Попробуйте ещё раз." };
+    return { ok: true, image: url };
   });

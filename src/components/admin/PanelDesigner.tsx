@@ -12,6 +12,7 @@ import {
   Save,
   FolderOpen,
   Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export function PanelDesigner() {
   const [busy, setBusy] = useState(false);
   const [imgBusy, setImgBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [aiError, setAiError] = useState<string>("");
   const resultRef = useRef<HTMLDivElement>(null);
   const shouldRevealResultRef = useRef(false);
 
@@ -190,6 +192,7 @@ export function PanelDesigner() {
     setInput(DEFAULT_PANEL_INPUT);
     setDesign(null);
     setImage("");
+    setAiError("");
   }
 
   async function pasteLines() {
@@ -229,12 +232,20 @@ export function PanelDesigner() {
       return;
     }
     setBusy(true);
+    setAiError("");
     shouldRevealResultRef.current = true;
     setDesign(null);
     setImage("");
     try {
       const res = await run({ data: input });
-      setDesign(res);
+      if (!res.ok) {
+        shouldRevealResultRef.current = false;
+        setAiError(res.message);
+        toast.error(res.message);
+        setBusy(false);
+        return;
+      }
+      setDesign(res.design);
       toast.success("Щит спроектирован");
     } catch (e) {
       shouldRevealResultRef.current = false;
@@ -250,6 +261,12 @@ export function PanelDesigner() {
       const res = await renderImg({
         data: { prompt: design.image_prompt || design.summary?.enclosure || "" },
       });
+      if (!res.ok) {
+        setAiError(res.message);
+        toast.error(res.message);
+        setImgBusy(false);
+        return;
+      }
       setImage(res.image);
       if (sessionId) {
         const { error } = await supabase
@@ -436,6 +453,15 @@ export function PanelDesigner() {
           <Button onClick={handleDesign} disabled={busy}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}Спроектировать щит</Button>
           {design && <><Button variant="secondary" onClick={() => revealResult()}><Download className="mr-2 h-4 w-4" /> К результату</Button><Button variant="outline" onClick={handlePdf} disabled={exporting}><FileDown className="mr-2 h-4 w-4" /> PDF-отчёт</Button><Button variant="outline" onClick={downloadSvg}><Download className="mr-2 h-4 w-4" /> Схема SVG</Button><Button variant="outline" onClick={handleImage} disabled={imgBusy}>{imgBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}Визуализация щита</Button><Button variant="secondary" onClick={toEstimate} disabled={exporting}><ClipboardList className="mr-2 h-4 w-4" /> Перенести в смету</Button></>}
         </div>
+        {aiError && (
+          <div role="alert" className="mt-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <div>
+              <p className="font-medium">AI-проектировщик временно недоступен</p>
+              <p className="mt-1 text-muted-foreground">{aiError}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {busy && <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Идёт расчёт нагрузок, подбор защиты и компоновка — обычно 20–40 секунд…</div>}
