@@ -5,7 +5,7 @@ import type { PanelDesign, PanelInput } from "./panel";
 
 export type PanelAiError = {
   ok: false;
-  code: "payment_required" | "rate_limited" | "unavailable";
+  code: "payment_required" | "policy_blocked" | "rate_limited" | "unavailable";
   message: string;
 };
 
@@ -131,6 +131,7 @@ ${data.lines_text}`;
 
       if (res.status === 429) return { error: { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." } };
       if (res.status === 402) return { error: { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." } };
+      if (res.status === 403) return { error: { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." } };
       if (!res.ok) return { error: { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." } };
       const json = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
@@ -179,6 +180,7 @@ Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, nea
 
     if (res.status === 429) return { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." };
     if (res.status === 402) return { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." };
+    if (res.status === 403) return { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." };
     if (!res.ok) return { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." };
 
     const json = (await res.json()) as {
