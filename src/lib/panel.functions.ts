@@ -121,7 +121,7 @@ ${data.lines_text}`;
       });
 
       if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
-      if (res.status === 402) throw new Error("Закончились кредиты AI");
+      if (res.status === 402) throw new Error("Закончились кредиты AI — пополните баланс в настройках рабочего пространства (Settings → Workspace → Usage)");
       if (!res.ok) throw new Error("Не удалось выполнить расчёт");
       const json = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
@@ -168,7 +168,7 @@ Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, nea
 
 
     if (res.status === 429) throw new Error("Слишком много запросов, попробуйте позже");
-    if (res.status === 402) throw new Error("Закончились кредиты AI");
+    if (res.status === 402) throw new Error("Закончились кредиты AI — пополните баланс в настройках рабочего пространства (Settings → Workspace → Usage)");
     if (!res.ok) throw new Error("Не удалось создать визуализацию");
 
     const json = (await res.json()) as {
