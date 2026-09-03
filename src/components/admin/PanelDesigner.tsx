@@ -242,6 +242,7 @@ export function PanelDesigner() {
         shouldRevealResultRef.current = false;
         setAiError(res.message);
         toast.error(res.message);
+        setBusy(false);
         return;
       }
       setDesign(res.design);
@@ -263,6 +264,7 @@ export function PanelDesigner() {
       if (!res.ok) {
         setAiError(res.message);
         toast.error(res.message);
+        setImgBusy(false);
         return;
       }
       setImage(res.image);
