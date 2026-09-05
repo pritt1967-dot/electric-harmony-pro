@@ -20,17 +20,35 @@ const LIGHT: [number, number, number] = [239, 244, 255];
 const LINE: [number, number, number] = [216, 222, 232];
 
 async function fetchBase64(url: string, baseUrl?: string) {
-  const resolved =
-    baseUrl && url.startsWith("/") ? `${baseUrl}${url}` : url;
-  const res = await fetch(resolved);
-  const buf = await res.arrayBuffer();
-  let binary = "";
-  const bytes = new Uint8Array(buf);
-  for (let i = 0; i < bytes.length; i += 8192) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  const candidates: string[] = [];
+  if (url.startsWith("/")) {
+    if (baseUrl) candidates.push(`${baseUrl}${url}`);
+    const port = process.env["PORT"] ?? "8080";
+    candidates.push(`http://127.0.0.1:${port}${url}`);
   }
-  return btoa(binary);
+  candidates.push(url);
+
+  let lastError: unknown = null;
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate);
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${candidate}`);
+      const buf = await res.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i += 8192) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      }
+      return btoa(binary);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Failed to fetch ${url}`);
 }
+
 
 let fontCache: { regular: string; bold: string } | null = null;
 let logoCache: string | null = null;
