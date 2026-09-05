@@ -13,8 +13,13 @@ export async function buildContactCardPdf(baseUrl?: string) {
   const { fonts, logo } = await loadAssets(baseUrl);
 
   // Use the existing site QR code from public/qr-site.png
-  const qrBase64 = await fetchBase64("/qr-site.png", baseUrl);
-  const qr = `data:image/png;base64,${qrBase64}`;
+  let qr: string | null = null;
+  try {
+    qr = `data:image/png;base64,${await fetchBase64("/qr-site.png", baseUrl)}`;
+  } catch {
+    /* QR optional */
+  }
+
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
 
