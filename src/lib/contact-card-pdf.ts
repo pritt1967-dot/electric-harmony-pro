@@ -33,12 +33,20 @@ export async function buildContactCardPdf(baseUrl?: string) {
   doc.setFillColor(...LIGHT);
   doc.rect(0, 0, pageW, 52, "F");
 
-  // Logo — пропорции оригинала сохраняются
+  // Logo — пропорции оригинала сохраняются, текст начинается после
+  // реального правого края логотипа с зазором 10 мм
+  let textX = M + 25;
   try {
     const props = doc.getImageProperties(logo);
-    const h = 22;
-    const w = (h * props.width) / props.height;
+    let h = 22;
+    let w = (h * props.width) / props.height;
+    const maxW = 55;
+    if (w > maxW) {
+      w = maxW;
+      h = (w * props.height) / props.width;
+    }
     doc.addImage(logo, "PNG", M, 15, w, h);
+    textX = M + w + 10;
   } catch {
     /* logo optional */
   }
@@ -47,12 +55,12 @@ export async function buildContactCardPdf(baseUrl?: string) {
   doc.setFont("DejaVu", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...DARK);
-  doc.text("S&M Electric", M + 28, 25);
+  doc.text("S&M Electric", textX, 25);
 
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(11);
   doc.setTextColor(...GRAY);
-  doc.text("Электромонтаж в Санкт-Петербурге и области", M + 28, 32);
+  doc.text("Электромонтаж в Санкт-Петербурге и области", textX, 32);
 
   // Main contact card box
   const boxY = 62;
