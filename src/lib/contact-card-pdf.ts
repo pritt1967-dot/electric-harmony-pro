@@ -116,10 +116,11 @@ export async function buildContactCardPdf(baseUrl?: string) {
   const qrY = boxY + 18;
 
   try {
-    doc.addImage(qr, "PNG", qrX, qrY, qrSize, qrSize);
+    if (qr) doc.addImage(qr, "PNG", qrX, qrY, qrSize, qrSize);
   } catch {
     /* QR optional */
   }
+
 
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(9);
