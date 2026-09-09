@@ -88,14 +88,75 @@ export function MoneyManager() {
 
   const stats = useMemo(() => {
     const income = operations.filter(o => o.operation_type === "income").reduce((s, o) => s + Number(o.amount), 0);
-    const expenses = operations.filter(o => o.operation_type === "expense" && o.category?.affects_project_balance !== false).reduce((s, o) => s + Number(o.amount), 0);
+    const projectExpenses = operations.filter(o => o.operation_type === "expense" && o.category?.affects_project_balance !== false);
+    const expenses = projectExpenses.reduce((s, o) => s + Number(o.amount), 0);
     const balances = participants.map(p => {
       const received = operations.filter(o => o.to_name === p.name).reduce((s, o) => s + Number(o.amount), 0);
       const spent = operations.filter(o => o.from_name === p.name).reduce((s, o) => s + Number(o.amount), 0);
       return { ...p, received, spent, balance: received - spent };
     });
-    return { income, expenses, remaining: income - expenses, balances };
+
+    const byCategoryMap = new Map<string, number>();
+    for (const o of projectExpenses) {
+      const key = o.category?.name || "Без статьи";
+      byCategoryMap.set(key, (byCategoryMap.get(key) ?? 0) + Number(o.amount));
+    }
+    const byCategory = [...byCategoryMap.entries()]
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const byDate = new Map<string, { income: number; expense: number }>();
+    for (const o of operations) {
+      const row = byDate.get(o.operation_date) ?? { income: 0, expense: 0 };
+      if (o.operation_type === "income") row.income += Number(o.amount);
+      else if (o.operation_type === "expense" && o.category?.affects_project_balance !== false) row.expense += Number(o.amount);
+      byDate.set(o.operation_date, row);
+    }
+    let ci = 0;
+    let ce = 0;
+    const timeline = [...byDate.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([d, v]) => {
+        ci += v.income;
+        ce += v.expense;
+        return { date: date(d), Поступления: ci, Расходы: ce, Остаток: ci - ce };
+      });
+
+    const balanceSum = balances.reduce((s, b) => s + b.balance, 0);
+    return { income, expenses, remaining: income - expenses, balances, byCategory, timeline, balanceSum };
   }, [operations, participants]);
+
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const downloadPdf = async () => {
+    setPdfBusy(true);
+    try {
+      const { buildFinancePdf } = await import("@/lib/finance-pdf");
+      const doc = await buildFinancePdf({
+        customer: data?.project?.customer_name || CUSTOMER,
+        projectName: data?.project?.project_name || "Основной проект",
+        income: stats.income,
+        expenses: stats.expenses,
+        remaining: stats.remaining,
+        byCategory: stats.byCategory,
+        balances: stats.balances.map(b => ({ name: b.name, received: b.received, spent: b.spent, balance: b.balance })),
+        operations: operations.map(o => ({
+          operation_date: o.operation_date,
+          operation_type: o.operation_type,
+          from_name: o.from_name,
+          to_name: o.to_name,
+          amount: Number(o.amount),
+          categoryName: o.category?.name || "Без статьи",
+          comment: o.comment,
+        })),
+      });
+      doc.save("finance-report.pdf");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
 
   const addOperation = useMutation({
     mutationFn: async () => {
