@@ -106,14 +106,25 @@ export const loadFinanceData = createServerFn({ method: "POST" })
     const linkedIds = new Set(projectLinks.map((l) => l.participant_id));
     const allParticipants = (participants ?? []) as FinanceParticipant[];
 
-    return {
+    const payload = {
       operations: (operations ?? []) as FinanceOperation[],
-      participants: linkedIds.size
+      participants: (linkedIds.size
         ? allParticipants.filter((p) => linkedIds.has(p.id))
-        : allParticipants,
+        : allParticipants) as FinanceParticipant[],
       categories: (categories ?? []) as FinanceCategory[],
       project: ((projects ?? []) as FinanceProject[])[0] ?? null,
     };
+
+    // Temporary diagnostics (counts only, never credentials).
+    console.log("[finance] loadFinanceData", {
+      projectId: data.projectId,
+      operations: payload.operations.length,
+      categories: payload.categories.length,
+      participants: payload.participants.length,
+      projectFound: Boolean(payload.project),
+    });
+
+    return payload;
   });
 
 export const createFinanceOperation = createServerFn({ method: "POST" })
