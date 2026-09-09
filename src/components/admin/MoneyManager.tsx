@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Loader2, Plus, Trash2, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
@@ -8,9 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createFinanceOperation,
+  createFinanceParticipant,
+  deleteFinanceOperation,
+  loadFinanceData,
+} from "@/lib/finance.functions";
 
-const db = supabase as any;
 const PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
 const CUSTOMER = "ООО «Си Проект»";
 
@@ -45,41 +50,31 @@ export function MoneyManager() {
     comment: "",
   });
 
+  const fetchFinance = useServerFn(loadFinanceData);
+  const addOperationFn = useServerFn(createFinanceOperation);
+  const removeOperationFn = useServerFn(deleteFinanceOperation);
+  const addParticipantFn = useServerFn(createFinanceParticipant);
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", PROJECT_ID],
     queryFn: async () => {
-      // Do not use a nested PostgREST relation here. The finance tables were
-      // created after the generated Supabase TypeScript schema and older
-      // PostgREST schema caches can reject nested selects even when the FK exists.
-      const [ops, parts, cats, project] = await Promise.all([
-        db.from("operations")
-          .select("id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,created_at")
-          .eq("project_id", PROJECT_ID)
-          .order("operation_date", { ascending: false })
-          .order("created_at", { ascending: false }),
-        db.from("participants").select("id,name").order("name"),
-        db.from("categories").select("id,name,affects_project_balance").order("name"),
-        db.from("projects").select("customer_name,project_name,status").eq("id", PROJECT_ID).maybeSingle(),
-      ]);
-
-      if (ops.error) throw new Error(`operations: ${ops.error.message}`);
-      if (parts.error) throw new Error(`participants: ${parts.error.message}`);
-      if (cats.error) throw new Error(`categories: ${cats.error.message}`);
-      if (project.error) throw new Error(`projects: ${project.error.message}`);
+      // Finance tables live in a separate backend, reached through server
+      // functions so no finance credentials exist in the browser bundle.
+      const result = await fetchFinance({ data: { projectId: PROJECT_ID } });
 
       const categoryMap = new Map<string, Category>(
-        (cats.data ?? []).map((c: Category) => [c.id, c]),
+        (result.categories ?? []).map((c: Category) => [c.id, c]),
       );
-      const operations = (ops.data ?? []).map((o: Operation) => ({
+      const operations = (result.operations ?? []).map((o: Operation) => ({
         ...o,
         category: o.category_id ? categoryMap.get(o.category_id) ?? null : null,
       }));
 
       return {
         operations: operations as Operation[],
-        participants: (parts.data ?? []) as Participant[],
-        categories: (cats.data ?? []) as Category[],
-        project: project.data ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
+        participants: (result.participants ?? []) as Participant[],
+        categories: (result.categories ?? []) as Category[],
+        project: result.project ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
       };
     },
   });
@@ -104,8 +99,7 @@ export function MoneyManager() {
       const amount = Number(form.amount.replace(/\s/g, "").replace(",", "."));
       if (!amount || amount <= 0) throw new Error("Укажите сумму больше нуля");
       if (!form.from_name || !form.to_name) throw new Error("Укажите отправителя и получателя");
-      const { error } = await db.from("operations").insert({ project_id: PROJECT_ID, operation_date: form.operation_date, operation_type: form.operation_type, from_name: form.from_name, to_name: form.to_name, amount, category_id: form.category_id || null, comment: form.comment || null });
-      if (error) throw error;
+      await addOperationFn({ data: { projectId: PROJECT_ID, operation_date: form.operation_date, operation_type: form.operation_type, from_name: form.from_name, to_name: form.to_name, amount, category_id: form.category_id || null, comment: form.comment || null } });
     },
     onSuccess: () => {
       toast.success("Операция добавлена");
@@ -118,8 +112,7 @@ export function MoneyManager() {
 
   const deleteOperation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await db.from("operations").delete().eq("id", id);
-      if (error) throw error;
+      await removeOperationFn({ data: { id } });
     },
     onSuccess: () => {
       toast.success("Операция удалена");
@@ -132,10 +125,7 @@ export function MoneyManager() {
     mutationFn: async () => {
       const name = newParticipant.trim();
       if (!name) throw new Error("Введите имя участника");
-      const { data: p, error } = await db.from("participants").insert({ name }).select("id,name").single();
-      if (error) throw error;
-      const { error: linkError } = await db.from("project_participants").insert({ project_id: PROJECT_ID, participant_id: p.id });
-      if (linkError) throw linkError;
+      await addParticipantFn({ data: { projectId: PROJECT_ID, name } });
     },
     onSuccess: () => {
       setNewParticipant("");
