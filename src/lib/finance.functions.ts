@@ -33,13 +33,29 @@ function financeKey(): string | null {
  * На внешнем хостинге (Vercel) ключ финансовой базы отсутствует — там доступно
  * только реле в инфраструктуре Lovable, защищённое общим секретом.
  */
+const DEFAULT_RELAY_URL =
+  "https://electric-9117335567.lovable.app/api/public/finance-relay";
+
 function relayConfig(): { url: string; secret: string } | null {
   const secret = process.env["AI_RELAY_SECRET"];
+  if (!secret) return null;
   const url =
     process.env["FINANCE_RELAY_URL"] ??
-    process.env["AI_RELAY_URL"]?.replace(/\/ai-relay\/?$/, "/finance-relay");
-  if (!secret || !url) return null;
+    process.env["AI_RELAY_URL"]?.replace(/\/ai-relay\/?$/, "/finance-relay") ??
+    DEFAULT_RELAY_URL;
   return { url: url.replace(/\/+$/, ""), secret };
+}
+
+function describeStatus(status: number, transport: "direct" | "relay"): string {
+  if (status === 401)
+    return transport === "relay"
+      ? "401 — реле отклонило запрос: секрет AI_RELAY_SECRET на сайте не совпадает с секретом реле."
+      : "401 — ключ финансовой базы отклонён.";
+  if (status === 403) return "403 — недостаточно прав для доступа к финансовым данным.";
+  if (status === 404) return "404 — адрес финансового сервиса не найден.";
+  if (status === 500 || status === 502 || status === 503)
+    return `${status} — финансовый сервер временно недоступен.`;
+  return `${status}`;
 }
 
 async function rest(
@@ -48,6 +64,7 @@ async function rest(
 ): Promise<unknown> {
   const key = financeKey();
   let response: Response;
+  const transport: "direct" | "relay" = key ? "direct" : "relay";
 
   if (key) {
     const headers = new Headers();
@@ -64,7 +81,7 @@ async function rest(
     const relay = relayConfig();
     if (!relay) {
       throw new Error(
-        "Финансовое подключение не настроено: нет ни ключа финансовой базы, ни адреса реле.",
+        "Финансовое подключение не настроено: на сервере нет ни ключа финансовой базы (FINANCE_SUPABASE_SERVICE_ROLE_KEY), ни секрета реле (AI_RELAY_SECRET).",
       );
     }
     response = await fetch(relay.url, {
@@ -82,11 +99,15 @@ async function rest(
   const text = await response.text();
   if (!response.ok) {
     throw new Error(
-      `Финансовая база (${path.split("?")[0]}): ${response.status} ${text.slice(0, 300)}`,
+      `Финансовая база (${path.split("?")[0]}, ${transport}): ${describeStatus(
+        response.status,
+        transport,
+      )} ${text.slice(0, 200)}`,
     );
   }
   return text ? JSON.parse(text) : null;
 }
+
 
 export type FinanceOperation = {
   id: string;
