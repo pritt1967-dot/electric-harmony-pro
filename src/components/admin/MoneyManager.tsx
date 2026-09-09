@@ -61,19 +61,22 @@ export function MoneyManager() {
       // Finance tables live in a separate backend, reached through server
       // functions so no finance credentials exist in the browser bundle.
       const result = await fetchFinance({ data: { projectId: PROJECT_ID } });
+      if (!result) throw new Error("Финансовый сервер не вернул данные");
 
-      const categoryMap = new Map<string, Category>(
-        (result.categories ?? []).map((c: Category) => [c.id, c]),
-      );
-      const operations = (result.operations ?? []).map((o: Operation) => ({
+      const categories = Array.isArray(result.categories) ? (result.categories as Category[]) : [];
+      const operationsRaw = Array.isArray(result.operations) ? (result.operations as Operation[]) : [];
+      const participants = Array.isArray(result.participants) ? (result.participants as Participant[]) : [];
+
+      const categoryMap = new Map<string, Category>(categories.map((c) => [c.id, c]));
+      const operations = operationsRaw.map((o) => ({
         ...o,
         category: o.category_id ? categoryMap.get(o.category_id) ?? null : null,
       }));
 
       return {
-        operations: operations as Operation[],
-        participants: (result.participants ?? []) as Participant[],
-        categories: (result.categories ?? []) as Category[],
+        operations,
+        participants,
+        categories,
         project: result.project ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
       };
     },
