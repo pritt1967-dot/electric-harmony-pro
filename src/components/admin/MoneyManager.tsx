@@ -112,8 +112,7 @@ export function MoneyManager() {
 
   const deleteOperation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await db.from("operations").delete().eq("id", id);
-      if (error) throw error;
+      await removeOperationFn({ data: { id } });
     },
     onSuccess: () => {
       toast.success("Операция удалена");
