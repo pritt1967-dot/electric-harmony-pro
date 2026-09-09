@@ -261,7 +261,7 @@ export function MoneyManagerParticipants() {
           <ParticipantPicker label="От кого" value={form.fromId} participants={participants} onChange={p => setForm(f => ({ ...f, fromId: p.id, toId: f.toId === p.id ? "" : f.toId }))} />
           <ParticipantPicker label="Кому" value={form.toId} participants={participants} excludeId={form.fromId} onChange={p => setForm(f => ({ ...f, toId: p.id }))} />
           <div><Label>Сумма</Label><Input className="mt-1.5" inputMode="decimal" placeholder="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} /></div>
-          <div className="sm:col-span-2 lg:col-cols-4"><Label>Комментарий</Label><Textarea className="mt-1.5" placeholder="Например: возврат аванса" value={form.comment} onChange={e => setForm(f => ({ ...f, comment: e.target.value }))} /></div>
+          <div className="sm:col-span-2 lg:col-span-4"><Label>Комментарий</Label><Textarea className="mt-1.5" placeholder="Например: возврат аванса" value={form.comment} onChange={e => setForm(f => ({ ...f, comment: e.target.value }))} /></div>
         </div>
         <div className="mt-4 flex justify-end gap-2"><Button variant="outline" onClick={() => setShowTransfer(false)}>Отмена</Button><Button onClick={() => addTransfer.mutate()} disabled={addTransfer.isPending}>{addTransfer.isPending ? "Сохранение…" : "Сохранить перевод"}</Button></div>
       </div>}
