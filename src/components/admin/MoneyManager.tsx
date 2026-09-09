@@ -79,7 +79,10 @@ export function MoneyManager() {
         projectExists: Boolean(result?.project),
       });
 
-      if (!result) throw new Error("Финансовый сервер не вернул данные");
+      if (!result)
+        throw new Error(
+          "Финансовый сервер не ответил. Проверьте настройки финансового подключения на хостинге сайта.",
+        );
       if (result.error) throw new Error(result.error);
 
       const categoryMap = new Map<string, Category>(categories.map((c) => [c.id, c]));
