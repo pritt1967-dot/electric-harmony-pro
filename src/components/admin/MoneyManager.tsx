@@ -125,10 +125,7 @@ export function MoneyManager() {
     mutationFn: async () => {
       const name = newParticipant.trim();
       if (!name) throw new Error("Введите имя участника");
-      const { data: p, error } = await db.from("participants").insert({ name }).select("id,name").single();
-      if (error) throw error;
-      const { error: linkError } = await db.from("project_participants").insert({ project_id: PROJECT_ID, participant_id: p.id });
-      if (linkError) throw linkError;
+      await addParticipantFn({ data: { projectId: PROJECT_ID, name } });
     },
     onSuccess: () => {
       setNewParticipant("");
