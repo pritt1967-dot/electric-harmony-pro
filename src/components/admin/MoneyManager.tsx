@@ -45,20 +45,42 @@ export function MoneyManager() {
     comment: "",
   });
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", PROJECT_ID],
     queryFn: async () => {
+      // Do not use a nested PostgREST relation here. The finance tables were
+      // created after the generated Supabase TypeScript schema and older
+      // PostgREST schema caches can reject nested selects even when the FK exists.
       const [ops, parts, cats, project] = await Promise.all([
-        db.from("operations").select("id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,category:categories(name,affects_project_balance)").eq("project_id", PROJECT_ID).order("operation_date", { ascending: false }).order("created_at", { ascending: false }),
+        db.from("operations")
+          .select("id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,created_at")
+          .eq("project_id", PROJECT_ID)
+          .order("operation_date", { ascending: false })
+          .order("created_at", { ascending: false }),
         db.from("participants").select("id,name").order("name"),
         db.from("categories").select("id,name,affects_project_balance").order("name"),
-        db.from("projects").select("customer_name,project_name,status").eq("id", PROJECT_ID).single(),
+        db.from("projects").select("customer_name,project_name,status").eq("id", PROJECT_ID).maybeSingle(),
       ]);
-      if (ops.error) throw ops.error;
-      if (parts.error) throw parts.error;
-      if (cats.error) throw cats.error;
-      if (project.error) throw project.error;
-      return { operations: ops.data as Operation[], participants: parts.data as Participant[], categories: cats.data as Category[], project: project.data };
+
+      if (ops.error) throw new Error(`operations: ${ops.error.message}`);
+      if (parts.error) throw new Error(`participants: ${parts.error.message}`);
+      if (cats.error) throw new Error(`categories: ${cats.error.message}`);
+      if (project.error) throw new Error(`projects: ${project.error.message}`);
+
+      const categoryMap = new Map<string, Category>(
+        (cats.data ?? []).map((c: Category) => [c.id, c]),
+      );
+      const operations = (ops.data ?? []).map((o: Operation) => ({
+        ...o,
+        category: o.category_id ? categoryMap.get(o.category_id) ?? null : null,
+      }));
+
+      return {
+        operations: operations as Operation[],
+        participants: (parts.data ?? []) as Participant[],
+        categories: (cats.data ?? []) as Category[],
+        project: project.data ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
+      };
     },
   });
 
@@ -124,7 +146,7 @@ export function MoneyManager() {
   });
 
   if (isLoading) return <div className="flex items-center gap-2 py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Загрузка движения денег…</div>;
-  if (isError) return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">Не удалось загрузить финансовые данные.</div>;
+  if (isError) return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm"><div className="font-medium">Не удалось загрузить финансовые данные.</div><div className="mt-1 text-muted-foreground">{error instanceof Error ? error.message : "Проверьте подключение к Supabase."}</div></div>;
 
   return (
     <div className="space-y-5">
