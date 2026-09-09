@@ -50,41 +50,31 @@ export function MoneyManager() {
     comment: "",
   });
 
+  const fetchFinance = useServerFn(loadFinanceData);
+  const addOperationFn = useServerFn(createFinanceOperation);
+  const removeOperationFn = useServerFn(deleteFinanceOperation);
+  const addParticipantFn = useServerFn(createFinanceParticipant);
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", PROJECT_ID],
     queryFn: async () => {
-      // Do not use a nested PostgREST relation here. The finance tables were
-      // created after the generated Supabase TypeScript schema and older
-      // PostgREST schema caches can reject nested selects even when the FK exists.
-      const [ops, parts, cats, project] = await Promise.all([
-        db.from("operations")
-          .select("id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,created_at")
-          .eq("project_id", PROJECT_ID)
-          .order("operation_date", { ascending: false })
-          .order("created_at", { ascending: false }),
-        db.from("participants").select("id,name").order("name"),
-        db.from("categories").select("id,name,affects_project_balance").order("name"),
-        db.from("projects").select("customer_name,project_name,status").eq("id", PROJECT_ID).maybeSingle(),
-      ]);
-
-      if (ops.error) throw new Error(`operations: ${ops.error.message}`);
-      if (parts.error) throw new Error(`participants: ${parts.error.message}`);
-      if (cats.error) throw new Error(`categories: ${cats.error.message}`);
-      if (project.error) throw new Error(`projects: ${project.error.message}`);
+      // Finance tables live in a separate backend, reached through server
+      // functions so no finance credentials exist in the browser bundle.
+      const result = await fetchFinance({ data: { projectId: PROJECT_ID } });
 
       const categoryMap = new Map<string, Category>(
-        (cats.data ?? []).map((c: Category) => [c.id, c]),
+        (result.categories ?? []).map((c: Category) => [c.id, c]),
       );
-      const operations = (ops.data ?? []).map((o: Operation) => ({
+      const operations = (result.operations ?? []).map((o: Operation) => ({
         ...o,
         category: o.category_id ? categoryMap.get(o.category_id) ?? null : null,
       }));
 
       return {
         operations: operations as Operation[],
-        participants: (parts.data ?? []) as Participant[],
-        categories: (cats.data ?? []) as Category[],
-        project: project.data ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
+        participants: (result.participants ?? []) as Participant[],
+        categories: (result.categories ?? []) as Category[],
+        project: result.project ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
       };
     },
   });
