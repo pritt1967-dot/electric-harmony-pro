@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Loader2, Plus, Trash2, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, FileText, Loader2, PieChart as PieChartIcon, Plus, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
+import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
