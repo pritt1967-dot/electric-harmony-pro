@@ -173,6 +173,14 @@ export function MoneyManager() {
   };
 
 
+  useEffect(() => {
+    if (showForm) {
+      requestAnimationFrame(() => {
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [showForm]);
+
   const addOperation = useMutation({
     mutationFn: async () => {
       const amount = Number(form.amount.replace(/\s/g, "").replace(",", "."));
@@ -231,6 +239,22 @@ export function MoneyManager() {
           </div>
         </div>
       </div>
+
+      {showForm && (
+        <div ref={formRef} className="rounded-2xl border-2 border-brand/40 bg-card p-4 sm:p-5">
+          <h3 className="font-bold">Новая операция</h3>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div><Label>Дата</Label><Input className="mt-1.5" type="date" value={form.operation_date} onChange={e => setForm({ ...form, operation_date: e.target.value })} /></div>
+            <div><Label>Тип</Label><Select value={form.operation_type} onValueChange={(v: Operation["operation_type"]) => setForm({ ...form, operation_type: v })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="income">Приход</SelectItem><SelectItem value="expense">Расход</SelectItem><SelectItem value="transfer">Передача</SelectItem></SelectContent></Select></div>
+            <div><Label>От кого</Label><Input className="mt-1.5" value={form.from_name} onChange={e => setForm({ ...form, from_name: e.target.value })} /></div>
+            <div><Label>Кому</Label><Input className="mt-1.5" value={form.to_name} onChange={e => setForm({ ...form, to_name: e.target.value })} /></div>
+            <div><Label>Сумма</Label><Input className="mt-1.5" inputMode="decimal" placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
+            <div><Label>Статья</Label><Select value={form.category_id} onValueChange={v => setForm({ ...form, category_id: v })}><SelectTrigger className="mt-1.5"><SelectValue placeholder="Выберите статью" /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}{c.affects_project_balance ? "" : " · не расход"}</SelectItem>)}</SelectContent></Select></div>
+            <div className="sm:col-span-2"><Label>Комментарий</Label><Textarea className="mt-1.5 min-h-10" value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })} /></div>
+          </div>
+          <div className="mt-4 flex flex-col justify-end gap-2 sm:flex-row"><Button variant="outline" onClick={() => setShowForm(false)}>Отмена</Button><Button onClick={() => addOperation.mutate()} disabled={addOperation.isPending}>{addOperation.isPending ? "Сохранение…" : "Сохранить"}</Button></div>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat title="Получено от заказчика" value={stats.income} icon={<ArrowDownLeft className="size-4" />} />
