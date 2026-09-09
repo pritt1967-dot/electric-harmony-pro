@@ -110,51 +110,87 @@ export type FinanceProject = {
   status: string | null;
 };
 
-/** Loads everything the money tab needs, without nested PostgREST selects. */
+export type FinancePayload = {
+  ok: boolean;
+  error: string | null;
+  source: "direct" | "relay";
+  operations: FinanceOperation[];
+  participants: FinanceParticipant[];
+  categories: FinanceCategory[];
+  project: FinanceProject | null;
+};
+
+/**
+ * Loads everything the money tab needs, without nested PostgREST selects.
+ * Никогда не бросает исключение: ошибка возвращается полем `error`, иначе
+ * внешний хостинг превращает throw в HTML-страницу 500, и клиент получает
+ * undefined вместо понятной причины.
+ */
 export const loadFinanceData = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .inputValidator((data: { projectId: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<FinancePayload> => {
     const projectId = encodeURIComponent(data.projectId);
+    const source: "direct" | "relay" = financeKey() ? "direct" : "relay";
 
-    const [operations, participants, categories, projects, links] =
-      await Promise.all([
-        rest(
-          `operations?select=id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,created_at&project_id=eq.${projectId}&order=operation_date.desc,created_at.desc`,
-        ),
-        rest(`participants?select=id,name&order=name.asc`),
-        rest(`categories?select=id,name,affects_project_balance&order=name.asc`),
-        rest(
-          `projects?select=customer_name,project_name,status&id=eq.${projectId}&limit=1`,
-        ),
-        rest(
-          `project_participants?select=project_id,participant_id&project_id=eq.${projectId}`,
-        ),
-      ]);
-
-    const projectLinks = (links ?? []) as { participant_id: string }[];
-    const linkedIds = new Set(projectLinks.map((l) => l.participant_id));
-    const allParticipants = (participants ?? []) as FinanceParticipant[];
-
-    const payload = {
-      operations: (operations ?? []) as FinanceOperation[],
-      participants: (linkedIds.size
-        ? allParticipants.filter((p) => linkedIds.has(p.id))
-        : allParticipants) as FinanceParticipant[],
-      categories: (categories ?? []) as FinanceCategory[],
-      project: ((projects ?? []) as FinanceProject[])[0] ?? null,
+    const empty: FinancePayload = {
+      ok: false,
+      error: null,
+      source,
+      operations: [],
+      participants: [],
+      categories: [],
+      project: null,
     };
 
-    // Temporary diagnostics (counts only, never credentials).
-    console.log("[finance] loadFinanceData", {
-      projectId: data.projectId,
-      operations: payload.operations.length,
-      categories: payload.categories.length,
-      participants: payload.participants.length,
-      projectFound: Boolean(payload.project),
-    });
+    try {
+      const [operations, participants, categories, projects, links] =
+        await Promise.all([
+          rest(
+            `operations?select=id,operation_date,operation_type,from_name,to_name,amount,category_id,comment,created_at&project_id=eq.${projectId}&order=operation_date.desc,created_at.desc`,
+          ),
+          rest(`participants?select=id,name&order=name.asc`),
+          rest(`categories?select=id,name,affects_project_balance&order=name.asc`),
+          rest(
+            `projects?select=customer_name,project_name,status&id=eq.${projectId}&limit=1`,
+          ),
+          rest(
+            `project_participants?select=project_id,participant_id&project_id=eq.${projectId}`,
+          ),
+        ]);
 
-    return payload;
+      const projectLinks = (links ?? []) as { participant_id: string }[];
+      const linkedIds = new Set(projectLinks.map((l) => l.participant_id));
+      const allParticipants = (participants ?? []) as FinanceParticipant[];
+
+      const payload: FinancePayload = {
+        ok: true,
+        error: null,
+        source,
+        operations: (operations ?? []) as FinanceOperation[],
+        participants: (linkedIds.size
+          ? allParticipants.filter((p) => linkedIds.has(p.id))
+          : allParticipants) as FinanceParticipant[],
+        categories: (categories ?? []) as FinanceCategory[],
+        project: ((projects ?? []) as FinanceProject[])[0] ?? null,
+      };
+
+      // Diagnostics: counts only, never credentials.
+      console.log("[finance] loadFinanceData", {
+        projectId: data.projectId,
+        source,
+        operations: payload.operations.length,
+        categories: payload.categories.length,
+        participants: payload.participants.length,
+        projectFound: Boolean(payload.project),
+      });
+
+      return payload;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[finance] loadFinanceData failed", { source, message });
+      return { ...empty, error: message };
+    }
   });
 
 export const createFinanceOperation = createServerFn({ method: "POST" })
