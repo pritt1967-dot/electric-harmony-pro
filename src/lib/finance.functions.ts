@@ -225,7 +225,7 @@ export const createFinanceParticipant = createServerFn({ method: "POST" })
 
     await rest("project_participants", {
       method: "POST",
-      headers: { Prefer: "return=representation,resolution=ignore-duplicates" },
+      prefer: "return=representation,resolution=ignore-duplicates",
       body: JSON.stringify({
         project_id: data.projectId,
         participant_id: participant.id,
