@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, FileText, Loader2, PieChart as PieChartIcon, Plus, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
@@ -41,6 +41,7 @@ const date = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString("ru-RU"
 export function MoneyManager() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const formRef = useRef<HTMLDivElement | null>(null);
   const [newParticipant, setNewParticipant] = useState("");
   const [form, setForm] = useState({
     operation_date: new Date().toISOString().slice(0, 10),
