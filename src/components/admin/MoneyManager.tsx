@@ -99,8 +99,7 @@ export function MoneyManager() {
       const amount = Number(form.amount.replace(/\s/g, "").replace(",", "."));
       if (!amount || amount <= 0) throw new Error("Укажите сумму больше нуля");
       if (!form.from_name || !form.to_name) throw new Error("Укажите отправителя и получателя");
-      const { error } = await db.from("operations").insert({ project_id: PROJECT_ID, operation_date: form.operation_date, operation_type: form.operation_type, from_name: form.from_name, to_name: form.to_name, amount, category_id: form.category_id || null, comment: form.comment || null });
-      if (error) throw error;
+      await addOperationFn({ data: { projectId: PROJECT_ID, operation_date: form.operation_date, operation_type: form.operation_type, from_name: form.from_name, to_name: form.to_name, amount, category_id: form.category_id || null, comment: form.comment || null } });
     },
     onSuccess: () => {
       toast.success("Операция добавлена");
