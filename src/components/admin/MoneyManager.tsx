@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Loader2, Plus, Trash2, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
@@ -8,9 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createFinanceOperation,
+  createFinanceParticipant,
+  deleteFinanceOperation,
+  loadFinanceData,
+} from "@/lib/finance.functions";
 
-const db = supabase as any;
 const PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
 const CUSTOMER = "ООО «Си Проект»";
 
