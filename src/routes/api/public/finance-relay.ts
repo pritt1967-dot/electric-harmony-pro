@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Финансовое реле: выполняется в инфраструктуре Lovable, где хранится
@@ -20,17 +21,43 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+function authenticatedFetch(apiKey: string, accessToken: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (headers.get("Authorization") === `Bearer ${apiKey}`) headers.delete("Authorization");
+    headers.set("apikey", apiKey);
+    headers.set("Authorization", `Bearer ${accessToken}`);
+    return fetch(input, { ...init, headers });
+  };
+}
+
 export const Route = createFileRoute("/api/public/finance-relay")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const relaySecret = process.env["AI_RELAY_SECRET"];
-        if (!relaySecret) {
-          return Response.json({ error: "Relay is not configured" }, { status: 503 });
-        }
         const provided = request.headers.get("x-relay-secret") ?? "";
-        if (!provided || !safeEqual(provided, relaySecret)) {
-          return Response.json({ error: "Unauthorized" }, { status: 401 });
+        const hasSharedSecret = Boolean(relaySecret && provided && safeEqual(provided, relaySecret));
+        if (!hasSharedSecret) {
+          const authHeader = request.headers.get("authorization") ?? "";
+          const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
+          const siteUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
+          const siteKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_ANON_KEY"];
+          if (!accessToken || !siteUrl || !siteKey) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+          }
+          const site = createClient(siteUrl, siteKey, {
+            global: { fetch: authenticatedFetch(siteKey, accessToken) },
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          const { data: userData, error: userError } = await site.auth.getUser(accessToken);
+          if (userError || !userData.user) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+          }
+          const { data: isAdmin, error: roleError } = await site.rpc("has_role", { _user_id: userData.user.id, _role: "admin" });
+          if (roleError || !isAdmin) {
+            return Response.json({ error: "Forbidden" }, { status: 403 });
+          }
         }
 
         const key =
