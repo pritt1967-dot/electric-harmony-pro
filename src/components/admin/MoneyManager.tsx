@@ -210,7 +210,10 @@ export function MoneyManager() {
             <div className="flex items-center gap-2"><Wallet className="size-5" /><h2 className="text-lg font-bold">Движение денег</h2></div>
             <p className="mt-1 text-sm text-muted-foreground">{CUSTOMER} · {data?.project?.project_name || "Основной проект"}</p>
           </div>
-          <Button onClick={() => setShowForm(v => !v)}><Plus className="mr-2 size-4" /> Новая операция</Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={downloadPdf} disabled={pdfBusy}><FileText className="mr-2 size-4" /> {pdfBusy ? "Формирую…" : "Сформировать финансовый отчёт PDF"}</Button>
+            <Button onClick={() => setShowForm(v => !v)}><Plus className="mr-2 size-4" /> Новая операция</Button>
+          </div>
         </div>
       </div>
 
@@ -219,6 +222,71 @@ export function MoneyManager() {
         <Stat title="Расходы проекта" value={stats.expenses} icon={<ArrowUpRight className="size-4" />} />
         <Stat title="Остаток проекта" value={stats.remaining} icon={<Wallet className="size-4" />} accent />
       </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5">
+          <div className="flex items-center gap-2"><PieChartIcon className="size-4 text-muted-foreground" /><h3 className="font-bold">Расходы проекта</h3></div>
+          {stats.byCategory.length ? (
+            <>
+              <div className="mt-3 h-56 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={stats.byCategory} dataKey="amount" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
+                      {stats.byCategory.map((c, i) => <Cell key={c.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => money(Number(v))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="mt-3 space-y-1.5 text-sm">
+                {stats.byCategory.map((c, i) => (
+                  <li key={c.name} className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2"><span className="size-2.5 shrink-0 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} /><span className="truncate">{c.name}</span></span>
+                    <span className="font-semibold whitespace-nowrap">{money(c.amount)}</span>
+                  </li>
+                ))}
+                <li className="flex items-center justify-between gap-3 border-t pt-1.5"><span className="text-muted-foreground">Всего расходов</span><span className="font-bold whitespace-nowrap">{money(stats.expenses)}</span></li>
+              </ul>
+            </>
+          ) : <p className="mt-3 text-sm text-muted-foreground">Расходов пока нет.</p>}
+        </div>
+
+        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5">
+          <div className="flex items-center gap-2"><TrendingUp className="size-4 text-muted-foreground" /><h3 className="font-bold">Динамика</h3></div>
+          {stats.timeline.length ? (
+            <div className="mt-3 h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={stats.timeline} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={16} />
+                  <YAxis tick={{ fontSize: 11 }} width={54} tickFormatter={(v: number) => `${Math.round(Number(v) / 1000)}т`} />
+                  <Tooltip formatter={(v: number) => money(Number(v))} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="Поступления" stroke="#1d4ed8" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="Расходы" stroke="#dc2626" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="Остаток" stroke="#16a34a" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : <p className="mt-3 text-sm text-muted-foreground">Операций пока нет.</p>}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border bg-card p-4 sm:p-5">
+        <h3 className="font-bold">Контроль баланса</h3>
+        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Получено от заказчика</span><span className="font-semibold">{money(stats.income)}</span></div>
+          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Расходы проекта</span><span className="font-semibold">{money(stats.expenses)}</span></div>
+          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Остаток проекта</span><span className="font-semibold">{money(stats.remaining)}</span></div>
+          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Сумма балансов участников</span><span className="font-semibold">{money(stats.balanceSum)}</span></div>
+        </div>
+        {Math.abs(stats.balanceSum - stats.remaining) > 1 && (
+          <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">
+            Внимание: сумма балансов участников ({money(stats.balanceSum)}) не совпадает с остатком проекта ({money(stats.remaining)}).
+          </div>
+        )}
+      </div>
+
 
       {showForm && (
         <div className="rounded-2xl border bg-card p-4 sm:p-5">
