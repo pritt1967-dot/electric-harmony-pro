@@ -35,6 +35,7 @@ type Participant = { id: string; name: string };
 type Category = { id: string; name: string; affects_project_balance: boolean };
 
 const money = (v: number) => `${new Intl.NumberFormat("ru-RU").format(Math.round(v))} ₽`;
+const PIE_COLORS = ["#1d4ed8", "#0ea5e9", "#f59e0b", "#16a34a", "#a855f7", "#dc2626", "#64748b"];
 const date = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString("ru-RU");
 
 export function MoneyManager() {
