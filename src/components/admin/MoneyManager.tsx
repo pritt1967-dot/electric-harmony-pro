@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, FileText, Loader2, PieChart as PieChartIcon, Plus, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, FileText, Loader2, PieChart as PieChartIcon, Plus, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -37,6 +39,7 @@ type Category = { id: string; name: string; affects_project_balance: boolean };
 const money = (v: number) => `${new Intl.NumberFormat("ru-RU").format(Math.round(v))} ₽`;
 const PIE_COLORS = ["#1d4ed8", "#0ea5e9", "#f59e0b", "#16a34a", "#a855f7", "#dc2626", "#64748b"];
 const date = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString("ru-RU");
+const todayMoscow = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Moscow", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 export function MoneyManager() {
   const qc = useQueryClient();
@@ -44,7 +47,7 @@ export function MoneyManager() {
   const formRef = useRef<HTMLDivElement | null>(null);
   const [newParticipant, setNewParticipant] = useState("");
   const [form, setForm] = useState({
-    operation_date: new Date().toISOString().slice(0, 10),
+    operation_date: todayMoscow(),
     operation_type: "expense" as Operation["operation_type"],
     from_name: "Макс",
     to_name: "Лемана Про",
@@ -61,42 +64,16 @@ export function MoneyManager() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", PROJECT_ID],
     queryFn: async () => {
-      // Finance tables live in a separate backend, reached through server
-      // functions so no finance credentials exist in the browser bundle.
       const result = await fetchFinance({ data: { projectId: PROJECT_ID } });
-
       const categories = Array.isArray(result?.categories) ? (result.categories as Category[]) : [];
       const operationsRaw = Array.isArray(result?.operations) ? (result.operations as Operation[]) : [];
       const participants = Array.isArray(result?.participants) ? (result.participants as Participant[]) : [];
-
-      // Диагностика без ключей и адресов.
-      console.log("[finance:client] loadFinanceData", {
-        resultExists: Boolean(result),
-        source: result?.source ?? "unknown",
-        operations: operationsRaw.length,
-        participants: participants.length,
-        categories: categories.length,
-        projectExists: Boolean(result?.project),
-      });
-
-      if (!result)
-        throw new Error(
-          "Финансовый сервер не ответил. Проверьте настройки финансового подключения на хостинге сайта.",
-        );
+      console.log("[finance:client] loadFinanceData", { resultExists: Boolean(result), source: result?.source ?? "unknown", operations: operationsRaw.length, participants: participants.length, categories: categories.length, projectExists: Boolean(result?.project) });
+      if (!result) throw new Error("Финансовый сервер не ответил. Проверьте настройки финансового подключения на хостинге сайта.");
       if (result.error) throw new Error(result.error);
-
       const categoryMap = new Map<string, Category>(categories.map((c) => [c.id, c]));
-      const operations = operationsRaw.map((o) => ({
-        ...o,
-        category: o.category_id ? categoryMap.get(o.category_id) ?? null : null,
-      }));
-
-      return {
-        operations,
-        participants,
-        categories,
-        project: result.project ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" },
-      };
+      const operations = operationsRaw.map((o) => ({ ...o, category: o.category_id ? categoryMap.get(o.category_id) ?? null : null }));
+      return { operations, participants, categories, project: result.project ?? { customer_name: CUSTOMER, project_name: "Основной проект", status: "active" } };
     },
   });
 
@@ -113,16 +90,9 @@ export function MoneyManager() {
       const spent = operations.filter(o => o.from_name === p.name).reduce((s, o) => s + Number(o.amount), 0);
       return { ...p, received, spent, balance: received - spent };
     });
-
     const byCategoryMap = new Map<string, number>();
-    for (const o of projectExpenses) {
-      const key = o.category?.name || "Без статьи";
-      byCategoryMap.set(key, (byCategoryMap.get(key) ?? 0) + Number(o.amount));
-    }
-    const byCategory = [...byCategoryMap.entries()]
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount);
-
+    for (const o of projectExpenses) { const key = o.category?.name || "Без статьи"; byCategoryMap.set(key, (byCategoryMap.get(key) ?? 0) + Number(o.amount)); }
+    const byCategory = [...byCategoryMap.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
     const byDate = new Map<string, { income: number; expense: number }>();
     for (const o of operations) {
       const row = byDate.get(o.operation_date) ?? { income: 0, expense: 0 };
@@ -130,16 +100,8 @@ export function MoneyManager() {
       else if (o.operation_type === "expense" && o.category?.affects_project_balance !== false) row.expense += Number(o.amount);
       byDate.set(o.operation_date, row);
     }
-    let ci = 0;
-    let ce = 0;
-    const timeline = [...byDate.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([d, v]) => {
-        ci += v.income;
-        ce += v.expense;
-        return { date: date(d), Поступления: ci, Расходы: ce, Остаток: ci - ce };
-      });
-
+    let ci = 0; let ce = 0;
+    const timeline = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => { ci += v.income; ce += v.expense; return { date: date(d), Поступления: ci, Расходы: ce, Остаток: ci - ce }; });
     const balanceSum = balances.reduce((s, b) => s + b.balance, 0);
     return { income, expenses, remaining: income - expenses, balances, byCategory, timeline, balanceSum };
   }, [operations, participants]);
@@ -149,40 +111,13 @@ export function MoneyManager() {
     setPdfBusy(true);
     try {
       const { buildFinancePdf } = await import("@/lib/finance-pdf");
-      const doc = await buildFinancePdf({
-        customer: data?.project?.customer_name || CUSTOMER,
-        projectName: data?.project?.project_name || "Основной проект",
-        income: stats.income,
-        expenses: stats.expenses,
-        remaining: stats.remaining,
-        byCategory: stats.byCategory,
-        balances: stats.balances.map(b => ({ name: b.name, received: b.received, spent: b.spent, balance: b.balance })),
-        operations: operations.map(o => ({
-          operation_date: o.operation_date,
-          operation_type: o.operation_type,
-          from_name: o.from_name,
-          to_name: o.to_name,
-          amount: Number(o.amount),
-          categoryName: o.category?.name || "Без статьи",
-          comment: o.comment,
-        })),
-      });
+      const doc = await buildFinancePdf({ customer: data?.project?.customer_name || CUSTOMER, projectName: data?.project?.project_name || "Основной проект", income: stats.income, expenses: stats.expenses, remaining: stats.remaining, byCategory: stats.byCategory, balances: stats.balances.map(b => ({ name: b.name, received: b.received, spent: b.spent, balance: b.balance })), operations: operations.map(o => ({ operation_date: o.operation_date, operation_type: o.operation_type, from_name: o.from_name, to_name: o.to_name, amount: Number(o.amount), categoryName: o.category?.name || "Без статьи", comment: o.comment })) });
       doc.save("finance-report.pdf");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF");
-    } finally {
-      setPdfBusy(false);
-    }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF"); }
+    finally { setPdfBusy(false); }
   };
 
-
-  useEffect(() => {
-    if (showForm) {
-      requestAnimationFrame(() => {
-        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  }, [showForm]);
+  useEffect(() => { if (showForm) requestAnimationFrame(() => { formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }); }, [showForm]);
 
   const addOperation = useMutation({
     mutationFn: async () => {
@@ -193,53 +128,35 @@ export function MoneyManager() {
     },
     onSuccess: () => {
       toast.success("Операция добавлена");
-      setForm({ operation_date: new Date().toISOString().slice(0, 10), operation_type: "expense", from_name: "Макс", to_name: "Лемана Про", amount: "", category_id: "", comment: "" });
-      setShowForm(false);
-      qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] });
+      setForm({ operation_date: todayMoscow(), operation_type: "expense", from_name: "Макс", to_name: "Лемана Про", amount: "", category_id: "", comment: "" });
+      setShowForm(false); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteOperation = useMutation({
-    mutationFn: async (id: string) => {
-      await removeOperationFn({ data: { id } });
-    },
-    onSuccess: () => {
-      toast.success("Операция удалена");
-      qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] });
-    },
+    mutationFn: async (id: string) => { await removeOperationFn({ data: { id } }); },
+    onSuccess: () => { toast.success("Операция удалена"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const addParticipant = useMutation({
-    mutationFn: async () => {
-      const name = newParticipant.trim();
-      if (!name) throw new Error("Введите имя участника");
-      await addParticipantFn({ data: { projectId: PROJECT_ID, name } });
-    },
-    onSuccess: () => {
-      setNewParticipant("");
-      toast.success("Участник добавлен");
-      qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] });
-    },
+    mutationFn: async () => { const name = newParticipant.trim(); if (!name) throw new Error("Введите имя участника"); await addParticipantFn({ data: { projectId: PROJECT_ID, name } }); },
+    onSuccess: () => { setNewParticipant(""); toast.success("Участник добавлен"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   if (isLoading) return <div className="flex items-center gap-2 py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Загрузка движения денег…</div>;
   if (isError) return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm"><div className="font-medium">Не удалось загрузить финансовые данные.</div><div className="mt-1 text-muted-foreground">{error instanceof Error ? error.message : "Проверьте подключение к Supabase."}</div></div>;
 
+  const selectedOperationDate = new Date(`${form.operation_date}T12:00:00`);
+
   return (
     <div className="space-y-5">
       <div className="rounded-2xl border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2"><Wallet className="size-5" /><h2 className="text-lg font-bold">Движение денег</h2></div>
-            <p className="mt-1 text-sm text-muted-foreground">{CUSTOMER} · {data?.project?.project_name || "Основной проект"}</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button variant="outline" onClick={downloadPdf} disabled={pdfBusy}><FileText className="mr-2 size-4" /> {pdfBusy ? "Формирую…" : "Сформировать финансовый отчёт PDF"}</Button>
-            <Button onClick={() => setShowForm(v => !v)}><Plus className="mr-2 size-4" /> Новая операция</Button>
-          </div>
+          <div><div className="flex items-center gap-2"><Wallet className="size-5" /><h2 className="text-lg font-bold">Движение денег</h2></div><p className="mt-1 text-sm text-muted-foreground">{CUSTOMER} · {data?.project?.project_name || "Основной проект"}</p></div>
+          <div className="flex flex-col gap-2 sm:flex-row"><Button variant="outline" onClick={downloadPdf} disabled={pdfBusy}><FileText className="mr-2 size-4" /> {pdfBusy ? "Формирую…" : "Сформировать финансовый отчёт PDF"}</Button><Button onClick={() => setShowForm(v => !v)}><Plus className="mr-2 size-4" /> Новая операция</Button></div>
         </div>
       </div>
 
@@ -247,7 +164,32 @@ export function MoneyManager() {
         <div ref={formRef} className="rounded-2xl border-2 border-brand/40 bg-card p-4 sm:p-5">
           <h3 className="font-bold">Новая операция</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div><Label>Дата</Label><Input className="mt-1.5" type="date" value={form.operation_date} onChange={e => setForm({ ...form, operation_date: e.target.value })} /></div>
+            <div>
+              <Label>Дата операции</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" className="mt-1.5 w-full justify-start text-left font-normal">
+                    <CalendarDays className="mr-2 size-4" />
+                    {selectedOperationDate.toLocaleDateString("ru-RU")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedOperationDate}
+                    onSelect={(selected) => {
+                      if (selected) {
+                        const year = selected.getFullYear();
+                        const month = String(selected.getMonth() + 1).padStart(2, "0");
+                        const day = String(selected.getDate()).padStart(2, "0");
+                        setForm({ ...form, operation_date: `${year}-${month}-${day}` });
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
             <div><Label>Тип</Label><Select value={form.operation_type} onValueChange={(v: Operation["operation_type"]) => setForm({ ...form, operation_type: v })}><SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="income">Приход</SelectItem><SelectItem value="expense">Расход</SelectItem><SelectItem value="transfer">Передача</SelectItem></SelectContent></Select></div>
             <div><Label>От кого</Label><Input className="mt-1.5" value={form.from_name} onChange={e => setForm({ ...form, from_name: e.target.value })} /></div>
             <div><Label>Кому</Label><Input className="mt-1.5" value={form.to_name} onChange={e => setForm({ ...form, to_name: e.target.value })} /></div>
@@ -259,97 +201,18 @@ export function MoneyManager() {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Stat title="Получено от заказчика" value={stats.income} icon={<ArrowDownLeft className="size-4" />} />
-        <Stat title="Расходы проекта" value={stats.expenses} icon={<ArrowUpRight className="size-4" />} />
-        <Stat title="Остаток проекта" value={stats.remaining} icon={<Wallet className="size-4" />} accent />
-      </div>
+      <div className="grid gap-3 sm:grid-cols-3"><Stat title="Получено от заказчика" value={stats.income} icon={<ArrowDownLeft className="size-4" />} /><Stat title="Расходы проекта" value={stats.expenses} icon={<ArrowUpRight className="size-4" />} /><Stat title="Остаток проекта" value={stats.remaining} icon={<Wallet className="size-4" />} accent /></div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5">
-          <div className="flex items-center gap-2"><PieChartIcon className="size-4 text-muted-foreground" /><h3 className="font-bold">Расходы проекта</h3></div>
-          {stats.byCategory.length ? (
-            <>
-              <div className="mt-3 h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={stats.byCategory} dataKey="amount" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
-                      {stats.byCategory.map((c, i) => <Cell key={c.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip formatter={(v: number) => money(Number(v))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <ul className="mt-3 space-y-1.5 text-sm">
-                {stats.byCategory.map((c, i) => (
-                  <li key={c.name} className="flex items-center justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2"><span className="size-2.5 shrink-0 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} /><span className="truncate">{c.name}</span></span>
-                    <span className="font-semibold whitespace-nowrap">{money(c.amount)}</span>
-                  </li>
-                ))}
-                <li className="flex items-center justify-between gap-3 border-t pt-1.5"><span className="text-muted-foreground">Всего расходов</span><span className="font-bold whitespace-nowrap">{money(stats.expenses)}</span></li>
-              </ul>
-            </>
-          ) : <p className="mt-3 text-sm text-muted-foreground">Расходов пока нет.</p>}
-        </div>
-
-        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5">
-          <div className="flex items-center gap-2"><TrendingUp className="size-4 text-muted-foreground" /><h3 className="font-bold">Динамика</h3></div>
-          {stats.timeline.length ? (
-            <div className="mt-3 h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={stats.timeline} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={16} />
-                  <YAxis tick={{ fontSize: 11 }} width={54} tickFormatter={(v: number) => `${Math.round(Number(v) / 1000)}т`} />
-                  <Tooltip formatter={(v: number) => money(Number(v))} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="Поступления" stroke="#1d4ed8" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Расходы" stroke="#dc2626" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Остаток" stroke="#16a34a" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : <p className="mt-3 text-sm text-muted-foreground">Операций пока нет.</p>}
-        </div>
+        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5"><div className="flex items-center gap-2"><PieChartIcon className="size-4 text-muted-foreground" /><h3 className="font-bold">Расходы проекта</h3></div>{stats.byCategory.length ? <><div className="mt-3 h-56 w-full"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={stats.byCategory} dataKey="amount" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>{stats.byCategory.map((c, i) => <Cell key={c.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}</Pie><Tooltip formatter={(v: number) => money(Number(v))} /></PieChart></ResponsiveContainer></div><ul className="mt-3 space-y-1.5 text-sm">{stats.byCategory.map((c, i) => <li key={c.name} className="flex items-center justify-between gap-3"><span className="flex min-w-0 items-center gap-2"><span className="size-2.5 shrink-0 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} /><span className="truncate">{c.name}</span></span><span className="font-semibold whitespace-nowrap">{money(c.amount)}</span></li>)}<li className="flex items-center justify-between gap-3 border-t pt-1.5"><span className="text-muted-foreground">Всего расходов</span><span className="font-bold whitespace-nowrap">{money(stats.expenses)}</span></li></ul></> : <p className="mt-3 text-sm text-muted-foreground">Расходов пока нет.</p>}</div>
+        <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-5"><div className="flex items-center gap-2"><TrendingUp className="size-4 text-muted-foreground" /><h3 className="font-bold">Динамика</h3></div>{stats.timeline.length ? <div className="mt-3 h-56 w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={stats.timeline} margin={{ left: 4, right: 8, top: 8, bottom: 4 }}><CartesianGrid strokeDasharray="3 3" opacity={0.25} /><XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={16} /><YAxis tick={{ fontSize: 11 }} width={54} tickFormatter={(v: number) => `${Math.round(Number(v) / 1000)}т`} /><Tooltip formatter={(v: number) => money(Number(v))} /><Legend wrapperStyle={{ fontSize: 12 }} /><Line type="monotone" dataKey="Поступления" stroke="#1d4ed8" strokeWidth={2} dot={false} /><Line type="monotone" dataKey="Расходы" stroke="#dc2626" strokeWidth={2} dot={false} /><Line type="monotone" dataKey="Остаток" stroke="#16a34a" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div> : <p className="mt-3 text-sm text-muted-foreground">Операций пока нет.</p>}</div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-4 sm:p-5">
-        <h3 className="font-bold">Контроль баланса</h3>
-        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Получено от заказчика</span><span className="font-semibold">{money(stats.income)}</span></div>
-          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Расходы проекта</span><span className="font-semibold">{money(stats.expenses)}</span></div>
-          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Остаток проекта</span><span className="font-semibold">{money(stats.remaining)}</span></div>
-          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Сумма балансов участников</span><span className="font-semibold">{money(stats.balanceSum)}</span></div>
-        </div>
-        {Math.abs(stats.balanceSum - stats.remaining) > 1 && (
-          <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">
-            Внимание: сумма балансов участников ({money(stats.balanceSum)}) не совпадает с остатком проекта ({money(stats.remaining)}).
-          </div>
-        )}
-      </div>
+      <div className="rounded-2xl border bg-card p-4 sm:p-5"><h3 className="font-bold">Контроль баланса</h3><div className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><div className="flex justify-between gap-3"><span className="text-muted-foreground">Получено от заказчика</span><span className="font-semibold">{money(stats.income)}</span></div><div className="flex justify-between gap-3"><span className="text-muted-foreground">Расходы проекта</span><span className="font-semibold">{money(stats.expenses)}</span></div><div className="flex justify-between gap-3"><span className="text-muted-foreground">Остаток проекта</span><span className="font-semibold">{money(stats.remaining)}</span></div><div className="flex justify-between gap-3"><span className="text-muted-foreground">Сумма балансов участников</span><span className="font-semibold">{money(stats.balanceSum)}</span></div></div>{Math.abs(stats.balanceSum - stats.remaining) > 1 && <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">Внимание: сумма балансов участников ({money(stats.balanceSum)}) не совпадает с остатком проекта ({money(stats.remaining)}).</div>}</div>
 
+      <div className="rounded-2xl border bg-card p-4 sm:p-5"><div className="mb-4 flex items-center justify-between"><h3 className="font-bold">Баланс участников</h3><Users className="size-4 text-muted-foreground" /></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{stats.balances.map(p => <div key={p.id} className="rounded-xl border p-3"><div className="font-semibold">{p.name}</div><div className={`mt-1 text-xl font-extrabold ${p.balance < 0 ? "text-destructive" : ""}`}>{money(p.balance)}</div><div className="mt-1 text-xs text-muted-foreground">получил {money(p.received)} · потратил {money(p.spent)}</div></div>)}</div><div className="mt-4 flex flex-col gap-2 sm:flex-row"><Input placeholder="Новый участник" value={newParticipant} onChange={e => setNewParticipant(e.target.value)} /><Button variant="outline" onClick={() => addParticipant.mutate()} disabled={addParticipant.isPending}><Plus className="mr-2 size-4" /> Добавить участника</Button></div></div>
 
-      <div className="rounded-2xl border bg-card p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">Баланс участников</h3><Users className="size-4 text-muted-foreground" /></div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.balances.map(p => <div key={p.id} className="rounded-xl border p-3"><div className="font-semibold">{p.name}</div><div className={`mt-1 text-xl font-extrabold ${p.balance < 0 ? "text-destructive" : ""}`}>{money(p.balance)}</div><div className="mt-1 text-xs text-muted-foreground">получил {money(p.received)} · потратил {money(p.spent)}</div></div>)}
-        </div>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row"><Input placeholder="Новый участник" value={newParticipant} onChange={e => setNewParticipant(e.target.value)} /><Button variant="outline" onClick={() => addParticipant.mutate()} disabled={addParticipant.isPending}><Plus className="mr-2 size-4" /> Добавить участника</Button></div>
-      </div>
-
-      <div className="rounded-2xl border bg-card">
-        <div className="border-b p-4"><h3 className="font-bold">Все операции <span className="font-normal text-muted-foreground">({operations.length})</span></h3></div>
-        <div className="divide-y">
-          {operations.map(o => <div key={o.id} className="grid gap-2 p-4 sm:grid-cols-[90px_1fr_auto_auto] sm:items-center">
-            <div className="text-sm text-muted-foreground">{date(o.operation_date)}</div>
-            <div className="min-w-0"><div className="flex items-center gap-2 font-medium">{o.operation_type === "transfer" ? <ArrowRightLeft className="size-4 shrink-0" /> : o.operation_type === "income" ? <ArrowDownLeft className="size-4 shrink-0" /> : <ArrowUpRight className="size-4 shrink-0" />}<span className="truncate">{o.from_name || "—"} → {o.to_name || "—"}</span></div><div className="text-xs text-muted-foreground">{o.category?.name || "Без статьи"}{o.comment ? ` · ${o.comment}` : ""}</div></div>
-            <div className="font-bold whitespace-nowrap">{money(Number(o.amount))}</div>
-            <Button variant="ghost" size="icon" aria-label="Удалить" onClick={() => { if (confirm("Удалить операцию?")) deleteOperation.mutate(o.id); }}><Trash2 className="size-4 text-muted-foreground" /></Button>
-          </div>)}
-          {!operations.length && <div className="p-8 text-center text-muted-foreground">Операций пока нет.</div>}
-        </div>
-      </div>
+      <div className="rounded-2xl border bg-card"><div className="border-b p-4"><h3 className="font-bold">Все операции <span className="font-normal text-muted-foreground">({operations.length})</span></h3></div><div className="divide-y">{operations.map(o => <div key={o.id} className="grid gap-2 p-4 sm:grid-cols-[90px_1fr_auto_auto] sm:items-center"><div className="text-sm text-muted-foreground">{date(o.operation_date)}</div><div className="min-w-0"><div className="flex items-center gap-2 font-medium">{o.operation_type === "transfer" ? <ArrowRightLeft className="size-4 shrink-0" /> : o.operation_type === "income" ? <ArrowDownLeft className="size-4 shrink-0" /> : <ArrowUpRight className="size-4 shrink-0" />}<span className="truncate">{o.from_name || "—"} → {o.to_name || "—"}</span></div><div className="text-xs text-muted-foreground">{o.category?.name || "Без статьи"}{o.comment ? ` · ${o.comment}` : ""}</div></div><div className="font-bold whitespace-nowrap">{money(Number(o.amount))}</div><Button variant="ghost" size="icon" aria-label="Удалить" onClick={() => { if (confirm("Удалить операцию?")) deleteOperation.mutate(o.id); }}><Trash2 className="size-4 text-muted-foreground" /></Button></div>)}{!operations.length && <div className="p-8 text-center text-muted-foreground">Операций пока нет.</div>}</div></div>
     </div>
   );
 }
