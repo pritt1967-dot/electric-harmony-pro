@@ -21,33 +21,63 @@ function financeUrl(): string {
   ).replace(/\/+$/, "");
 }
 
-function financeKey(): string {
-  const key =
+function financeKey(): string | null {
+  return (
     process.env["FINANCE_SUPABASE_SERVICE_ROLE_KEY"] ??
-    process.env["FINANCE_SUPABASE_PUBLISHABLE_KEY"];
-  if (!key) {
-    throw new Error(
-      "Финансовое подключение не настроено: отсутствует ключ финансового проекта.",
-    );
-  }
-  return key;
+    process.env["FINANCE_SUPABASE_PUBLISHABLE_KEY"] ??
+    null
+  );
+}
+
+/**
+ * На внешнем хостинге (Vercel) ключ финансовой базы отсутствует — там доступно
+ * только реле в инфраструктуре Lovable, защищённое общим секретом.
+ */
+function relayConfig(): { url: string; secret: string } | null {
+  const secret = process.env["AI_RELAY_SECRET"];
+  const url =
+    process.env["FINANCE_RELAY_URL"] ??
+    process.env["AI_RELAY_URL"]?.replace(/\/ai-relay\/?$/, "/finance-relay");
+  if (!secret || !url) return null;
+  return { url: url.replace(/\/+$/, ""), secret };
 }
 
 async function rest(
   path: string,
-  init: RequestInit & { method?: string } = {},
+  init: { method?: string; body?: string; prefer?: string } = {},
 ): Promise<unknown> {
   const key = financeKey();
-  const headers = new Headers(init.headers);
-  headers.set("apikey", key);
-  headers.set("Authorization", `Bearer ${key}`);
-  if (init.body) headers.set("Content-Type", "application/json");
-  if (!headers.has("Prefer")) headers.set("Prefer", "return=representation");
+  let response: Response;
 
-  const response = await fetch(`${financeUrl()}/rest/v1/${path}`, {
-    ...init,
-    headers,
-  });
+  if (key) {
+    const headers = new Headers();
+    headers.set("apikey", key);
+    headers.set("Authorization", `Bearer ${key}`);
+    if (init.body) headers.set("Content-Type", "application/json");
+    headers.set("Prefer", init.prefer ?? "return=representation");
+    response = await fetch(`${financeUrl()}/rest/v1/${path}`, {
+      method: init.method ?? "GET",
+      headers,
+      body: init.body,
+    });
+  } else {
+    const relay = relayConfig();
+    if (!relay) {
+      throw new Error(
+        "Финансовое подключение не настроено: нет ни ключа финансовой базы, ни адреса реле.",
+      );
+    }
+    response = await fetch(relay.url, {
+      method: "POST",
+      headers: { "X-Relay-Secret": relay.secret, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path,
+        method: init.method ?? "GET",
+        body: init.body ? JSON.parse(init.body) : undefined,
+        prefer: init.prefer ?? "return=representation",
+      }),
+    });
+  }
 
   const text = await response.text();
   if (!response.ok) {
