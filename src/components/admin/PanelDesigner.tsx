@@ -238,6 +238,14 @@ export function PanelDesigner() {
     setImage("");
     try {
       const res = await run({ data: input });
+      if (!res || typeof res !== "object") {
+        shouldRevealResultRef.current = false;
+        const msg = "Сервис AI не ответил. Попробуйте ещё раз.";
+        setAiError(msg);
+        toast.error(msg);
+        setBusy(false);
+        return;
+      }
       if (!res.ok) {
         shouldRevealResultRef.current = false;
         setAiError(res.message);
