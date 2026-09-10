@@ -269,6 +269,13 @@ export function PanelDesigner() {
       const res = await renderImg({
         data: { prompt: design.image_prompt || design.summary?.enclosure || "" },
       });
+      if (!res || typeof res !== "object") {
+        const msg = "Сервис AI не ответил. Попробуйте ещё раз.";
+        setAiError(msg);
+        toast.error(msg);
+        setImgBusy(false);
+        return;
+      }
       if (!res.ok) {
         setAiError(res.message);
         toast.error(res.message);
