@@ -1,9 +1,44 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { requirePanelAuth } from "@/lib/panel-auth.middleware";
 
+const FINANCE_RELAY_URL = "https://electric-9117335567.lovable.app/api/public/finance-relay";
+
 async function rest(path: string, init: { method?: string; body?: string; prefer?: string } = {}): Promise<any> {
-  const { financeRest } = await import("@/lib/finance-db.server");
-  return financeRest(path, init);
+  const authorization = getRequest()?.headers.get("authorization") ?? "";
+  if (!authorization) throw new Error("Не удалось получить авторизацию администратора");
+
+  const response = await fetch(FINANCE_RELAY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authorization,
+    },
+    body: JSON.stringify({
+      path,
+      method: init.method ?? "GET",
+      body: init.body ? JSON.parse(init.body) : undefined,
+      prefer: init.prefer ?? "return=representation",
+    }),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    let message = text.slice(0, 300);
+    try {
+      const parsed = JSON.parse(text) as { error?: unknown };
+      if (typeof parsed.error === "string") message = parsed.error;
+    } catch {
+      // Keep the upstream response text for diagnostics.
+    }
+    if (response.status === 401) throw new Error("Ошибка авторизации финансового сервера");
+    if (response.status === 403) throw new Error("Недостаточно прав для финансовых данных");
+    if (response.status === 404) throw new Error("Финансовый endpoint не найден");
+    if (response.status >= 500) throw new Error(`Финансовый сервер недоступен: ${message}`);
+    throw new Error(`Финансовая база: ${response.status} ${message}`);
+  }
+
+  return text ? JSON.parse(text) : null;
 }
 
 export type FinanceOperation = {
