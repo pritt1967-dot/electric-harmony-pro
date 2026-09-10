@@ -14,6 +14,22 @@ import { createClient } from "@supabase/supabase-js";
 const FINANCE_PROJECT_REF = "nppincxonqwajdoxqbla";
 const ALLOWED = /^(operations|participants|categories|projects|project_participants)(\?|$)/;
 
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("origin") ?? "";
+  const allowed = origin === "https://sm-electric.ru" || origin === "https://www.sm-electric.ru" || origin === "http://localhost:8080" || /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(origin);
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : "https://sm-electric.ru",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+function json(request: Request, value: unknown, status: number) {
+  return Response.json(value, { status, headers: corsHeaders(request) });
+}
+
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -34,6 +50,7 @@ function authenticatedFetch(apiKey: string, accessToken: string): typeof fetch {
 export const Route = createFileRoute("/api/public/finance-relay")({
   server: {
     handlers: {
+      OPTIONS: async ({ request }) => new Response(null, { status: 204, headers: corsHeaders(request) }),
       POST: async ({ request }) => {
         const relaySecret = process.env["AI_RELAY_SECRET"];
         const provided = request.headers.get("x-relay-secret") ?? "";
@@ -44,7 +61,7 @@ export const Route = createFileRoute("/api/public/finance-relay")({
           const siteUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
           const siteKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_ANON_KEY"];
           if (!accessToken || !siteUrl || !siteKey) {
-            return Response.json({ error: "Unauthorized" }, { status: 401 });
+            return json(request, { error: "Unauthorized" }, 401);
           }
           const site = createClient(siteUrl, siteKey, {
             global: { fetch: authenticatedFetch(siteKey, accessToken) },
@@ -52,11 +69,11 @@ export const Route = createFileRoute("/api/public/finance-relay")({
           });
           const { data: userData, error: userError } = await site.auth.getUser(accessToken);
           if (userError || !userData.user) {
-            return Response.json({ error: "Unauthorized" }, { status: 401 });
+            return json(request, { error: "Unauthorized" }, 401);
           }
           const { data: isAdmin, error: roleError } = await site.rpc("has_role", { _user_id: userData.user.id, _role: "admin" });
           if (roleError || !isAdmin) {
-            return Response.json({ error: "Forbidden" }, { status: 403 });
+            return json(request, { error: "Forbidden" }, 403);
           }
         }
 
@@ -64,23 +81,23 @@ export const Route = createFileRoute("/api/public/finance-relay")({
           process.env["FINANCE_SUPABASE_SERVICE_ROLE_KEY"] ??
           process.env["FINANCE_SUPABASE_PUBLISHABLE_KEY"];
         if (!key) {
-          return Response.json({ error: "Нет ключа финансовой базы" }, { status: 503 });
+          return json(request, { error: "Нет ключа финансовой базы" }, 503);
         }
 
         let body: { path?: unknown; method?: unknown; body?: unknown; prefer?: unknown };
         try {
           body = (await request.json()) as typeof body;
         } catch {
-          return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+          return json(request, { error: "Invalid JSON body" }, 400);
         }
 
         const path = typeof body.path === "string" ? body.path : "";
         if (!ALLOWED.test(path)) {
-          return Response.json({ error: "Unsupported path" }, { status: 400 });
+          return json(request, { error: "Unsupported path" }, 400);
         }
         const method = typeof body.method === "string" ? body.method : "GET";
         if (!["GET", "POST", "DELETE", "PATCH"].includes(method)) {
-          return Response.json({ error: "Unsupported method" }, { status: 400 });
+          return json(request, { error: "Unsupported method" }, 400);
         }
 
         const base = (
@@ -105,7 +122,7 @@ export const Route = createFileRoute("/api/public/finance-relay")({
 
         return new Response(await upstream.text(), {
           status: upstream.status,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...corsHeaders(request) },
         });
       },
     },

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown, FileText, Loader2, PieChart as PieChartIcon, Plus, Search, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -12,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createFinanceOperation, createFinanceParticipant, deleteFinanceOperation, loadFinanceData } from "@/lib/finance.functions";
+import { createFinanceOperationClient, createFinanceParticipantClient, deleteFinanceOperationClient, loadFinanceDataClient } from "@/lib/finance-client";
 
 const PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
 const money = (v: number) => `${new Intl.NumberFormat("ru-RU").format(Math.round(v))} ₽`;
@@ -78,15 +77,10 @@ export function MoneyManagerParticipants() {
   const [form, setForm] = useState({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" });
   const [pdfBusy, setPdfBusy] = useState(false);
 
-  const fetchFinance = useServerFn(loadFinanceData);
-  const addOperationFn = useServerFn(createFinanceOperation);
-  const removeOperationFn = useServerFn(deleteFinanceOperation);
-  const addParticipantFn = useServerFn(createFinanceParticipant);
-
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", PROJECT_ID],
     queryFn: async () => {
-      const result = await fetchFinance({ data: { projectId: PROJECT_ID } });
+      const result = await loadFinanceDataClient(PROJECT_ID);
       if (!result || result.error) throw new Error(result?.error || "Финансовый сервер не ответил");
       const categories = Array.isArray(result.categories) ? result.categories as Category[] : [];
       const categoryMap = new Map(categories.map(c => [c.id, c]));
@@ -175,20 +169,20 @@ export function MoneyManagerParticipants() {
       const from = participants.find(p => p.id === form.fromId);
       const to = participants.find(p => p.id === form.toId);
       if (!from || !to) throw new Error("Участник не найден");
-      await addOperationFn({ data: { projectId: PROJECT_ID, operation_date: form.operation_date, operation_type: "transfer", from_name: from.name, to_name: to.name, from_participant_id: from.id, to_participant_id: to.id, amount, category_id: null, comment: form.comment || null } });
+      await createFinanceOperationClient({ projectId: PROJECT_ID, operation_date: form.operation_date, operation_type: "transfer", from_name: from.name, to_name: to.name, from_participant_id: from.id, to_participant_id: to.id, amount, category_id: null, comment: form.comment || null });
     },
     onSuccess: () => { toast.success("Перевод между участниками добавлен"); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); setShowTransfer(false); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const addParticipant = useMutation({
-    mutationFn: async () => { const name = newParticipant.trim(); if (!name) throw new Error("Введите имя участника"); if (participants.some(p => p.name.toLowerCase() === name.toLowerCase())) throw new Error("Такой участник уже есть"); await addParticipantFn({ data: { projectId: PROJECT_ID, name } }); },
+    mutationFn: async () => { const name = newParticipant.trim(); if (!name) throw new Error("Введите имя участника"); if (participants.some(p => p.name.toLowerCase() === name.toLowerCase())) throw new Error("Такой участник уже есть"); await createFinanceParticipantClient(PROJECT_ID, name); },
     onSuccess: () => { setNewParticipant(""); toast.success("Участник добавлен"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteOperation = useMutation({
-    mutationFn: async (id: string) => { await removeOperationFn({ data: { id } }); },
+    mutationFn: async (id: string) => { await deleteFinanceOperationClient(id); },
     onSuccess: () => { toast.success("Операция удалена"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
     onError: (e: Error) => toast.error(e.message),
   });
