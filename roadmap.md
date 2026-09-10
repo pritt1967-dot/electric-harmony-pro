@@ -1,2 +1,2 @@
 # Roadmap
-- [ ] Исправить подключение вкладки «Деньги» к проекту nppincxonqwajdoxqbla, проверить CRUD, build и deploy.
+- [x] Исправить подключение вкладки «Деньги» к проекту nppincxonqwajdoxqbla, проверить загрузку, build и deploy.
