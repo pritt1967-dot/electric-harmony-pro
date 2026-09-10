@@ -1,19 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown, FileText, Loader2, PieChart as PieChartIcon, Plus, Search, Trash2, TrendingUp, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown, FileText, FolderPlus, Loader2, PieChart as PieChartIcon, Plus, Search, Trash2, TrendingUp, UserPlus, Users, Wallet } from "lucide-react";
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createFinanceOperationClient, createFinanceParticipantClient, deleteFinanceOperationClient, loadFinanceDataClient } from "@/lib/finance-client";
+import {
+  attachParticipantClient,
+  createFinanceOperationClient,
+  createFinanceParticipantClient,
+  createFinanceProjectClient,
+  deleteFinanceOperationClient,
+  detachParticipantClient,
+  listAllParticipantsClient,
+  listFinanceProjectsClient,
+  loadFinanceDataClient,
+  type FinanceProjectRow,
+} from "@/lib/finance-client";
 
-const PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
+const MAIN_PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
 const money = (v: number) => `${new Intl.NumberFormat("ru-RU").format(Math.round(v))} ₽`;
 const todayMoscow = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Moscow", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const formatDate = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString("ru-RU");
@@ -72,15 +84,25 @@ function ParticipantPicker({ label, value, participants, onChange, excludeId }: 
 export function MoneyManagerParticipants() {
   const qc = useQueryClient();
   const formRef = useRef<HTMLDivElement | null>(null);
+  const [projectId, setProjectId] = useState(MAIN_PROJECT_ID);
   const [showTransfer, setShowTransfer] = useState(false);
-  const [newParticipant, setNewParticipant] = useState("");
   const [form, setForm] = useState({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" });
   const [pdfBusy, setPdfBusy] = useState(false);
 
+  const [projectDialog, setProjectDialog] = useState(false);
+  const [projectForm, setProjectForm] = useState({ projectName: "", customerName: "", objectName: "" });
+  const [participantDialog, setParticipantDialog] = useState(false);
+  const [existingId, setExistingId] = useState("");
+  const [newParticipant, setNewParticipant] = useState("");
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string; operations: number } | null>(null);
+
+  const projectsQuery = useQuery({ queryKey: ["finance-projects"], queryFn: listFinanceProjectsClient });
+  const allParticipantsQuery = useQuery({ queryKey: ["finance-all-participants"], queryFn: listAllParticipantsClient, enabled: participantDialog });
+
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["money-manager", PROJECT_ID],
+    queryKey: ["money-manager", projectId],
     queryFn: async () => {
-      const result = await loadFinanceDataClient(PROJECT_ID);
+      const result = await loadFinanceDataClient(projectId);
       if (!result || result.error) throw new Error(result?.error || "Финансовый сервер не ответил");
       const categories = Array.isArray(result.categories) ? result.categories as Category[] : [];
       const categoryMap = new Map(categories.map(c => [c.id, c]));
@@ -89,20 +111,22 @@ export function MoneyManagerParticipants() {
         operations,
         participants: Array.isArray(result.participants) ? result.participants as Participant[] : [],
         categories,
-        project: result.project ?? { customer_name: "ООО «Си Проект»", project_name: "Основной проект", status: "active" },
+        project: result.project ?? { customer_name: "", project_name: "Проект", status: "active" },
       };
     },
   });
 
+  const projects: FinanceProjectRow[] = projectsQuery.data ?? [];
   const participants = data?.participants ?? [];
   const operations = data?.operations ?? [];
-  const categories = data?.categories ?? [];
-  const project = data?.project ?? { customer_name: "ООО «Си Проект»", project_name: "Основной проект", status: "active" };
+  const project = data?.project ?? { customer_name: "", project_name: "Проект", status: "active" };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["money-manager", projectId] }); qc.invalidateQueries({ queryKey: ["finance-all-participants"] }); };
 
   const stats = useMemo(() => {
     const income = operations.filter(o => o.operation_type === "income").reduce((s, o) => s + Number(o.amount), 0);
     const projectExpenses = operations.filter(o => o.operation_type === "expense" && o.category?.affects_project_balance !== false);
     const expenses = projectExpenses.reduce((s, o) => s + Number(o.amount), 0);
+    const transfers = operations.filter(o => o.operation_type === "transfer");
 
     const byCategoryMap = new Map<string, number>();
     for (const o of projectExpenses) {
@@ -128,23 +152,25 @@ export function MoneyManagerParticipants() {
     });
     const balanceSum = balances.reduce((s, b) => s + b.balance, 0);
 
-    return { income, expenses, remaining: income - expenses, byCategory, timeline, balances, balanceSum };
+    return { income, expenses, remaining: income - expenses, byCategory, timeline, balances, balanceSum, transfers };
   }, [operations, participants]);
 
   useEffect(() => { if (showTransfer) requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [showTransfer]);
+  useEffect(() => { setShowTransfer(false); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); }, [projectId]);
 
   const downloadPdf = async () => {
     setPdfBusy(true);
     try {
       const { buildFinancePdf } = await import("@/lib/finance-pdf");
       const doc = await buildFinancePdf({
-        customer: project.customer_name || "ООО «Си Проект»",
-        projectName: project.project_name || "Основной проект",
+        customer: project.customer_name || "—",
+        projectName: project.project_name || "Проект",
         income: stats.income,
         expenses: stats.expenses,
         remaining: stats.remaining,
         byCategory: stats.byCategory,
         balances: stats.balances.map(b => ({ name: b.name, received: b.received, spent: b.sent, balance: b.balance })),
+        transfers: stats.transfers.map(o => ({ operation_date: o.operation_date, from_name: o.from_name, to_name: o.to_name, amount: Number(o.amount), comment: o.comment })),
         operations: operations.map(o => ({
           operation_date: o.operation_date,
           operation_type: o.operation_type,
@@ -160,6 +186,40 @@ export function MoneyManagerParticipants() {
     finally { setPdfBusy(false); }
   };
 
+  const createProject = useMutation({
+    mutationFn: async () => {
+      const object = projectForm.objectName.trim();
+      const name = projectForm.projectName.trim() + (object ? ` — ${object}` : "");
+      return createFinanceProjectClient({ projectName: name, customerName: projectForm.customerName });
+    },
+    onSuccess: (created) => {
+      toast.success("Проект создан");
+      setProjectDialog(false);
+      setProjectForm({ projectName: "", customerName: "", objectName: "" });
+      qc.invalidateQueries({ queryKey: ["finance-projects"] });
+      setProjectId(created.id);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addExistingParticipant = useMutation({
+    mutationFn: async () => { if (!existingId) throw new Error("Выберите участника"); await attachParticipantClient(projectId, existingId); },
+    onSuccess: () => { toast.success("Участник добавлен в проект"); setExistingId(""); setParticipantDialog(false); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addNewParticipant = useMutation({
+    mutationFn: async () => { const name = newParticipant.trim(); if (!name) throw new Error("Введите имя участника"); await createFinanceParticipantClient(projectId, name); },
+    onSuccess: () => { toast.success("Новый участник создан и добавлен"); setNewParticipant(""); setParticipantDialog(false); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeParticipant = useMutation({
+    mutationFn: async (id: string) => { await detachParticipantClient(projectId, id); },
+    onSuccess: () => { toast.success("Участник исключён из проекта"); setRemoveTarget(null); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const addTransfer = useMutation({
     mutationFn: async () => {
       const amount = Number(form.amount.replace(/\s/g, "").replace(",", "."));
@@ -169,29 +229,77 @@ export function MoneyManagerParticipants() {
       const from = participants.find(p => p.id === form.fromId);
       const to = participants.find(p => p.id === form.toId);
       if (!from || !to) throw new Error("Участник не найден");
-      await createFinanceOperationClient({ projectId: PROJECT_ID, operation_date: form.operation_date, operation_type: "transfer", from_name: from.name, to_name: to.name, from_participant_id: from.id, to_participant_id: to.id, amount, category_id: null, comment: form.comment || null });
+      await createFinanceOperationClient({ projectId, operation_date: form.operation_date, operation_type: "transfer", from_name: from.name, to_name: to.name, from_participant_id: from.id, to_participant_id: to.id, amount, category_id: null, comment: form.comment || null });
     },
-    onSuccess: () => { toast.success("Перевод между участниками добавлен"); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); setShowTransfer(false); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const addParticipant = useMutation({
-    mutationFn: async () => { const name = newParticipant.trim(); if (!name) throw new Error("Введите имя участника"); if (participants.some(p => p.name.toLowerCase() === name.toLowerCase())) throw new Error("Такой участник уже есть"); await createFinanceParticipantClient(PROJECT_ID, name); },
-    onSuccess: () => { setNewParticipant(""); toast.success("Участник добавлен"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
+    onSuccess: () => { toast.success("Перевод между участниками добавлен"); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); setShowTransfer(false); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteOperation = useMutation({
     mutationFn: async (id: string) => { await deleteFinanceOperationClient(id); },
-    onSuccess: () => { toast.success("Операция удалена"); qc.invalidateQueries({ queryKey: ["money-manager", PROJECT_ID] }); },
+    onSuccess: () => { toast.success("Операция удалена"); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading) return <div className="flex items-center gap-2 py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Загрузка движения денег…</div>;
-  if (isError) return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm"><div className="font-medium">Не удалось загрузить финансовые данные.</div><div className="mt-1 text-muted-foreground">{error instanceof Error ? error.message : "Проверьте подключение"}</div></div>;
+  const projectSwitcher = (
+    <div className="rounded-2xl border bg-card p-4 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Wallet className="size-5" />
+          <h2 className="text-lg font-bold">Деньги</h2>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Проект:</span>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger className="min-w-52"><SelectValue placeholder="Выберите проект" /></SelectTrigger>
+              <SelectContent>
+                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.project_name || "Без названия"}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" onClick={() => setProjectDialog(true)}><FolderPlus className="mr-2 size-4" /> Новый проект</Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const projectDialogNode = (
+    <Dialog open={projectDialog} onOpenChange={setProjectDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Новый проект</DialogTitle>
+          <DialogDescription>Создаётся отдельный финансовый проект. Существующие проекты и их операции не меняются.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div><Label>Название проекта *</Label><Input className="mt-1.5" maxLength={120} value={projectForm.projectName} onChange={e => setProjectForm(f => ({ ...f, projectName: e.target.value }))} /></div>
+          <div><Label>Заказчик</Label><Input className="mt-1.5" maxLength={160} value={projectForm.customerName} onChange={e => setProjectForm(f => ({ ...f, customerName: e.target.value }))} /></div>
+          <div>
+            <Label>Объект / адрес</Label>
+            <Input className="mt-1.5" maxLength={200} value={projectForm.objectName} onChange={e => setProjectForm(f => ({ ...f, objectName: e.target.value }))} placeholder="Добавится к названию проекта" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setProjectDialog(false)}>Отмена</Button>
+          <Button
+            onClick={() => createProject.mutate()}
+            disabled={createProject.isPending || !projectForm.projectName.trim()}
+          >{createProject.isPending ? "Создание…" : "Создать проект"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (isLoading) return <div className="space-y-5">{projectSwitcher}{projectDialogNode}<div className="flex items-center gap-2 py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /> Загрузка движения денег…</div></div>;
+  if (isError) return <div className="space-y-5">{projectSwitcher}{projectDialogNode}<div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm"><div className="font-medium">Не удалось загрузить финансовые данные.</div><div className="mt-1 text-muted-foreground">{error instanceof Error ? error.message : "Проверьте подключение"}</div></div></div>;
+
+  const freeParticipants = (allParticipantsQuery.data ?? []).filter(p => !participants.some(x => x.id === p.id));
 
   return (
     <div className="space-y-5">
+      {projectSwitcher}
+      {projectDialogNode}
+
       {/* Финансовый отчёт */}
       <div className="rounded-2xl border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -200,7 +308,7 @@ export function MoneyManagerParticipants() {
               <Wallet className="size-5" />
               <h2 className="text-lg font-bold">Финансовый отчёт</h2>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">{project.customer_name} · {project.project_name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{project.customer_name || "Заказчик не указан"} · {project.project_name}</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="outline" onClick={downloadPdf} disabled={pdfBusy}>
@@ -260,20 +368,27 @@ export function MoneyManagerParticipants() {
         <div className="mt-4 flex justify-end gap-2"><Button variant="outline" onClick={() => setShowTransfer(false)}>Отмена</Button><Button onClick={() => addTransfer.mutate()} disabled={addTransfer.isPending}>{addTransfer.isPending ? "Сохранение…" : "Сохранить перевод"}</Button></div>
       </div>}
 
-      {/* Баланс участников */}
+      {/* Участники проекта */}
       <div className="rounded-2xl border bg-card p-4 sm:p-5">
-        <div className="flex items-center gap-2"><Users className="size-5" /><h3 className="font-bold">Баланс участников</h3></div>
-        <div className="mt-4 grid gap-2">
-          {stats.balances.map(p => <div key={p.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl border p-3 sm:grid-cols-[1fr_auto_auto_auto]">
-            <div className="font-medium">{p.name}</div><div className="text-sm text-muted-foreground">получил {money(p.received)}</div><div className="text-sm text-muted-foreground">передал {money(p.sent)}</div><div className={`font-bold ${p.balance > 0 ? "text-emerald-600" : p.balance < 0 ? "text-destructive" : ""}`}>{p.balance > 0 ? "+" : ""}{money(p.balance)}</div>
-          </div>)}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2"><Users className="size-5" /><h3 className="font-bold">Участники проекта</h3></div>
+          <Button variant="outline" onClick={() => setParticipantDialog(true)}><UserPlus className="mr-2 size-4" /> Добавить участника</Button>
         </div>
-      </div>
-
-      {/* Участники */}
-      <div className="rounded-2xl border bg-card p-4 sm:p-5">
-        <h3 className="font-bold">Участники</h3>
-        <div className="mt-3 flex gap-2"><Input placeholder="Имя нового участника" value={newParticipant} onChange={e => setNewParticipant(e.target.value)} /><Button onClick={() => addParticipant.mutate()} disabled={addParticipant.isPending}><Plus className="mr-2 size-4" />Добавить</Button></div>
+        <div className="mt-4 grid gap-2">
+          {stats.balances.map(p => <div key={p.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="font-medium">{p.name}</div>
+              <div className="text-xs text-muted-foreground">получил {money(p.received)} · передал {money(p.sent)}</div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`font-bold ${p.balance > 0 ? "text-emerald-600" : p.balance < 0 ? "text-destructive" : ""}`}>{p.balance > 0 ? "+" : ""}{money(p.balance)}</span>
+              <Button variant="ghost" size="sm" onClick={() => setRemoveTarget({ id: p.id, name: p.name, operations: operations.filter(o => o.from_participant_id === p.id || o.to_participant_id === p.id || o.from_name === p.name || o.to_name === p.name).length })}>
+                <Trash2 className="mr-1.5 size-4" /> Удалить
+              </Button>
+            </div>
+          </div>)}
+          {stats.balances.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">В проекте пока нет участников</div>}
+        </div>
       </div>
 
       {/* История */}
@@ -282,14 +397,64 @@ export function MoneyManagerParticipants() {
         <div className="mt-3 space-y-2">
           {operations.map(o => <div key={o.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="font-medium">{o.operation_type === "transfer" ? `${o.from_name ?? "—"} → ${o.to_name ?? "—"}` : `${o.from_name ?? "—"} → ${o.to_name ?? "—"}`}</div>
-              <div className="text-xs text-muted-foreground">{formatDate(o.operation_date)}{o.comment ? ` · ${o.comment}` : ""}{o.category ? ` · ${o.category.name}` : ""}</div>
+              <div className="font-medium">{o.from_name ?? "—"} → {o.to_name ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">{formatDate(o.operation_date)}{o.operation_type === "transfer" ? " · внутренний перевод" : ""}{o.comment ? ` · ${o.comment}` : ""}{o.category ? ` · ${o.category.name}` : ""}</div>
             </div>
             <div className="flex items-center gap-3"><span className="font-bold">{money(Number(o.amount))}</span><Button variant="ghost" size="icon" onClick={() => deleteOperation.mutate(o.id)} disabled={deleteOperation.isPending}><Trash2 className="size-4" /></Button></div>
           </div>)}
           {operations.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">Операций пока нет</div>}
         </div>
       </div>
+
+      {/* Добавление участника */}
+      <Dialog open={participantDialog} onOpenChange={setParticipantDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Добавить участника</DialogTitle>
+            <DialogDescription>Участник будет добавлен только в проект «{project.project_name}».</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div>
+              <Label>Существующий участник</Label>
+              <div className="mt-1.5 flex gap-2">
+                <Select value={existingId} onValueChange={setExistingId}>
+                  <SelectTrigger><SelectValue placeholder={allParticipantsQuery.isLoading ? "Загрузка…" : "Выберите участника"} /></SelectTrigger>
+                  <SelectContent>
+                    {freeParticipants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => addExistingParticipant.mutate()} disabled={addExistingParticipant.isPending || !existingId}>Добавить</Button>
+              </div>
+              {!allParticipantsQuery.isLoading && freeParticipants.length === 0 && <p className="mt-1.5 text-xs text-muted-foreground">Все участники базы уже в проекте.</p>}
+            </div>
+            <div>
+              <Label>Новый участник</Label>
+              <div className="mt-1.5 flex gap-2">
+                <Input maxLength={80} placeholder="Имя участника" value={newParticipant} onChange={e => setNewParticipant(e.target.value)} />
+                <Button variant="outline" onClick={() => addNewParticipant.mutate()} disabled={addNewParticipant.isPending || !newParticipant.trim()}><Plus className="mr-1.5 size-4" />Создать</Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Удаление участника из проекта */}
+      <Dialog open={Boolean(removeTarget)} onOpenChange={open => !open && setRemoveTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Удалить участника из проекта</DialogTitle>
+            <DialogDescription>
+              {removeTarget?.operations
+                ? "У участника есть финансовая история в этом проекте. Участник будет исключён из проекта, но его операции и история сохранятся."
+                : `Участник «${removeTarget?.name ?? ""}» будет исключён только из этого проекта.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoveTarget(null)}>Отмена</Button>
+            <Button variant="destructive" onClick={() => removeTarget && removeParticipant.mutate(removeTarget.id)} disabled={removeParticipant.isPending}>Удалить из проекта</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
