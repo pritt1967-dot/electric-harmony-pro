@@ -36,6 +36,40 @@ async function rest(path: string, init: { method?: string; body?: unknown; prefe
   return text ? JSON.parse(text) : null;
 }
 
+export type FinanceProjectRow = { id: string; project_name: string | null; customer_name: string | null; status: string | null };
+
+/** Все финансовые проекты для переключателя вверху раздела «Деньги». */
+export async function listFinanceProjectsClient(): Promise<FinanceProjectRow[]> {
+  const rows = await rest("projects?select=id,project_name,customer_name,status&order=created_at.asc");
+  return (rows ?? []) as FinanceProjectRow[];
+}
+
+/** Создаёт новый финансовый проект в существующей таблице projects. */
+export async function createFinanceProjectClient(input: { projectName: string; customerName: string }): Promise<FinanceProjectRow> {
+  const projectName = input.projectName.trim();
+  if (!projectName) throw new Error("Введите название проекта");
+  const rows = await rest("projects", { method: "POST", body: { project_name: projectName, customer_name: input.customerName.trim(), status: "active" } }) as FinanceProjectRow[];
+  const project = rows?.[0];
+  if (!project) throw new Error("Не удалось создать проект");
+  return project;
+}
+
+/** Все участники базы — для добавления существующего участника в проект. */
+export async function listAllParticipantsClient(): Promise<FinanceParticipant[]> {
+  const rows = await rest("participants?select=id,name&order=name.asc");
+  return (rows ?? []) as FinanceParticipant[];
+}
+
+/** Привязывает существующего участника к выбранному проекту. */
+export async function attachParticipantClient(projectId: string, participantId: string) {
+  await rest("project_participants", { method: "POST", body: { project_id: projectId, participant_id: participantId } });
+}
+
+/** Убирает участника только из текущего проекта; сам участник и его операции сохраняются. */
+export async function detachParticipantClient(projectId: string, participantId: string) {
+  await rest(`project_participants?project_id=eq.${encodeURIComponent(projectId)}&participant_id=eq.${encodeURIComponent(participantId)}`, { method: "DELETE" });
+}
+
 export async function loadFinanceDataClient(projectId: string): Promise<FinancePayload> {
   const pid = encodeURIComponent(projectId);
   const [operations, participants, categories, projects, links] = await Promise.all([
@@ -52,7 +86,7 @@ export async function loadFinanceDataClient(projectId: string): Promise<FinanceP
     error: null,
     source: "relay",
     operations: (operations ?? []) as FinanceOperation[],
-    participants: ids.size ? all.filter(row => ids.has(row.id)) : all,
+    participants: all.filter(row => ids.has(row.id)),
     categories: (categories ?? []) as FinanceCategory[],
     project: ((projects ?? []) as FinanceProject[])[0] ?? null,
   };

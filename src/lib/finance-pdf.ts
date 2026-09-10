@@ -22,6 +22,7 @@ export type FinanceReportData = {
   remaining: number;
   byCategory: { name: string; amount: number }[];
   balances: { name: string; received: number; spent: number; balance: number }[];
+  transfers?: { operation_date: string; from_name: string | null; to_name: string | null; amount: number; comment: string | null }[];
   operations: FinanceReportOperation[];
 };
 
@@ -141,6 +142,34 @@ export async function buildFinancePdf(data: FinanceReportData): Promise<jsPDF> {
       margin: { left: M, right: M },
     });
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+  }
+
+  if (data.transfers?.length) {
+    doc.setFont("DejaVu", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(17, 17, 17);
+    doc.text("Внутренние переводы между участниками", M, y);
+    autoTable(doc, {
+      startY: y + 3,
+      head: [["Дата", "От кого", "Кому", "Комментарий", "Сумма"]],
+      body: data.transfers.map((t) => [
+        formatDate(t.operation_date),
+        t.from_name || "—",
+        t.to_name || "—",
+        t.comment || "",
+        money(Number(t.amount)),
+      ]),
+      styles: { font: "DejaVu", fontSize: 9, cellPadding: 2, overflow: "linebreak" },
+      headStyles: { font: "DejaVu", fontStyle: "bold", fillColor: [29, 78, 216] },
+      columnStyles: { 0: { cellWidth: 22 }, 4: { halign: "right", cellWidth: 30 } },
+      margin: { left: M, right: M },
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
+    doc.setFont("DejaVu", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(90, 98, 112);
+    doc.text("Внутренние переводы не влияют на доходы, расходы и остаток проекта.", M, y);
+    y += 8;
   }
 
   doc.setFont("DejaVu", "bold");
