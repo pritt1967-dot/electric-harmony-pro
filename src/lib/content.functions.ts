@@ -35,6 +35,8 @@ export type ProjectRow = {
   title: string;
   description: string;
   location: string;
+  category: string;
+  customer_name: string;
   work_date: string | null;
   cover_image: string;
   sort_order: number;
@@ -96,7 +98,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       supabase
         .from("projects")
         .select(
-          "id, slug, title, description, location, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)",
+          "id, slug, title, description, location, category, customer_name, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)",
         )
         .eq("is_published", true)
         .order("sort_order", { ascending: true }),
@@ -123,6 +125,8 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(
       title: p.title,
       description: p.description,
       location: p.location,
+      category: p.category,
+      customer_name: p.customer_name,
       work_date: p.work_date,
       cover_image: p.cover_image,
       sort_order: p.sort_order,

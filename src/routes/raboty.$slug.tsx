@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, CalendarDays, MapPin, Phone } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, MapPin, Phone } from "lucide-react";
 
 import { Header, MobileCtaBar } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -120,12 +120,18 @@ function WorkPage() {
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="size-4 text-brand" />
                   {new Date(project.work_date).toLocaleDateString("ru-RU", {
-                    month: "long",
+                    day: "2-digit",
+                    month: "2-digit",
                     year: "numeric",
                   })}
                 </span>
               )}
               {project.category && <span>{project.category}</span>}
+              {project.customer_name && (
+                <span className="flex items-center gap-1.5">
+                  <Building2 className="size-4 text-brand" /> Заказчик: {project.customer_name}
+                </span>
+              )}
             </div>
             {project.description && (
               <p className="mt-5 max-w-3xl text-base text-muted-foreground">
@@ -171,11 +177,27 @@ function WorkPage() {
                 </ul>
               </div>
             )}
+            {project.lights_text && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <h2 className="text-lg font-bold text-foreground">Светильники</h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {project.lights_text}
+                </p>
+              </div>
+            )}
             {project.result_text && (
               <div className="rounded-xl border border-border bg-card p-6">
                 <h2 className="text-lg font-bold text-foreground">Результат</h2>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {project.result_text}
+                </p>
+              </div>
+            )}
+            {project.warranty_text && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <h2 className="text-lg font-bold text-foreground">Гарантия</h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {project.warranty_text}
                 </p>
               </div>
             )}
@@ -192,14 +214,14 @@ function WorkPage() {
           <section className="border-y border-border bg-secondary/40 py-10 lg:py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
               <h2 className="text-2xl font-extrabold text-foreground">Фотографии объекта</h2>
-              <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className={`mt-7 grid grid-cols-1 gap-5 ${project.images.length > 1 ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
                 {project.images.map((img, i) => {
                   const ba = detectBeforeAfter(img.caption, img.alt);
                   const captionText = ba
                     ? beforeAfterLabel(ba)
                     : img.caption || img.alt || "";
                   return (
-                  <figure key={img.id} className="overflow-hidden rounded-xl border border-border bg-background">
+                  <figure key={img.id} className={`overflow-hidden rounded-xl border border-border bg-background ${project.images.length === 1 ? "mx-auto w-full max-w-5xl" : ""}`}>
                     <button
                       type="button"
                       onClick={() => setLightbox(i)}
@@ -214,7 +236,7 @@ function WorkPage() {
                           `${project.title} — фото выполненных работ${place ? `, ${place}` : ""}`
                         }
                         loading="lazy"
-                        className="h-56 w-full object-cover transition-transform hover:scale-[1.03]"
+                        className={project.images.length === 1 ? "max-h-[75vh] w-full object-contain transition-transform hover:scale-[1.01]" : "h-56 w-full object-cover transition-transform hover:scale-[1.03]"}
                       />
                       {ba && (
                         <span
