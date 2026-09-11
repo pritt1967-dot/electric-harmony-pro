@@ -472,10 +472,12 @@ export type Database = {
           cost_text: string
           cover_image: string
           created_at: string
+          customer_name: string
           description: string
           equipment: string
           id: string
           is_published: boolean
+          lights_text: string
           location: string
           result_text: string
           seo_description: string
@@ -486,6 +488,7 @@ export type Database = {
           task: string
           title: string
           updated_at: string
+          warranty_text: string
           work_date: string | null
           works_done: string
         }
@@ -495,10 +498,12 @@ export type Database = {
           cost_text?: string
           cover_image?: string
           created_at?: string
+          customer_name?: string
           description?: string
           equipment?: string
           id?: string
           is_published?: boolean
+          lights_text?: string
           location?: string
           result_text?: string
           seo_description?: string
@@ -509,6 +514,7 @@ export type Database = {
           task?: string
           title?: string
           updated_at?: string
+          warranty_text?: string
           work_date?: string | null
           works_done?: string
         }
@@ -518,10 +524,12 @@ export type Database = {
           cost_text?: string
           cover_image?: string
           created_at?: string
+          customer_name?: string
           description?: string
           equipment?: string
           id?: string
           is_published?: boolean
+          lights_text?: string
           location?: string
           result_text?: string
           seo_description?: string
@@ -532,6 +540,7 @@ export type Database = {
           task?: string
           title?: string
           updated_at?: string
+          warranty_text?: string
           work_date?: string | null
           works_done?: string
         }
