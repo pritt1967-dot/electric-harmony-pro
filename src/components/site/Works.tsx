@@ -139,6 +139,8 @@ function ProjectBlock({
   const cover = images[coverIdx];
   const rest = images.filter((_, i) => i !== coverIdx);
   const date = formatWorkDate(project.work_date);
+  const showFullCover =
+    project.slug === "elektromontazhnye-raboty-na-sekretnom-obekte";
 
   const featured = index === 0;
   const flipped = !featured && index % 2 === 0;
@@ -155,7 +157,9 @@ function ProjectBlock({
           src={cover.image_url}
           alt={cover.alt || `${project.title} — электромонтажные работы`}
           loading={featured ? "eager" : "lazy"}
-          className={`w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${
+          className={`w-full transition-transform duration-700 group-hover:scale-[1.03] ${
+            showFullCover ? "object-contain bg-muted" : "object-cover"
+          } ${
             featured ? "aspect-[4/3] sm:aspect-[21/9]" : "aspect-[4/3]"
           }`}
         />
