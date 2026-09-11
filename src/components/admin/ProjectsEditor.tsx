@@ -37,10 +37,13 @@ type Project = {
   title: string;
   city: string;
   category: string;
+  customer_name: string;
   task: string;
   works_done: string;
   equipment: string;
+  lights_text: string;
   result_text: string;
+  warranty_text: string;
   cost_text: string;
   service_slug: string;
   seo_title: string;
@@ -104,7 +107,7 @@ export function ProjectsEditor() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, slug, title, description, location, city, category, task, works_done, equipment, result_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
+          "id, slug, title, description, location, city, category, customer_name, task, works_done, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
         )
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -259,10 +262,13 @@ function ProjectCard({
     location: project.location,
     city: project.city ?? "",
     category: project.category ?? "",
+    customer_name: project.customer_name ?? "",
     task: project.task ?? "",
     works_done: project.works_done ?? "",
     equipment: project.equipment ?? "",
+    lights_text: project.lights_text ?? "",
     result_text: project.result_text ?? "",
+    warranty_text: project.warranty_text ?? "",
     cost_text: project.cost_text ?? "",
     service_slug: project.service_slug ?? "",
     seo_title: project.seo_title ?? "",
@@ -287,10 +293,13 @@ function ProjectCard({
         location: form.location,
         city: form.city,
         category: form.category,
+        customer_name: form.customer_name,
         task: form.task,
         works_done: form.works_done,
         equipment: form.equipment,
+        lights_text: form.lights_text,
         result_text: form.result_text,
+        warranty_text: form.warranty_text,
         cost_text: form.cost_text,
         service_slug: form.service_slug,
         seo_title: form.seo_title,
@@ -474,6 +483,14 @@ function ProjectCard({
           />
         </div>
         <div className="space-y-1.5">
+          <Label>Заказчик</Label>
+          <Input
+            value={form.customer_name}
+            placeholder="Название организации или имя"
+            onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label>Задача заказчика</Label>
           <Textarea
             rows={3}
@@ -498,11 +515,27 @@ function ProjectCard({
           />
         </div>
         <div className="space-y-1.5">
+          <Label>Светильники</Label>
+          <Textarea
+            rows={3}
+            value={form.lights_text}
+            onChange={(e) => setForm({ ...form, lights_text: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label>Результат</Label>
           <Textarea
             rows={3}
             value={form.result_text}
             onChange={(e) => setForm({ ...form, result_text: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Гарантия</Label>
+          <Textarea
+            rows={3}
+            value={form.warranty_text}
+            onChange={(e) => setForm({ ...form, warranty_text: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
