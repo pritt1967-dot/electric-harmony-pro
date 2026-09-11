@@ -93,7 +93,11 @@ function WorksIndex() {
                         src={w.cover_image}
                         alt={`${w.title} — фото объекта, ${w.city || w.location || "Санкт-Петербург"}`}
                         loading="lazy"
-                        className="h-52 w-full object-cover transition-transform group-hover:scale-[1.03]"
+                        className={`h-52 w-full transition-transform group-hover:scale-[1.03] ${
+                          w.slug === "elektromontazhnye-raboty-na-sekretnom-obekte"
+                            ? "object-contain bg-muted"
+                            : "object-cover"
+                        }`}
                       />
                     )}
                     <div className="p-5">
