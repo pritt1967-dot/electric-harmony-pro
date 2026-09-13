@@ -1,0 +1,35 @@
+name: Build static site artifact
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: Package static site
+        run: tar -czf sm-electric-site.tar.gz -C .output/public .
+      - name: Upload static artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sm-electric-site
+          path: sm-electric-site.tar.gz
+          retention-days: 7
