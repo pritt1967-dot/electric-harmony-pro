@@ -33,3 +33,4 @@ jobs:
           name: sm-electric-site
           path: sm-electric-site.tar.gz
           retention-days: 7
+      # REG.RU deployment uses the Node/Nitro output produced by vite.config.ts.
