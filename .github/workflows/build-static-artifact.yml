@@ -25,9 +25,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
-      - name: Package static site
-        run: tar -czf sm-electric-site.tar.gz -C .output/public .
-      - name: Upload static artifact
+      - name: Package application output
+        run: tar -czf sm-electric-site.tar.gz -C .output .
+      - name: Upload application artifact
         uses: actions/upload-artifact@v4
         with:
           name: sm-electric-site
