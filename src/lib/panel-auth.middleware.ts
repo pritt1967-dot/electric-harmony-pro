@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { getPublicSupabaseConfig } from "@/lib/public-supabase-config";
 
 function isOpaqueApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -72,16 +73,7 @@ export const requirePanelAuth = createMiddleware({ type: "function" })
     }
   })
   .server(async ({ next }) => {
-    const backendUrl =
-      process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-    const publishableKey =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??
-      process.env["VITE_SUPABASE_ANON_KEY"];
-
-    if (!backendUrl || !publishableKey) {
-      throw new Error("Unauthorized: Backend authentication is not configured");
-    }
+    const { url: backendUrl, key: publishableKey } = getPublicSupabaseConfig();
 
     const authHeader = getRequest()?.headers.get("authorization") ?? "";
     const token = authHeader.startsWith("Bearer ")

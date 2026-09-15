@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { getPublicSupabaseConfig } from "@/lib/public-supabase-config";
 
 /**
  * Финансовое реле: выполняется в инфраструктуре Lovable, где хранится
@@ -58,9 +59,8 @@ export const Route = createFileRoute("/api/public/finance-relay")({
         if (!hasSharedSecret) {
           const authHeader = request.headers.get("authorization") ?? "";
           const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
-          const siteUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-          const siteKey = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_ANON_KEY"];
-          if (!accessToken || !siteUrl || !siteKey) {
+          const { url: siteUrl, key: siteKey } = getPublicSupabaseConfig();
+          if (!accessToken) {
             return json(request, { error: "Unauthorized" }, 401);
           }
           const site = createClient(siteUrl, siteKey, {
