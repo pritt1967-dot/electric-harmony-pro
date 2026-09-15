@@ -28,10 +28,7 @@ function envValue(name: string): string | undefined {
 
 function financeConfig(): { url: string; key: string } {
   const url = (envValue("FINANCE_SUPABASE_URL") ?? DEFAULT_FINANCE_URL).replace(/\/+$/, "");
-  const key =
-    envValue("FINANCE_SUPABASE_SERVICE_ROLE_KEY") ??
-    envValue("FINANCE_SUPABASE_KEY") ??
-    envValue("FINANCE_SUPABASE_PUBLISHABLE_KEY");
+  const key = envValue("FINANCE_SUPABASE_SERVICE_ROLE_KEY");
   if (!key) {
     throw new Error(
       "Нет ключа финансовой базы. Добавьте переменную окружения FINANCE_SUPABASE_SERVICE_ROLE_KEY на сервере сайта.",
