@@ -50,10 +50,18 @@ async function withFinanceTimeout<T>(request: Promise<T>): Promise<T> {
 
 type Participant = { id: string; name: string };
 type Category = { id: string; name: string; affects_project_balance: boolean };
+type OperationKind = "income" | "expense" | "transfer" | "refund";
+const TYPE_LABEL: Record<string, string> = { income: "Приход", expense: "Расход", transfer: "Перевод", refund: "Возврат" };
+const TYPE_BADGE: Record<string, string> = {
+  income: "bg-emerald-500/15 text-emerald-700",
+  expense: "bg-destructive/15 text-destructive",
+  transfer: "bg-sky-500/15 text-sky-700",
+  refund: "bg-amber-500/15 text-amber-700",
+};
 type Operation = {
   id: string;
   operation_date: string;
-  operation_type: "income" | "expense" | "transfer";
+  operation_type: OperationKind;
   from_name: string | null;
   to_name: string | null;
   from_participant_id?: string | null;
@@ -104,6 +112,10 @@ export function MoneyManagerParticipants() {
   const [showTransfer, setShowTransfer] = useState(false);
   const [form, setForm] = useState({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" });
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [opDialog, setOpDialog] = useState(false);
+  const [opForm, setOpForm] = useState<{ type: OperationKind; operation_date: string; participantId: string; counterpartyName: string; categoryId: string; amount: string; comment: string }>({ type: "expense", operation_date: todayMoscow(), participantId: "", counterpartyName: "", categoryId: "", amount: "", comment: "" });
+  const [newCategory, setNewCategory] = useState("");
+  const [filters, setFilters] = useState({ from: "", to: "", type: "all", participantId: "all", categoryId: "all" });
 
   const [projectDialog, setProjectDialog] = useState(false);
   const [projectForm, setProjectForm] = useState({ projectName: "", customerName: "", objectName: "" });
@@ -139,11 +151,24 @@ export function MoneyManagerParticipants() {
   const project = data?.project ?? { customer_name: "", project_name: "Проект", status: "active" };
   const refresh = () => { qc.invalidateQueries({ queryKey: ["money-manager", projectId] }); qc.invalidateQueries({ queryKey: ["finance-all-participants"] }); };
 
+  const visibleOperations = useMemo(() => operations.filter(o => {
+    if (filters.from && o.operation_date < filters.from) return false;
+    if (filters.to && o.operation_date > filters.to) return false;
+    if (filters.type !== "all" && o.operation_type !== filters.type) return false;
+    if (filters.categoryId !== "all" && o.category_id !== filters.categoryId) return false;
+    if (filters.participantId !== "all" && o.from_participant_id !== filters.participantId && o.to_participant_id !== filters.participantId) return false;
+    return true;
+  }), [operations, filters]);
+
   const stats = useMemo(() => {
-    const income = operations.filter(o => o.operation_type === "income").reduce((s, o) => s + Number(o.amount), 0);
+    const sum = (list: Operation[]) => list.reduce((s, o) => s + Number(o.amount), 0);
+    const income = sum(operations.filter(o => o.operation_type === "income"));
     const projectExpenses = operations.filter(o => o.operation_type === "expense" && o.category?.affects_project_balance !== false);
-    const expenses = projectExpenses.reduce((s, o) => s + Number(o.amount), 0);
+    const expenses = sum(projectExpenses);
     const transfers = operations.filter(o => o.operation_type === "transfer");
+    const transfersSum = sum(transfers);
+    const refunds = operations.filter(o => o.operation_type === "refund");
+    const refundsSum = sum(refunds);
 
     const byCategoryMap = new Map<string, number>();
     for (const o of projectExpenses) {
@@ -152,10 +177,18 @@ export function MoneyManagerParticipants() {
     }
     const byCategory = [...byCategoryMap.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
 
+    const byParticipantMap = new Map<string, number>();
+    for (const o of projectExpenses) {
+      const key = participants.find(p => p.id === o.from_participant_id)?.name || o.from_name || "Проект";
+      byParticipantMap.set(key, (byParticipantMap.get(key) ?? 0) + Number(o.amount));
+    }
+    const byParticipantExpense = [...byParticipantMap.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+
     const byDate = new Map<string, { income: number; expense: number }>();
     for (const o of operations) {
       const row = byDate.get(o.operation_date) ?? { income: 0, expense: 0 };
       if (o.operation_type === "income") row.income += Number(o.amount);
+      else if (o.operation_type === "refund") row.expense -= Number(o.amount);
       else if (o.operation_type === "expense" && o.category?.affects_project_balance !== false) row.expense += Number(o.amount);
       byDate.set(o.operation_date, row);
     }
@@ -163,14 +196,14 @@ export function MoneyManagerParticipants() {
     const timeline = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => { ci += v.income; ce += v.expense; return { date: formatDate(d), Поступления: ci, Расходы: ce, Остаток: ci - ce }; });
 
     const balances = participants.map(p => {
-      const received = operations.filter(o => o.to_participant_id === p.id || (!o.to_participant_id && o.to_name === p.name)).reduce((s, o) => s + Number(o.amount), 0);
-      const sent = operations.filter(o => o.from_participant_id === p.id || (!o.from_participant_id && o.from_name === p.name)).reduce((s, o) => s + Number(o.amount), 0);
+      const received = sum(operations.filter(o => o.to_participant_id === p.id || (!o.to_participant_id && !o.from_participant_id && o.to_name === p.name)));
+      const sent = sum(operations.filter(o => o.from_participant_id === p.id || (!o.from_participant_id && !o.to_participant_id && o.from_name === p.name)));
       return { ...p, received, sent, balance: received - sent };
     });
     const balanceSum = balances.reduce((s, b) => s + b.balance, 0);
 
-    return { income, expenses, remaining: income - expenses, byCategory, timeline, balances, balanceSum, transfers };
-  }, [operations, participants]);
+    return { income, expenses, refundsSum, transfersSum, remaining: income - expenses + refundsSum, byCategory, byParticipantExpense, timeline, balances, balanceSum, transfers };
+  }, [operations, participants, filters]);
 
   useEffect(() => { if (showTransfer) requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [showTransfer]);
   useEffect(() => { setShowTransfer(false); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); }, [projectId]);
@@ -249,6 +282,51 @@ export function MoneyManagerParticipants() {
       await createFinanceOperationClient({ projectId, operation_date: form.operation_date, operation_type: "transfer", from_name: from.name, to_name: to.name, from_participant_id: from.id, to_participant_id: to.id, amount, category_id: null, comment: form.comment || null });
     },
     onSuccess: () => { toast.success("Перевод между участниками добавлен"); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); setShowTransfer(false); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addOperation = useMutation({
+    mutationFn: async () => {
+      const amount = Number(opForm.amount.replace(/\s/g, "").replace(",", "."));
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Укажите сумму больше нуля");
+      const participant = participants.find(p => p.id === opForm.participantId) ?? null;
+      const categoryName = (data?.categories ?? []).find(c => c.id === opForm.categoryId)?.name ?? "";
+      const counterparty = opForm.counterpartyName.trim();
+      const type = opForm.type;
+      const from_name = type === "income" ? (counterparty || project.customer_name || "Заказчик") : (participant?.name ?? "Проект");
+      const to_name = type === "income"
+        ? (participant?.name ?? "Проект")
+        : (counterparty || categoryName || (type === "refund" ? project.customer_name || "Проект" : "Расход"));
+      await createFinanceOperationClient({
+        projectId,
+        operation_date: opForm.operation_date,
+        operation_type: type,
+        from_name,
+        to_name,
+        from_participant_id: type === "income" ? null : participant?.id ?? null,
+        to_participant_id: type === "income" ? participant?.id ?? null : null,
+        amount,
+        category_id: opForm.categoryId || null,
+        comment: opForm.comment.trim() || null,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Операция добавлена");
+      setOpForm({ type: "expense", operation_date: todayMoscow(), participantId: "", counterpartyName: "", categoryId: "", amount: "", comment: "" });
+      setOpDialog(false);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addCategory = useMutation({
+    mutationFn: async () => createFinanceCategoryClient(newCategory.trim()),
+    onSuccess: (created) => {
+      toast.success("Категория добавлена");
+      setNewCategory("");
+      setOpForm(f => ({ ...f, categoryId: created.id }));
+      refresh();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -331,19 +409,32 @@ export function MoneyManagerParticipants() {
             <Button variant="outline" onClick={downloadPdf} disabled={pdfBusy}>
               <FileText className="mr-2 size-4" /> {pdfBusy ? "Формирую…" : "Скачать PDF"}
             </Button>
-            <Button onClick={() => setShowTransfer(v => !v)}>
+            <Button variant="outline" onClick={() => setShowTransfer(v => !v)}>
               <ArrowRightLeft className="mr-2 size-4" /> Перевод между участниками
+            </Button>
+            <Button onClick={() => setOpDialog(true)}>
+              <Plus className="mr-2 size-4" /> Новая операция
             </Button>
           </div>
         </div>
       </div>
 
       {/* Показатели */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Stat title="Получено от заказчика" value={stats.income} icon={<ArrowDownLeft className="size-4" />} />
         <Stat title="Расходы проекта" value={stats.expenses} icon={<ArrowUpRight className="size-4" />} />
         <Stat title="Остаток проекта" value={stats.remaining} icon={<Wallet className="size-4" />} accent />
+        <Stat title="Возвраты" value={stats.refundsSum} icon={<ArrowDownLeft className="size-4" />} />
+        <Stat title="Переводы между участниками" value={stats.transfersSum} icon={<ArrowRightLeft className="size-4" />} />
       </div>
+
+      {/* Расходы по участникам */}
+      {stats.byParticipantExpense.length > 0 && <div className="rounded-2xl border bg-card p-4 sm:p-5">
+        <h3 className="font-bold">Расходы по участникам</h3>
+        <ul className="mt-3 space-y-1.5 text-sm">
+          {stats.byParticipantExpense.map(p => <li key={p.name} className="flex items-center justify-between gap-3"><span className="truncate">{p.name}</span><span className="font-semibold whitespace-nowrap">{money(p.amount)}</span></li>)}
+        </ul>
+      </div>}
 
       {/* Графики */}
       <div className="grid gap-3 lg:grid-cols-2">
@@ -410,18 +501,128 @@ export function MoneyManagerParticipants() {
 
       {/* История */}
       <div className="rounded-2xl border bg-card p-4 sm:p-5">
-        <h3 className="font-bold">История операций <span className="font-normal text-muted-foreground">({operations.length})</span></h3>
+        <h3 className="font-bold">История операций <span className="font-normal text-muted-foreground">({visibleOperations.length} из {operations.length})</span></h3>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div><Label className="text-xs">Период с</Label><Input className="mt-1" type="date" value={filters.from} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))} /></div>
+          <div><Label className="text-xs">по</Label><Input className="mt-1" type="date" value={filters.to} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))} /></div>
+          <div>
+            <Label className="text-xs">Тип</Label>
+            <Select value={filters.type} onValueChange={v => setFilters(f => ({ ...f, type: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все типы</SelectItem>
+                <SelectItem value="income">Приход</SelectItem>
+                <SelectItem value="expense">Расход</SelectItem>
+                <SelectItem value="transfer">Перевод</SelectItem>
+                <SelectItem value="refund">Возврат</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Участник</Label>
+            <Select value={filters.participantId} onValueChange={v => setFilters(f => ({ ...f, participantId: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все участники</SelectItem>
+                {participants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Категория</Label>
+            <Select value={filters.categoryId} onValueChange={v => setFilters(f => ({ ...f, categoryId: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все категории</SelectItem>
+                {(data?.categories ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="mt-3 space-y-2">
-          {operations.map(o => <div key={o.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="font-medium">{o.from_name ?? "—"} → {o.to_name ?? "—"}</div>
-              <div className="text-xs text-muted-foreground">{formatDate(o.operation_date)}{o.operation_type === "transfer" ? " · внутренний перевод" : ""}{o.comment ? ` · ${o.comment}` : ""}{o.category ? ` · ${o.category.name}` : ""}</div>
+          {visibleOperations.map(o => <div key={o.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${TYPE_BADGE[o.operation_type] ?? "bg-muted"}`}>{TYPE_LABEL[o.operation_type] ?? o.operation_type}</span>
+                <span className="font-medium">{o.from_name ?? "—"} → {o.to_name ?? "—"}</span>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">{formatDate(o.operation_date)}{o.category ? ` · ${o.category.name}` : ""}{o.comment ? ` · ${o.comment}` : ""}</div>
             </div>
             <div className="flex items-center gap-3"><span className="font-bold">{money(Number(o.amount))}</span><Button variant="ghost" size="icon" onClick={() => deleteOperation.mutate(o.id)} disabled={deleteOperation.isPending}><Trash2 className="size-4" /></Button></div>
           </div>)}
-          {operations.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">Операций пока нет</div>}
+          {visibleOperations.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">{operations.length ? "Операций по выбранным фильтрам нет" : "Операций пока нет"}</div>}
         </div>
       </div>
+
+      {/* Новая операция: приход, расход, возврат */}
+      <Dialog open={opDialog} onOpenChange={setOpDialog}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Новая операция</DialogTitle>
+            <DialogDescription>Приход, расход участника или возврат по проекту «{project.project_name}».</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div>
+              <Label>Тип операции</Label>
+              <Select value={opForm.type} onValueChange={v => setOpForm(f => ({ ...f, type: v as OperationKind }))}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="income">Приход</SelectItem>
+                  <SelectItem value="expense">Расход</SelectItem>
+                  <SelectItem value="refund">Возврат</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Дата</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="mt-1.5 w-full justify-start font-normal"><CalendarDays className="mr-2 size-4" />{new Date(`${opForm.operation_date}T12:00:00`).toLocaleDateString("ru-RU")}</Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={new Date(`${opForm.operation_date}T12:00:00`)} onSelect={d => d && setOpForm(f => ({ ...f, operation_date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` }))} initialFocus /></PopoverContent>
+                </Popover>
+              </div>
+              <div><Label>Сумма *</Label><Input className="mt-1.5" inputMode="decimal" placeholder="0" value={opForm.amount} onChange={e => setOpForm(f => ({ ...f, amount: e.target.value }))} /></div>
+            </div>
+            <div>
+              <Label>{opForm.type === "income" ? "Кому поступили деньги" : opForm.type === "refund" ? "Кто возвращает" : "Кто произвёл расход"}</Label>
+              <Select value={opForm.participantId || "none"} onValueChange={v => setOpForm(f => ({ ...f, participantId: v === "none" ? "" : v }))}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Проект (без участника)</SelectItem>
+                  {participants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{opForm.type === "income" ? "От кого" : "Кому / за что"}</Label>
+              <Input className="mt-1.5" maxLength={120} value={opForm.counterpartyName} onChange={e => setOpForm(f => ({ ...f, counterpartyName: e.target.value }))} placeholder={opForm.type === "income" ? project.customer_name || "Заказчик" : "Поставщик, магазин, заказчик"} />
+            </div>
+            <div>
+              <Label>Категория</Label>
+              <Select value={opForm.categoryId || "none"} onValueChange={v => setOpForm(f => ({ ...f, categoryId: v === "none" ? "" : v }))}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Без статьи</SelectItem>
+                  {(data?.categories ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <div className="mt-2 flex gap-2">
+                <Input maxLength={60} placeholder="Новая категория" value={newCategory} onChange={e => setNewCategory(e.target.value)} />
+                <Button type="button" variant="outline" onClick={() => addCategory.mutate()} disabled={addCategory.isPending || !newCategory.trim()}><Plus className="mr-1.5 size-4" />Добавить</Button>
+              </div>
+            </div>
+            <div><Label>Описание</Label><Textarea className="mt-1.5" placeholder="Например: кабель ВВГнг 3х2,5" value={opForm.comment} onChange={e => setOpForm(f => ({ ...f, comment: e.target.value }))} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpDialog(false)}>Отмена</Button>
+            <Button onClick={() => addOperation.mutate()} disabled={addOperation.isPending || !opForm.amount.trim()}>{addOperation.isPending ? "Сохранение…" : "Сохранить операцию"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Добавление участника */}
       <Dialog open={participantDialog} onOpenChange={setParticipantDialog}>
