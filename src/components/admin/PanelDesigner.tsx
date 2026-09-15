@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser-client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
 import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";

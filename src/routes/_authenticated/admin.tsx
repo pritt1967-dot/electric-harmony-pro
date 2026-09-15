@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Toaster } from "sonner";
 import { LOGO_URL } from "@/lib/logo";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser-client";
 import { claimAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
