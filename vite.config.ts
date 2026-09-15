@@ -60,10 +60,10 @@ function ensureAuthMiddlewarePublicFallback(): Plugin {
       if (!id.replace(/\\/g, "/").includes(authMiddlewarePath)) return null;
 
       const urlExpression =
-        "process.env.SUPABASE_URL ??\n      process.env.VITE_SUPABASE_URL ??";
+        /process\.env(?:\.|\[\s*["'])SUPABASE_URL(?:["']\s*\])?\s*\?\?\s*process\.env(?:\.|\[\s*["'])VITE_SUPABASE_URL(?:["']\s*\])?\s*\?\?/;
       const keyExpression =
-        "process.env.SUPABASE_PUBLISHABLE_KEY ??\n      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??";
-      if (!code.includes(urlExpression) || !code.includes(keyExpression)) {
+        /process\.env(?:\.|\[\s*["'])SUPABASE_PUBLISHABLE_KEY(?:["']\s*\])?\s*\?\?\s*process\.env(?:\.|\[\s*["'])VITE_SUPABASE_PUBLISHABLE_KEY(?:["']\s*\])?\s*\?\?/;
+      if (!urlExpression.test(code) || !keyExpression.test(code)) {
         throw new Error(
           "Generated auth middleware no longer matches the expected public configuration pattern.",
         );
@@ -72,11 +72,11 @@ function ensureAuthMiddlewarePublicFallback(): Plugin {
       return code
         .replace(
           urlExpression,
-          "process.env.SUPABASE_URL?.trim() ||\n      process.env.VITE_SUPABASE_URL?.trim() ||",
+          "process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() ||",
         )
         .replace(
           keyExpression,
-          "process.env.SUPABASE_PUBLISHABLE_KEY?.trim() ||\n      process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||",
+          "process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||",
         );
     },
   };
