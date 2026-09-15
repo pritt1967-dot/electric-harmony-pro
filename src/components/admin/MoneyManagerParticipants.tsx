@@ -26,11 +26,27 @@ import {
 } from "@/lib/finance-client";
 
 const MAIN_PROJECT_ID = "c6287ea3-0e53-4fea-a51c-3b4eef980963";
+const FINANCE_UI_TIMEOUT_MS = 12_000;
 const money = (v: number) => `${new Intl.NumberFormat("ru-RU").format(Math.round(v))} ₽`;
 const todayMoscow = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Moscow", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const formatDate = (v: string) => new Date(`${v}T00:00:00`).toLocaleDateString("ru-RU");
 
 const PIE_COLORS = ["#1d4ed8", "#0ea5e9", "#f59e0b", "#16a34a", "#a855f7", "#dc2626", "#64748b"];
+
+async function withFinanceTimeout<T>(request: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("Финансовая база недоступна с сервера REG.RU (CLIENT_TIMEOUT: превышено 12 секунд)")),
+      FINANCE_UI_TIMEOUT_MS,
+    );
+  });
+  try {
+    return await Promise.race([request, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 type Participant = { id: string; name: string };
 type Category = { id: string; name: string; affects_project_balance: boolean };
@@ -96,14 +112,14 @@ export function MoneyManagerParticipants() {
   const [newParticipant, setNewParticipant] = useState("");
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string; operations: number } | null>(null);
 
-  const projectsQuery = useQuery({ queryKey: ["finance-projects"], queryFn: listFinanceProjectsClient });
-  const allParticipantsQuery = useQuery({ queryKey: ["finance-all-participants"], queryFn: listAllParticipantsClient, enabled: participantDialog });
+  const projectsQuery = useQuery({ queryKey: ["finance-projects"], retry: false, queryFn: () => withFinanceTimeout(listFinanceProjectsClient()) });
+  const allParticipantsQuery = useQuery({ queryKey: ["finance-all-participants"], retry: false, queryFn: () => withFinanceTimeout(listAllParticipantsClient()), enabled: participantDialog });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", projectId],
     retry: false,
     queryFn: async () => {
-      const result = await loadFinanceDataClient(projectId);
+      const result = await withFinanceTimeout(loadFinanceDataClient(projectId));
       if (!result || result.error) throw new Error(result?.error || "Финансовый сервер не ответил");
       const categories = Array.isArray(result.categories) ? result.categories as Category[] : [];
       const categoryMap = new Map(categories.map(c => [c.id, c]));

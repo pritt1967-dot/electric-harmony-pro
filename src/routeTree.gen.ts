@@ -26,6 +26,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
 import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/public/supabase-keepalive'
 import { Route as ApiPublicFinanceRelayRouteImport } from './routes/api/public/finance-relay'
+import { Route as ApiPublicFinanceHealthRouteImport } from './routes/api/public/finance-health'
 import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
 import { Route as ApiPublicAiRelayRouteImport } from './routes/api/public/ai-relay'
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
@@ -120,6 +121,11 @@ const ApiPublicFinanceRelayRoute = ApiPublicFinanceRelayRouteImport.update({
   path: '/api/public/finance-relay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFinanceHealthRoute = ApiPublicFinanceHealthRouteImport.update({
+  id: '/api/public/finance-health',
+  path: '/api/public/finance-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactCardDotpdfRoute =
   ApiPublicContactCardDotpdfRouteImport.update({
     id: '/api/public/contact-card.pdf',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
   '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
+  '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/estimate/$id'
     | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
+    | '/api/public/finance-health'
     | '/api/public/finance-relay'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/estimate/$id'
     | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
+    | '/api/public/finance-health'
     | '/api/public/finance-relay'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/estimate/$id'
     | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
+    | '/api/public/finance-health'
     | '/api/public/finance-relay'
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
@@ -321,6 +333,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicAiRelayRoute: typeof ApiPublicAiRelayRoute
   ApiPublicContactCardDotpdfRoute: typeof ApiPublicContactCardDotpdfRoute
+  ApiPublicFinanceHealthRoute: typeof ApiPublicFinanceHealthRoute
   ApiPublicFinanceRelayRoute: typeof ApiPublicFinanceRelayRoute
   ApiPublicSupabaseKeepaliveRoute: typeof ApiPublicSupabaseKeepaliveRoute
   ApiPublicTelegramHealthRoute: typeof ApiPublicTelegramHealthRoute
@@ -448,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFinanceRelayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/finance-health': {
+      id: '/api/public/finance-health'
+      path: '/api/public/finance-health'
+      fullPath: '/api/public/finance-health'
+      preLoaderRoute: typeof ApiPublicFinanceHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-card.pdf': {
       id: '/api/public/contact-card.pdf'
       path: '/api/public/contact-card.pdf'
@@ -525,6 +545,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicAiRelayRoute: ApiPublicAiRelayRoute,
   ApiPublicContactCardDotpdfRoute: ApiPublicContactCardDotpdfRoute,
+  ApiPublicFinanceHealthRoute: ApiPublicFinanceHealthRoute,
   ApiPublicFinanceRelayRoute: ApiPublicFinanceRelayRoute,
   ApiPublicSupabaseKeepaliveRoute: ApiPublicSupabaseKeepaliveRoute,
   ApiPublicTelegramHealthRoute: ApiPublicTelegramHealthRoute,
