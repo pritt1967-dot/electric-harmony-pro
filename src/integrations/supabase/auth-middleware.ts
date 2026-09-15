@@ -3,6 +3,7 @@ import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
+import { getPublicSupabaseConfig } from '@/lib/public-supabase-config'
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
@@ -30,27 +31,10 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    // REG.RU self-hosted Node deployments may not expose process.env values
-    // to server middleware. Use the public website Supabase configuration as
-    // a safe fallback; runtime environment variables still take priority.
-    const SUPABASE_URL =
-      process.env.SUPABASE_URL ??
-      process.env.VITE_SUPABASE_URL ??
-      'https://csqqjrbuajcymwhwaxva.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY =
-      process.env.SUPABASE_PUBLISHABLE_KEY ??
-      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-      'sb_publishable_nkgGme_KJeqG3wp-xETjPg_Ppen__qU';
-
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      const missing = [
-        ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-        ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-      ];
-      const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-      console.error(`[Supabase] ${message}`);
-      throw new Error(message);
-    }
+    const {
+      url: SUPABASE_URL,
+      key: SUPABASE_PUBLISHABLE_KEY,
+    } = getPublicSupabaseConfig();
 
     const request = getRequest();
 
