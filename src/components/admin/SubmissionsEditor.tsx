@@ -38,12 +38,21 @@ export function SubmissionsEditor() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function load() {
-    const { data } = await supabase
-      .from("submissions")
-      .select("id, name, phone, comment, status, created_at")
-      .order("created_at", { ascending: false });
-    setRows(data ?? []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select("id, name, phone, comment, status, created_at")
+        .order("created_at", { ascending: false });
+      if (error) toast.error("Не удалось загрузить заявки: " + error.message);
+      setRows(data ?? []);
+    } catch (e) {
+      toast.error(
+        "Не удалось загрузить заявки: " +
+          (e instanceof Error ? e.message : String(e)),
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
