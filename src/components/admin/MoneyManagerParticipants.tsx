@@ -101,6 +101,7 @@ export function MoneyManagerParticipants() {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["money-manager", projectId],
+    retry: false,
     queryFn: async () => {
       const result = await loadFinanceDataClient(projectId);
       if (!result || result.error) throw new Error(result?.error || "Финансовый сервер не ответил");
