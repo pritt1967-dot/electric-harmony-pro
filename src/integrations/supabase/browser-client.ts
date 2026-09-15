@@ -24,7 +24,6 @@ const PREVIEW_ZONES = [
 function usesProxy(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
-  if (host === "localhost" || host === "127.0.0.1") return false;
   return !PREVIEW_ZONES.some((zone) => host === zone || host.endsWith(`.${zone}`));
 }
 
