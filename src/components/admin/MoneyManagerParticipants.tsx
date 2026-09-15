@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import {
   attachParticipantClient,
+  createFinanceCategoryClient,
   createFinanceOperationClient,
   createFinanceParticipantClient,
   createFinanceProjectClient,
