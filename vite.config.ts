@@ -6,7 +6,6 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
-import type { Plugin } from "vite";
 
 // --- Supabase build-time env (для self-hosted Node.js, напр. REG.RU) ---
 // VITE_* значения вшиваются в бандл на этапе `npm run build`.
@@ -51,43 +50,6 @@ env.SUPABASE_PUBLISHABLE_KEY =
   pick(env.SUPABASE_PUBLISHABLE_KEY) ?? env.VITE_SUPABASE_PUBLISHABLE_KEY;
 env.SUPABASE_PROJECT_ID = pick(env.SUPABASE_PROJECT_ID) ?? env.VITE_SUPABASE_PROJECT_ID;
 
-function ensureAuthMiddlewarePublicFallback(): Plugin {
-  const authMiddlewarePath = "/src/integrations/supabase/auth-middleware.ts";
-  return {
-    name: "sm-electric:auth-public-config-fallback",
-    enforce: "pre",
-    transform(code, id) {
-      if (!id.replace(/\\/g, "/").includes(authMiddlewarePath)) return null;
-      if (
-        code.includes("process.env.SUPABASE_URL?.trim() ||") &&
-        code.includes("process.env.SUPABASE_PUBLISHABLE_KEY?.trim() ||")
-      ) {
-        return null;
-      }
-
-      const urlExpression =
-        /process\.env\.SUPABASE_URL\s*\?\?\s*process\.env\.VITE_SUPABASE_URL\s*\?\?/;
-      const keyExpression =
-        /process\.env\.SUPABASE_PUBLISHABLE_KEY\s*\?\?\s*process\.env\.VITE_SUPABASE_PUBLISHABLE_KEY\s*\?\?/;
-      if (!urlExpression.test(code) || !keyExpression.test(code)) {
-        throw new Error(
-          "Generated auth middleware no longer matches the expected public configuration pattern.",
-        );
-      }
-
-      return code
-        .replace(
-          urlExpression,
-          "process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() ||",
-        )
-        .replace(
-          keyExpression,
-          "process.env.SUPABASE_PUBLISHABLE_KEY?.trim() || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||",
-        );
-    },
-  };
-}
-
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -98,6 +60,6 @@ export default defineConfig({
     preset: "node-server",
   },
   vite: {
-    plugins: [ensureAuthMiddlewarePublicFallback(), mcpPlugin()],
+    plugins: [mcpPlugin()],
   },
 });
