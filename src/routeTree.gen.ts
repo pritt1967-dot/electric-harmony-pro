@@ -32,6 +32,7 @@ import { Route as ApiPublicAiRelayRouteImport } from './routes/api/public/ai-rel
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicSbSplatRouteImport } from './routes/api/public/sb/$'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo/$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -153,6 +154,11 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSbSplatRoute = ApiPublicSbSplatRouteImport.update({
+  id: '/api/public/sb/$',
+  path: '/api/public/sb/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   id: '/api/public/photo/$',
   path: '/api/public/photo/$',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/sb/$': typeof ApiPublicSbSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/sb/$': typeof ApiPublicSbSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/api/public/supabase-keepalive': typeof ApiPublicSupabaseKeepaliveRoute
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/sb/$': typeof ApiPublicSbSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
+    | '/api/public/sb/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
+    | '/api/public/sb/$'
   id:
     | '__root__'
     | '/'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/api/public/supabase-keepalive'
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
+    | '/api/public/sb/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   ApiPublicSupabaseKeepaliveRoute: typeof ApiPublicSupabaseKeepaliveRoute
   ApiPublicTelegramHealthRoute: typeof ApiPublicTelegramHealthRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
+  ApiPublicSbSplatRoute: typeof ApiPublicSbSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -503,6 +516,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sb/$': {
+      id: '/api/public/sb/$'
+      path: '/api/public/sb/$'
+      fullPath: '/api/public/sb/$'
+      preLoaderRoute: typeof ApiPublicSbSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/photo/$': {
       id: '/api/public/photo/$'
       path: '/api/public/photo/$'
@@ -550,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSupabaseKeepaliveRoute: ApiPublicSupabaseKeepaliveRoute,
   ApiPublicTelegramHealthRoute: ApiPublicTelegramHealthRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
+  ApiPublicSbSplatRoute: ApiPublicSbSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
