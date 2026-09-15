@@ -3,6 +3,42 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+const DEFAULT_SUPABASE_URL = "https://csqqjrbuajcymwhwaxva.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_nkgGme_KJeqG3wp-xETjPg_Ppen__qU";
+
+function cleanEnvironmentValue(value: string | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const cleaned = value.trim().replace(/^['"]|['"]$/g, "").trim();
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+/**
+ * Self-hosted Node.js deployments do not always expose build-time VITE_*
+ * values through process.env. Populate only the public backend connection
+ * values before importing TanStack's server entry so every server middleware
+ * receives the same configuration. Runtime values always take priority.
+ */
+function configurePublicBackendEnvironment(): void {
+  const url =
+    cleanEnvironmentValue(process.env["SUPABASE_URL"]) ??
+    cleanEnvironmentValue(process.env["VITE_SUPABASE_URL"]) ??
+    cleanEnvironmentValue(import.meta.env.VITE_SUPABASE_URL as string | undefined) ??
+    DEFAULT_SUPABASE_URL;
+  const publishableKey =
+    cleanEnvironmentValue(process.env["SUPABASE_PUBLISHABLE_KEY"]) ??
+    cleanEnvironmentValue(process.env["VITE_SUPABASE_PUBLISHABLE_KEY"]) ??
+    cleanEnvironmentValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+
+  process.env["SUPABASE_URL"] = url;
+  process.env["SUPABASE_PUBLISHABLE_KEY"] = publishableKey;
+  process.env["VITE_SUPABASE_URL"] ??= url;
+  process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ??= publishableKey;
+}
+
+configurePublicBackendEnvironment();
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
