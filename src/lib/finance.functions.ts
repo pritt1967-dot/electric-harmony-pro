@@ -22,10 +22,13 @@ async function assertAdmin(context: FinanceContext) {
   if (error || !data) throw new Error("Недостаточно прав для финансовых данных");
 }
 
+/** Приход, расход, перевод между участниками и возврат. */
+export type FinanceOperationType = "income" | "expense" | "transfer" | "refund";
+
 export type FinanceOperation = {
   id: string;
   operation_date: string;
-  operation_type: "income" | "expense" | "transfer";
+  operation_type: FinanceOperationType;
   from_name: string | null;
   to_name: string | null;
   from_participant_id?: string | null;
@@ -124,7 +127,7 @@ export const detachFinanceParticipant = createServerFn({ method: "POST" })
 
 export const createFinanceOperation = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .inputValidator((d: { projectId: string; operation_date: string; operation_type: "income" | "expense" | "transfer"; from_name: string; to_name: string; from_participant_id?: string | null; to_participant_id?: string | null; amount: number; category_id: string | null; comment: string | null }) => d)
+  .inputValidator((d: { projectId: string; operation_date: string; operation_type: FinanceOperationType; from_name: string; to_name: string; from_participant_id?: string | null; to_participant_id?: string | null; amount: number; category_id: string | null; comment: string | null }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context as unknown as FinanceContext);
     if (!Number.isFinite(data.amount) || data.amount <= 0) throw new Error("Укажите сумму больше нуля");
@@ -156,6 +159,25 @@ export const deleteFinanceOperation = createServerFn({ method: "POST" })
     await assertAdmin(context as unknown as FinanceContext);
     await financeRest(`operations?id=eq.${encodeURIComponent(data.id)}`, { method: "DELETE" });
     return { ok: true };
+  });
+
+/** Новая статья расходов в существующей таблице categories. */
+export const createFinanceCategory = createServerFn({ method: "POST" })
+  .middleware([requirePanelAuth])
+  .inputValidator((d: { name: string; affectsProjectBalance?: boolean }) => d)
+  .handler(async ({ data, context }): Promise<FinanceCategory> => {
+    await assertAdmin(context as unknown as FinanceContext);
+    const name = data.name.trim();
+    if (!name) throw new Error("Введите название категории");
+    const existing = await financeRest(`categories?select=id,name,affects_project_balance&name=ilike.${encodeURIComponent(name)}&limit=1`) as FinanceCategory[];
+    if (existing?.[0]) return existing[0];
+    const rows = await financeRest("categories", {
+      method: "POST",
+      body: { name, affects_project_balance: data.affectsProjectBalance ?? true },
+    }) as FinanceCategory[];
+    const category = rows?.[0];
+    if (!category) throw new Error("Не удалось создать категорию");
+    return category;
   });
 
 export const createFinanceParticipant = createServerFn({ method: "POST" })
