@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { ToolContext } from "@lovable.dev/mcp-js";
+import { getPublicSupabaseConfig } from "@/lib/public-supabase-config";
 
 type RuntimeGlobals = typeof globalThis & {
   Deno?: { env?: { get?: (name: string) => string | undefined } };
@@ -19,18 +20,7 @@ function configuredEnv(names: readonly string[]): string | undefined {
   return undefined;
 }
 
-function supabaseProjectUrl(): string {
-  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
-  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
-  return url;
-}
-
-function supabasePublishableKey(): string {
-  const direct = configuredEnv([
-    "SUPABASE_PUBLISHABLE_KEY",
-    "VITE_SUPABASE_PUBLISHABLE_KEY",
-  ]);
-  if (direct) return direct;
+function configuredPublishableKey(): string {
   const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
   if (keyset) {
     try {
@@ -51,14 +41,13 @@ function supabasePublishableKey(): string {
   }
   const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
   if (legacy) return legacy;
-  throw new Error(
-    "SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required",
-  );
+  return getPublicSupabaseConfig().key;
 }
 
 // No caller identity — RLS runs as `anon`. Public data only.
 export function supabaseAnon() {
-  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+  const { url } = getPublicSupabaseConfig();
+  return createClient(url, configuredPublishableKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
@@ -68,7 +57,8 @@ export function supabaseForUser(ctx: ToolContext) {
   const token = ctx.getToken();
   if (!token)
     throw new Error("supabaseForUser requires a verified OAuth token");
-  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+  const { url } = getPublicSupabaseConfig();
+  return createClient(url, configuredPublishableKey(), {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
