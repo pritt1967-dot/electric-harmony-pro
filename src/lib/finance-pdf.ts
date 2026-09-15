@@ -6,7 +6,7 @@ import { formatDate, money } from "./estimates";
 
 export type FinanceReportOperation = {
   operation_date: string;
-  operation_type: "income" | "expense" | "transfer";
+  operation_type: "income" | "expense" | "transfer" | "refund";
   from_name: string | null;
   to_name: string | null;
   amount: number;
@@ -30,6 +30,7 @@ const TYPE_LABEL: Record<FinanceReportOperation["operation_type"], string> = {
   income: "Приход",
   expense: "Расход",
   transfer: "Передача",
+  refund: "Возврат",
 };
 
 /** Builds the finance report PDF entirely from the live operations passed in. */

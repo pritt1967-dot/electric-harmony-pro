@@ -1,5 +1,6 @@
 import {
   attachFinanceParticipant,
+  createFinanceCategory,
   createFinanceOperation,
   createFinanceParticipant,
   createFinanceProject,
@@ -9,9 +10,14 @@ import {
   listFinanceProjects,
   loadFinanceData,
 } from "@/lib/finance.functions";
-import type { FinanceParticipant, FinancePayload, FinanceProjectRow } from "@/lib/finance.functions";
+import type { FinanceCategory, FinanceOperationType, FinanceParticipant, FinancePayload, FinanceProjectRow } from "@/lib/finance.functions";
 
-export type { FinanceProjectRow };
+export type { FinanceProjectRow, FinanceOperationType };
+
+/** Создаёт новую статью расходов (категорию) в финансовой базе. */
+export async function createFinanceCategoryClient(name: string, affectsProjectBalance = true): Promise<FinanceCategory> {
+  return createFinanceCategory({ data: { name, affectsProjectBalance } });
+}
 
 /**
  * Тонкая обёртка над серверными функциями финансового модуля.
@@ -47,7 +53,7 @@ export async function loadFinanceDataClient(projectId: string): Promise<FinanceP
   return loadFinanceData({ data: { projectId } });
 }
 
-export async function createFinanceOperationClient(data: { projectId: string; operation_date: string; operation_type: "income" | "expense" | "transfer"; from_name: string; to_name: string; from_participant_id?: string | null; to_participant_id?: string | null; amount: number; category_id: string | null; comment: string | null }) {
+export async function createFinanceOperationClient(data: { projectId: string; operation_date: string; operation_type: FinanceOperationType; from_name: string; to_name: string; from_participant_id?: string | null; to_participant_id?: string | null; amount: number; category_id: string | null; comment: string | null }) {
   return createFinanceOperation({ data });
 }
 
