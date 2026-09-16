@@ -104,6 +104,9 @@ export function PanelDesigner() {
   const [imgBusy, setImgBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [aiError, setAiError] = useState<string>("");
+  const [showSvg, setShowSvg] = useState(false);
+  const [cost, setCost] = useState<{ total: number; missing: number } | null>(null);
+  const [costBusy, setCostBusy] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const shouldRevealResultRef = useRef(false);
 
