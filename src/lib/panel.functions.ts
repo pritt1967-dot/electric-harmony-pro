@@ -690,11 +690,65 @@ ${data.lines_text}`;
         }
       }
 
+      // --- вводной кабель: расчёт только при достаточных исходных данных
+      const cableText = `${String(data.input_cable ?? "")} ${String(data.notes ?? "")}`;
+      const cableChecks: { text: string; ok: boolean }[] = [];
+      {
+        const sec = Number(
+          /[хx*]\s*([\d.,]+)/i.exec(String(data.input_cable ?? ""))?.[1]?.replace(",", ".") ?? 0,
+        );
+        const material = /мед|cu|ввг|nym/i.test(cableText) ? "медь" : /алюм|al|авбб/i.test(cableText) ? "алюминий" : "";
+        const method = /возду|лоток|труб|земл|гофр|кабельн\w+ канал|стен/i.exec(cableText)?.[0] ?? "";
+        const length = Number(/(\d+(?:[.,]\d+)?)\s*м(?!м|А)/i.exec(cableText)?.[1]?.replace(",", ".") ?? 0);
+        const dropLimit = Number(/(\d+(?:[.,]\d+)?)\s*%/.exec(cableText)?.[1]?.replace(",", ".") ?? 0);
+        const missing = [
+          material ? "" : "материал жил",
+          method ? "" : "способ и условия прокладки",
+          length ? "" : "длина трассы",
+          dropLimit ? "" : "допустимое падение напряжения",
+          sec ? "" : "сечение",
+        ].filter(Boolean);
+        if (missing.length) {
+          cableChecks.push({
+            text: `ТРЕБУЕТ УТОЧНЕНИЯ: сечение вводного кабеля не проверено — не заданы: ${missing.join(", ")}`,
+            ok: false,
+          });
+        } else {
+          const CU: Record<string, number> = { "4": 32, "6": 40, "10": 50, "16": 63, "25": 85, "35": 105, "50": 130 };
+          const AL: Record<string, number> = { "10": 39, "16": 50, "25": 65, "35": 80, "50": 100, "70": 125 };
+          const table = material === "медь" ? CU : AL;
+          const allowed = table[String(sec)] ?? 0;
+          const rho = material === "медь" ? 0.0175 : 0.028;
+          const phases3 = Number(data.phases) === 3;
+          const calcA = phases3
+            ? (Number(data.power_kw) * 1000) / (400 * 1.732 * 0.95)
+            : (Number(data.power_kw) * 1000) / (230 * 0.95);
+          const drop = phases3
+            ? ((1.732 * rho * length * calcA) / (sec * 400)) * 100
+            : ((2 * rho * length * calcA) / (sec * 230)) * 100;
+          const ok = Boolean(allowed) && allowed >= calcA && drop <= dropLimit;
+          cableChecks.push({
+            text: `Вводной кабель ${sec} мм² (${material}, ${method}, ${length} м): расчётный ток ${calcA.toFixed(1)} А, допустимый ток кабеля ${allowed || "не определён"} А, падение напряжения ${drop.toFixed(2)} % при допустимых ${dropLimit} %, запас по току ${allowed ? Math.round((allowed / calcA - 1) * 100) : 0} %`,
+            ok,
+          });
+          if (!ok) {
+            add("error", `Вводной кабель ${sec} мм² не проходит проверку: ток ${calcA.toFixed(1)} А, допустимо ${allowed || "?"} А, падение ${drop.toFixed(2)} % при пределе ${dropLimit} %.`, "Увеличить сечение вводного кабеля или изменить условия прокладки.");
+          }
+        }
+      }
+
       const checks = [
-        ...(d.checks ?? []),
+        ...(d.checks ?? []).filter(
+          (c) => !/селективн\w*[^.]*(обеспечен|ок\b|соответств)/i.test(String(c.text ?? "")),
+        ),
         { text: `Занято ${used} мод., свободно ${reserve} мод. (${reservePct} % резерва), корпус ${enclosure} мод., ${rails.length} рейки по ${capacity}`, ok: reserve >= used * 0.2 },
         { text: `Линий в проекте: ${linesAll.length}, групп УЗО: ${rcds.length}`, ok: true },
-        { text: "Селективность вводного УЗО 100 мА тип S с групповыми 30 мА подтверждается только по каталожным характеристикам выбранного производителя", ok: true },
+        ...groupChecks,
+        ...cableChecks,
+        {
+          text: "Селективность вводного УЗО 100 мА тип S с групповыми 30 мА предварительно обеспечивается по принципу применения временной задержки (тип S); окончательная проверка — по времятоковым характеристикам конкретных аппаратов выбранного производителя",
+          ok: true,
+        },
       ];
 
 
