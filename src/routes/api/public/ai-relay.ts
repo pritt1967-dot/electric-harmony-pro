@@ -65,6 +65,8 @@ export const Route = createFileRoute("/api/public/ai-relay")({
           payload = {
             model: "google/gemini-3.6-flash",
             temperature: 0,
+            top_p: 0,
+            seed: 20260916,
             messages: [
               { role: "system", content: system },
               { role: "user", content: prompt },
