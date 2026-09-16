@@ -158,11 +158,21 @@ async function callGateway(
 }
 
 
+/**
+ * Кэш готовых расчётов: одинаковые исходные данные всегда дают один и тот же
+ * проект (модель сама по себе не гарантирует побайтовую повторяемость).
+ */
+const designCache = new Map<string, PanelDesign>();
+
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .inputValidator((input: PanelInput) => input)
   .handler(async ({ data, context }): Promise<DesignPanelResult> => {
     await assertAdmin(context as never);
+
+    const cacheKey = JSON.stringify(data);
+    const cached = designCache.get(cacheKey);
+    if (cached) return { ok: true, design: cached };
 
 
 
@@ -411,7 +421,12 @@ ${data.lines_text}`;
       );
       if (response.error) return response.error;
       const design = parse(response.text ?? "");
-      if (design) return { ok: true, design: auditDesign(design) };
+      if (design) {
+        const audited = auditDesign(design);
+        if (designCache.size > 20) designCache.clear();
+        designCache.set(cacheKey, audited);
+        return { ok: true, design: audited };
+      }
     }
     return { ok: false, code: "unavailable", message: "Модель не вернула расчёт. Попробуйте ещё раз." };
   });
