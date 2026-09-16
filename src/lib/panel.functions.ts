@@ -519,6 +519,18 @@ ${data.lines_text}`;
         const audited = auditDesign(design);
         if (designCache.size > 20) designCache.clear();
         designCache.set(cacheKey, audited);
+        // Устойчивая повторяемость: тот же ввод всегда отдаёт этот же проект,
+        // даже после перезапуска сервера.
+        await supabaseAdmin
+          .from("panel_designs")
+          .upsert(
+            { title: cacheTitle, input: calcData as never, design: audited as never, image: "" },
+            { onConflict: "title" },
+          )
+          .then(
+            () => undefined,
+            () => undefined,
+          );
         return { ok: true, design: audited };
       }
     }
