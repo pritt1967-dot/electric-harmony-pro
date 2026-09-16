@@ -523,10 +523,7 @@ ${data.lines_text}`;
         // даже после перезапуска сервера.
         await supabaseAdmin
           .from("panel_designs")
-          .upsert(
-            { title: cacheTitle, input: calcData as never, design: audited as never, image: "" },
-            { onConflict: "title" },
-          )
+          .insert({ title: cacheTitle, input: calcData as never, design: audited as never, image: "" })
           .then(
             () => undefined,
             () => undefined,
