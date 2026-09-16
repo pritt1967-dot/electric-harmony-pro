@@ -324,13 +324,30 @@ ${data.lines_text}`;
       if (!chain.includes("реле")) {
         add("error", "В цепи защиты нет реле контроля напряжения.", "Добавить реле напряжения после вводного автомата, по одному на фазу или трёхфазное.");
       }
-      const lines = d.lines ?? [];
-      const noRcd = lines.filter((l) => !l.rcd || !String(l.rcd).trim());
+      const noRcd = linesAll.filter((l) => !l.rcd || !String(l.rcd).trim());
       if (noRcd.length) {
         add("warning", `Линии без дифференциальной защиты: ${noRcd.map((l) => l.mark).join(", ")}.`, "Проверить, обоснованно ли отсутствие УЗО на этих линиях.");
       }
 
-      return { ...d, issues };
+      const checks = [
+        ...(d.checks ?? []),
+        { text: `Занято ${used} мод., свободно ${reserve} мод. (${reservePct} % резерва), корпус ${enclosure} мод., ${rails.length} рейки по ${capacity}`, ok: reserve >= used * 0.2 },
+        { text: `Линий в проекте: ${linesAll.length}, групп УЗО: ${rcds.length}`, ok: true },
+      ];
+
+      return {
+        ...d,
+        rails,
+        checks,
+        issues,
+        summary: {
+          ...d.summary,
+          used_modules: used,
+          reserve_modules: reserve,
+          enclosure_modules: enclosure,
+          enclosure: d.summary?.enclosure?.replace(/\d+\s*модул\w*/i, `${enclosure} модулей`) || `Настенный щит ${enclosure} модулей`,
+        },
+      };
     }
 
     function parse(text: string): PanelDesign | null {
