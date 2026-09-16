@@ -634,17 +634,32 @@ ${data.lines_text}`;
         const socketLines = marks
           .map((m) => byMark.get(m))
           .filter((l) => l && /розет/i.test(l.name ?? ""));
-        if (socketLines.length > 4) {
+        if (socketLines.length > 3) {
           const names = socketLines.map((l) => `${l!.mark} ${l!.name}`).join(", ");
-          const half = Math.ceil(socketLines.length / 2);
           add(
             "warning",
-            `Эксплуатационное замечание: под УЗО ${g.mark} объединены ${socketLines.length} розеточных линий независимых помещений (${names}). Одно срабатывание обесточит розетки во всех этих помещениях сразу.`,
-            `Разделить на две группы 30 мА тип A: первые ${half} линий оставить на ${g.mark}, остальные перевести на новое УЗО (+2 модуля и отдельная N-шина). Электрических нарушений в текущем варианте нет — решение эксплуатационное.`,
+            `Под УЗО ${g.mark} осталось ${socketLines.length} розеточных линий независимых помещений (${names}).`,
+            "Разделить группу: не более 3 розеточных линий на одно УЗО 30 мА, каждой группе — своя изолированная N-шина.",
           );
         } else if (marks.length > 6) {
           add("warning", `УЗО ${g.mark} защищает ${marks.length} линий.`, "Рассмотреть разделение группы: при утечке обесточивается большой объём нагрузки.");
         }
+        if ((g.type ?? "").trim().toUpperCase() !== "A") {
+          add("warning", `УЗО ${g.mark}: тип «${g.type || "не указан"}» вместо типа A.`, "Для бытовых групповых линий применять тип A (или F/B по характеру нагрузки с обоснованием).");
+        }
+        if (!/30/.test(g.leakage ?? "")) {
+          add("warning", `УЗО ${g.mark}: IΔn «${g.leakage || "не указан"}» вместо 30 мА.`, "Для групп защиты людей применять IΔn 30 мА.");
+        }
+        if (rating && mainA && rating > mainA * 2) {
+          add("info", `УЗО ${g.mark} ${rating} А значительно превышает вводной автомат ${mainA} А.`, "Согласовать номинал группы с вводным устройством.");
+        }
+        if (!/n-шин|n шин|нулев/i.test(g.note ?? "")) {
+          add("warning", `Для УЗО ${g.mark} не подтверждена отдельная изолированная N-шина.`, "Указать в проекте: N каждой группы выведен на свою изолированную шину, объединение нулей после разных УЗО не допускается.");
+        }
+        groupChecks.push({
+          text: `${g.mark}: ${rating || "?"} А, тип ${g.type || "?"}, IΔn ${g.leakage || "?"}, линий ${marks.length} (розеточных ${socketLines.length}), сумма расчётных токов ${Math.round(sum)} А, отдельная N-шина`,
+          ok: Boolean(rating) && (g.type ?? "").trim().toUpperCase() === "A" && /30/.test(g.leakage ?? "") && socketLines.length <= 3 && (!rating || sum <= rating * 1.6),
+        });
         for (const m of marks) assigned.set(m, [...(assigned.get(m) ?? []), g.mark]);
       }
       for (const l of linesAll) {
