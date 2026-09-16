@@ -200,6 +200,28 @@ ${data.lines_text}`;
     /** Детерминированная проверка расчёта: то, что нельзя доверять только модели. */
     function auditDesign(input: PanelDesign): PanelDesign {
       let d = input;
+      // --- чистка искажений в текстах (защита от автозамен и транслитерации)
+      const FIX: [RegExp, string][] = [
+        [/\bУ\s?[Зз]о\b/g, "УЗО"],
+        [/\b(\d+)\s*м(?:ая|ая\.|аи)\b/gi, "$1 мА"],
+        [/\bмилиампер\w*/gi, "мА"],
+        [/\bСвет\s+Пляж\w*/gi, "Освещение"],
+        [/\bСвет\s+Стран\w*/gi, "Освещение"],
+        [/\bпоздний\b/gi, ""],
+        [/\s{2,}/g, " "],
+      ];
+      const fix = (t: unknown) =>
+        typeof t === "string" ? FIX.reduce((acc, [re, to]) => acc.replace(re, to), t).trim() : t;
+      const clean = <T,>(v: T): T => {
+        if (typeof v === "string") return fix(v) as T;
+        if (Array.isArray(v)) return v.map(clean) as T;
+        if (v && typeof v === "object") {
+          return Object.fromEntries(Object.entries(v).map(([k, val]) => [k, clean(val)])) as T;
+        }
+        return v;
+      };
+      d = clean(d);
+
       const issues = [...(d.issues ?? [])];
       const add = (severity: "error" | "warning" | "info", text: string, fix: string) =>
         issues.push({ severity, text, fix } as PanelDesign["issues"][number]);
@@ -297,28 +319,6 @@ ${data.lines_text}`;
           add("error", `Линия «${hit[0]!.name}» объединяет ${label} с другими потребителями.`, "Вынести потребителя на отдельную линию.");
         }
       }
-      // --- чистка искажений в текстах (защита от автозамен и транслитерации)
-      const FIX: [RegExp, string][] = [
-        [/\bУ\s?[Зз]о\b/g, "УЗО"],
-        [/\b(\d+)\s*м(?:ая|ая\.|аи)\b/gi, "$1 мА"],
-        [/\bмилиампер\w*/gi, "мА"],
-        [/\bСвет\s+Пляж\w*/gi, "Освещение"],
-        [/\bСвет\s+Стран\w*/gi, "Освещение"],
-        [/\bпоздний\b/gi, ""],
-        [/\s{2,}/g, " "],
-      ];
-      const fix = (t: unknown) =>
-        typeof t === "string" ? FIX.reduce((acc, [re, to]) => acc.replace(re, to), t).trim() : t;
-      const clean = <T,>(v: T): T => {
-        if (typeof v === "string") return fix(v) as T;
-        if (Array.isArray(v)) return v.map(clean) as T;
-        if (v && typeof v === "object") {
-          return Object.fromEntries(Object.entries(v).map(([k, val]) => [k, clean(val)])) as T;
-        }
-        return v;
-      };
-      d = clean(d);
-
       const clash = linesAll.filter((l) => /^QF1$/i.test((l.mark ?? "").trim()));
       if (clash.length) {
         add("error", "Маркировка QF1 занята вводным автоматом, но использована для групповой линии.", "Перенумеровать групповые автоматы начиная с QF2.");
