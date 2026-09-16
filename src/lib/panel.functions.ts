@@ -161,8 +161,17 @@ async function callGateway(
 /**
  * Кэш готовых расчётов: одинаковые исходные данные всегда дают один и тот же
  * проект (модель сама по себе не гарантирует побайтовую повторяемость).
+ * Память — быстрый слой, таблица panel_designs — устойчивый слой между
+ * перезапусками и экземплярами сервера (служебные записи скрыты из списка).
  */
 const designCache = new Map<string, PanelDesign>();
+
+const CACHE_PREFIX = "__cache__";
+function hashKey(value: string) {
+  let h = 5381;
+  for (let i = 0; i < value.length; i += 1) h = ((h << 5) + h + value.charCodeAt(i)) >>> 0;
+  return `${CACHE_PREFIX}${h.toString(36)}-${value.length.toString(36)}`;
+}
 
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
@@ -172,8 +181,23 @@ export const designPanel = createServerFn({ method: "POST" })
 
     const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
     const cacheKey = JSON.stringify(calcData);
+    const cacheTitle = hashKey(cacheKey);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const stored = await supabaseAdmin
+      .from("panel_designs")
+      .select("design")
+      .eq("title", cacheTitle)
+      .maybeSingle();
+    if (stored.data?.design) {
+      const design = stored.data.design as unknown as PanelDesign;
+      designCache.set(cacheKey, design);
+      return { ok: true, design };
+    }
+
+
 
 
 
@@ -385,11 +409,75 @@ ${data.lines_text}`;
         add("warning", `Линии без дифференциальной защиты: ${noRcd.map((l) => l.mark).join(", ")}.`, "Проверить, обоснованно ли отсутствие УЗО на этих линиях.");
       }
 
+      // --- координация «кабель ↔ автомат ↔ расчётный ток» по каждой линии
+      const CABLE_LIMIT: Record<string, number> = {
+        "1.5": 16, "2.5": 25, "4": 32, "6": 40, "10": 50, "16": 63,
+      };
+      for (const l of linesAll) {
+        const sec = /[хx*]\s*([\d.,]+)/i.exec(l.cable ?? "")?.[1]?.replace(",", ".");
+        const inA = Number(/(\d+)/.exec(l.breaker ?? "")?.[1] ?? 0);
+        const limit = sec ? CABLE_LIMIT[sec] : undefined;
+        if (limit && inA && inA > limit) {
+          add("error", `${l.mark} «${l.name}»: автомат ${l.breaker} больше допустимого тока кабеля ${sec} мм² (≈${limit} А).`, `Увеличить сечение кабеля или снизить номинал автомата до ${limit} А и ниже.`);
+        }
+        if (inA && Number(l.current_a) > inA) {
+          add("error", `${l.mark} «${l.name}»: расчётный ток ${l.current_a} А выше номинала автомата ${inA} А.`, "Поднять номинал автомата на ступень и проверить сечение кабеля.");
+        }
+        if (/освещен|подсветк|свет/i.test(l.name ?? "") && /^C/i.test((l.breaker ?? "").trim())) {
+          add("warning", `${l.mark} «${l.name}»: для линии освещения выбрана характеристика C.`, "Применить характеристику B (B6/B10).");
+        }
+      }
+
+      // --- групповые УЗО: номинал против суммы токов и принадлежность линий
+      const byMark = new Map(linesAll.map((l) => [l.mark, l]));
+      const assigned = new Map<string, string[]>();
+      for (const g of rcds) {
+        if (/100|300/.test(g.leakage ?? "")) continue;
+        const marks = (g.lines ?? []).map((t) => /QF\d+/i.exec(String(t))?.[0] ?? "").filter(Boolean);
+        const sum = marks.reduce((s, m) => s + Number(byMark.get(m)?.current_a ?? 0), 0);
+        const rating = Number(/(\d+)/.exec(g.rating ?? "")?.[1] ?? 0);
+        if (rating && sum > rating * 1.6) {
+          add("warning", `УЗО ${g.mark} ${rating} А: сумма расчётных токов линий ${Math.round(sum)} А.`, "Увеличить номинал УЗО или разделить группу.");
+        }
+        if (marks.length > 6) {
+          add("warning", `УЗО ${g.mark} защищает ${marks.length} линий.`, "Разделить группу: при утечке обесточивается слишком много помещений.");
+        }
+        for (const m of marks) assigned.set(m, [...(assigned.get(m) ?? []), g.mark]);
+      }
+      for (const l of linesAll) {
+        const owners = assigned.get(l.mark) ?? [];
+        if (owners.length > 1) {
+          add("error", `Линия ${l.mark} отнесена сразу к нескольким УЗО 30 мА (${owners.join(", ")}).`, "Оставить линию в одной группе: нули разных УЗО объединять нельзя.");
+        }
+        if (!owners.length && l.rcd && !/100|300/.test(String(l.rcd))) {
+          add("warning", `Линия ${l.mark} указывает УЗО ${l.rcd}, но в составе групп её нет.`, "Синхронизировать состав групп УЗО с таблицей линий.");
+        }
+      }
+
+      // --- таблица и раскладка реек должны описывать один и тот же щит
+      const railMarks = new Set(rails.flatMap((r) => (r.items ?? []).map((i) => i.mark)));
+      const missingOnRails = linesAll.filter((l) => !railMarks.has(l.mark));
+      if (missingOnRails.length) {
+        add("error", `Нет на DIN-рейках: ${missingOnRails.map((l) => l.mark).join(", ")}.`, "Разместить все аппараты таблицы на рейках — схема и раскладка должны совпадать.");
+      }
+
+      // --- перекос фаз
+      const phases = d.phase_load ?? [];
+      if (phases.length > 1) {
+        const kws = phases.map((p) => Number(p.kw) || 0);
+        const max = Math.max(...kws), min = Math.min(...kws);
+        if (max > 0 && (max - min) / max > 0.3) {
+          add("warning", `Перекос фаз: ${kws.map((k) => `${k} кВт`).join(" / ")}.`, "Перераспределить однофазные линии между фазами.");
+        }
+      }
+
       const checks = [
         ...(d.checks ?? []),
         { text: `Занято ${used} мод., свободно ${reserve} мод. (${reservePct} % резерва), корпус ${enclosure} мод., ${rails.length} рейки по ${capacity}`, ok: reserve >= used * 0.2 },
         { text: `Линий в проекте: ${linesAll.length}, групп УЗО: ${rcds.length}`, ok: true },
+        { text: "Селективность вводного УЗО 100 мА тип S с групповыми 30 мА подтверждается только по каталожным характеристикам выбранного производителя", ok: true },
       ];
+
 
       return {
         ...d,
@@ -431,6 +519,15 @@ ${data.lines_text}`;
         const audited = auditDesign(design);
         if (designCache.size > 20) designCache.clear();
         designCache.set(cacheKey, audited);
+        // Устойчивая повторяемость: тот же ввод всегда отдаёт этот же проект,
+        // даже после перезапуска сервера.
+        await supabaseAdmin
+          .from("panel_designs")
+          .insert({ title: cacheTitle, input: calcData as never, design: audited as never, image: "" })
+          .then(
+            () => undefined,
+            () => undefined,
+          );
         return { ok: true, design: audited };
       }
     }
