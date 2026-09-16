@@ -10,6 +10,16 @@ export type PanelInput = {
   ip: string;
   lines_text: string;
   notes: string;
+  /** Площадь объекта, м² (0 — не указана). */
+  area_m2?: number;
+  /** Марка и сечение вводного кабеля. */
+  input_cable?: string;
+  /** Перечень помещений объекта. */
+  rooms_text?: string;
+  /** Карточка проекта (не влияет на расчёт). */
+  customer?: string;
+  address?: string;
+  doc_date?: string;
 };
 
 export type PanelLine = {
