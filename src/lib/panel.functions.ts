@@ -192,23 +192,62 @@ ${data.lines_text}`;
       const add = (severity: "error" | "warning" | "info", text: string, fix: string) =>
         issues.push({ severity, text, fix } as PanelDesign["issues"][number]);
 
-      const rails = d.rails ?? [];
-      const capacity = rails.length ? Math.round((d.summary?.enclosure_modules ?? 0) / rails.length) : 0;
-      if (capacity > 0) {
-        for (const rail of rails) {
-          const sum = (rail.items ?? []).reduce((s, i) => s + (i.modules ?? 0), 0);
-          if (sum > capacity) {
+      // --- единый итог: рейки, занятые модули, резерв и корпус считаются здесь
+      const srcRails = d.rails ?? [];
+      const capacity = 18;
+      const devices = srcRails
+        .flatMap((r) => r.items ?? [])
+        .filter((i) => !/резерв|reserve|свободн/i.test(`${i.mark} ${i.label}`))
+        .map((i) => ({ ...i, modules: Math.max(1, Math.round(i.modules || 1)) }));
+
+      let rails: PanelRail[] = srcRails;
+      let used = devices.reduce((s, i) => s + i.modules, 0);
+      let enclosure = d.summary?.enclosure_modules ?? 0;
+
+      if (devices.length) {
+        const needed = Math.ceil(used * 1.2);
+        const fromRow = ENCLOSURE_SIZES.find((s) => s >= needed && s % capacity === 0);
+        enclosure = fromRow ?? Math.ceil(needed / capacity) * capacity;
+        const railCount = Math.max(1, Math.round(enclosure / capacity));
+
+        const overflow = srcRails.some(
+          (r) => (r.items ?? []).reduce((s, i) => s + (i.modules || 0), 0) > capacity,
+        );
+
+        const packed: PanelRail[] = [];
+        let queue = [...devices];
+        for (let r = 0; r < railCount; r++) {
+          const items: PanelRail["items"] = [];
+          let free = capacity;
+          while (queue.length && queue[0]!.modules <= free) {
+            const item = queue.shift()!;
+            items.push(item);
+            free -= item.modules;
+          }
+          if (free > 0) items.push({ mark: "RESERVE", label: `Свободно (${free} мод.)`, modules: free });
+          packed.push({ index: r + 1, title: srcRails[r]?.title ?? `Рейка ${r + 1}`, items });
+        }
+        if (queue.length) {
+          const rest = queue.reduce((s, i) => s + i.modules, 0);
+          add(
+            "error",
+            `Аппараты на ${rest} мод. не поместились в корпус ${enclosure} мод.`,
+            "Выбрать корпус большего типоразмера или вынести часть групп в отдельный щит.",
+          );
+        } else {
+          rails = packed;
+          if (overflow) {
             add(
-              "error",
-              `Рейка ${rail.index ?? ""}: занято ${sum} модулей при вместимости ${capacity}.`,
-              "Перенести часть аппаратов на соседнюю рейку или выбрать корпус большего размера.",
+              "info",
+              `Раскладка выровнена автоматически: на рейке было больше ${capacity} модулей, аппараты перенесены на следующую рейку.`,
+              "Проверить порядок групп на рейках перед сборкой.",
             );
           }
         }
       }
 
-      const used = d.summary?.used_modules ?? 0;
-      const reserve = d.summary?.reserve_modules ?? 0;
+      const reserve = Math.max(0, enclosure - used);
+      const reservePct = used ? Math.round((reserve / used) * 100) : 0;
       if (used > 0 && reserve < used * 0.2) {
         add(
           "error",
@@ -217,7 +256,62 @@ ${data.lines_text}`;
         );
       }
 
+      // --- линии: полнота данных, обязательные отдельные линии, формулировки
+      const linesAll = d.lines ?? [];
+      const incomplete = linesAll.filter(
+        (l) => !l.name?.trim() || !l.cable?.trim() || !l.breaker?.trim() || !l.modules,
+      );
+      if (incomplete.length) {
+        add(
+          "error",
+          `Не заполнены данные линий: ${incomplete.map((l) => l.mark).join(", ")}.`,
+          "Указать назначение, кабель, автомат и количество модулей для каждой линии.",
+        );
+      }
+      const MUST_BE_SEPARATE: [string, RegExp][] = [
+        ["стиральная машина", /стиральн/i],
+        ["посудомоечная машина", /посудомо/i],
+        ["электрическая духовка", /духов/i],
+        ["холодильник", /холодильник/i],
+        ["газовый котёл", /кот[её]л/i],
+        ["утюг", /утюг/i],
+        ["наружные розетки", /наружн\w*\s+розетк|уличн\w*\s+розетк/i],
+      ];
+      for (const [label, re] of MUST_BE_SEPARATE) {
+        const hit = linesAll.filter((l) => re.test(l.name ?? ""));
+        if (!hit.length) {
+          add("warning", `В проекте нет отдельной линии: ${label}.`, "Добавить выделенную линию для этого потребителя.");
+        } else if (hit.some((l) => /\+|,|и\s/i.test(l.name.replace(/^[^:]*:/, "")))) {
+          add("error", `Линия «${hit[0]!.name}» объединяет ${label} с другими потребителями.`, "Вынести потребителя на отдельную линию.");
+        }
+      }
+      const badNote = linesAll.filter(
+        (l) => !/^(Объединено, потому что|Отдельная линия, потому что)/i.test((l.note ?? "").trim()),
+      );
+      if (badNote.length) {
+        add(
+          "warning",
+          `Нет обоснования решения по линиям: ${badNote.map((l) => l.mark).join(", ")}.`,
+          "Дополнить пояснение «Объединено, потому что …» или «Отдельная линия, потому что …».",
+        );
+      }
+
       const rcds = d.rcd_groups ?? [];
+      const mainA = Number(/(\d+)/.exec(d.summary?.main_breaker ?? "")?.[1] ?? 0);
+      const fire = rcds.find((g) => /100|300/.test(g.leakage ?? ""));
+      const fireA = Number(/(\d+)/.exec(fire?.rating ?? "")?.[1] ?? 0);
+      if (fire && mainA && fireA && fireA < mainA) {
+        add(
+          "error",
+          `Противопожарное УЗО ${fire.mark} ${fireA} А меньше вводного автомата ${mainA} А.`,
+          "Выбрать номинал противопожарного УЗО на ступень выше вводного автомата.",
+        );
+      }
+      for (const g of rcds) {
+        if (!g.leakage?.trim() || !g.type?.trim() || !g.rating?.trim()) {
+          add("warning", `У УЗО ${g.mark} не указан номинал, тип или ток утечки.`, "Дополнить параметры аппарата.");
+        }
+      }
       if (!rcds.some((g) => /100|300/.test(g.leakage ?? "") && /S/i.test(g.type ?? ""))) {
         add("error", "Не найдено вводное противопожарное селективное УЗО 100 мА типа S.", "Установить 4P (или 2P) УЗО 100 мА тип S сразу после вводного автомата.");
       }
