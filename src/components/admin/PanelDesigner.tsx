@@ -129,6 +129,7 @@ export function PanelDesigner() {
     const { data } = await supabase
       .from("panel_designs")
       .select("id, title, created_at, updated_at")
+      .not("title", "like", "\\_\\_cache\\_\\_%")
       .order("updated_at", { ascending: false });
     setSessions((data ?? []) as Session[]);
   }, []);
