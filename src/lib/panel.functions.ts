@@ -178,6 +178,59 @@ ${data.lines_text}`;
       return { text: json.choices?.[0]?.message?.content ?? "" };
     }
 
+    /** Детерминированная проверка расчёта: то, что нельзя доверять только модели. */
+    function auditDesign(d: PanelDesign): PanelDesign {
+      const issues = [...(d.issues ?? [])];
+      const add = (severity: "error" | "warning" | "info", text: string, fix: string) =>
+        issues.push({ severity, text, fix } as PanelDesign["issues"][number]);
+
+      const rails = d.rails ?? [];
+      const capacity = rails.length ? Math.round((d.summary?.enclosure_modules ?? 0) / rails.length) : 0;
+      if (capacity > 0) {
+        for (const rail of rails) {
+          const sum = (rail.items ?? []).reduce((s, i) => s + (i.modules ?? 0), 0);
+          if (sum > capacity) {
+            add(
+              "error",
+              `Рейка ${rail.index ?? ""}: занято ${sum} модулей при вместимости ${capacity}.`,
+              "Перенести часть аппаратов на соседнюю рейку или выбрать корпус большего размера.",
+            );
+          }
+        }
+      }
+
+      const used = d.summary?.used_modules ?? 0;
+      const reserve = d.summary?.reserve_modules ?? 0;
+      if (used > 0 && reserve < used * 0.2) {
+        add(
+          "error",
+          `Резерв ${reserve} мод. меньше 20 % от занятых (${used} мод.).`,
+          "Выбрать корпус на следующий типоразмер из ряда 12/18/24/36/48/54/72/96 модулей.",
+        );
+      }
+
+      const rcds = d.rcd_groups ?? [];
+      if (!rcds.some((g) => /100|300/.test(g.leakage ?? "") && /S/i.test(g.type ?? ""))) {
+        add("error", "Не найдено вводное противопожарное селективное УЗО 100 мА типа S.", "Установить 4P (или 2P) УЗО 100 мА тип S сразу после вводного автомата.");
+      }
+      for (const g of rcds) {
+        if ((g.type ?? "").trim().toUpperCase() === "AC") {
+          add("warning", `УЗО ${g.mark}: тип AC устарел для бытовых линий.`, "Заменить на тип A.");
+        }
+      }
+      const chain = (d.protection_chain ?? []).join(" ").toLowerCase();
+      if (!chain.includes("реле")) {
+        add("error", "В цепи защиты нет реле контроля напряжения.", "Добавить реле напряжения после вводного автомата, по одному на фазу или трёхфазное.");
+      }
+      const lines = d.lines ?? [];
+      const noRcd = lines.filter((l) => !l.rcd || !String(l.rcd).trim());
+      if (noRcd.length) {
+        add("warning", `Линии без дифференциальной защиты: ${noRcd.map((l) => l.mark).join(", ")}.`, "Проверить, обоснованно ли отсутствие УЗО на этих линиях.");
+      }
+
+      return { ...d, issues };
+    }
+
     function parse(text: string): PanelDesign | null {
       const cleaned = text
         .replace(/^```(?:json)?/i, "")
