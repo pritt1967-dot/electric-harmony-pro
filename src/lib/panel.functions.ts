@@ -176,6 +176,19 @@ function hashKey(value: string) {
   return `${CACHE_PREFIX}${h.toString(36)}-${value.length.toString(36)}`;
 }
 
+/** Ключ не зависит от порядка полей формы — только от их значений. */
+function stableKey(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableKey).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${JSON.stringify(k)}:${stableKey(v)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .inputValidator((input: PanelInput) => input)
@@ -183,7 +196,7 @@ export const designPanel = createServerFn({ method: "POST" })
     await assertAdmin(context as never);
 
     const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
-    const cacheKey = JSON.stringify(calcData);
+    const cacheKey = stableKey(calcData);
     const cacheTitle = hashKey(cacheKey);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
@@ -191,11 +204,14 @@ export const designPanel = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const stored = await supabaseAdmin
       .from("panel_designs")
-      .select("design")
+      .select("design, input")
       .eq("title", cacheTitle)
-      .maybeSingle();
-    if (stored.data?.design) {
-      const design = stored.data.design as unknown as PanelDesign;
+      .order("created_at", { ascending: true })
+      .limit(1);
+    const row = stored.data?.[0];
+    // Совпадение хэша перепроверяем по самим исходным данным.
+    if (row?.design && stableKey(row.input) === cacheKey) {
+      const design = row.design as unknown as PanelDesign;
       designCache.set(cacheKey, design);
       return { ok: true, design };
     }
