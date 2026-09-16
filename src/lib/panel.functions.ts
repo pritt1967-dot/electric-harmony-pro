@@ -63,6 +63,10 @@ const SYSTEM = `Ты — инженер-проектировщик низков�
 }
 Все тексты (кроме image_prompt) — на русском языке.`;
 
+/** Адрес AI-реле Lovable по умолчанию (там доступен управляемый LOVABLE_API_KEY). */
+const DEFAULT_RELAY_URL =
+  "https://project--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app/api/public/ai-relay";
+
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
