@@ -170,7 +170,8 @@ export const designPanel = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<DesignPanelResult> => {
     await assertAdmin(context as never);
 
-    const cacheKey = JSON.stringify(data);
+    const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
+    const cacheKey = JSON.stringify(calcData);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
 
