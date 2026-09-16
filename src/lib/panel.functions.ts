@@ -288,6 +288,122 @@ ${data.lines_text}`;
       const add = (severity: "error" | "warning" | "info", text: string, fix: string) =>
         issues.push({ severity, text, fix } as PanelDesign["issues"][number]);
 
+      // --- разделение перегруженных розеточных групп: не более 3 розеточных
+      // линий независимых помещений под одним УЗО 30 мА. Разделение
+      // детерминированное: состав, номиналы, модули, рейки и спецификация
+      // пересобираются из одного и того же итогового расчёта.
+      {
+        const groups = (d.rcd_groups ?? []).map((g) => ({ ...g, lines: [...(g.lines ?? [])] }));
+        const lines = (d.lines ?? []).map((l) => ({ ...l }));
+        const railsSrc = (d.rails ?? []).map((r) => ({ ...r, items: [...(r.items ?? [])] }));
+        const spec = (d.spec ?? []).map((s) => ({ ...s }));
+        const byLine = new Map(lines.map((l) => [l.mark, l]));
+        const usedNums = new Set(
+          groups.map((g) => Number(/QD(\d+)/i.exec(g.mark ?? "")?.[1] ?? 0)).filter(Boolean),
+        );
+        let nextNum = 2;
+        const nextMark = () => {
+          while (usedNums.has(nextNum)) nextNum += 1;
+          usedNums.add(nextNum);
+          return `QD${nextNum}`;
+        };
+        const sumA = (ms: string[]) =>
+          ms.reduce((s, m) => s + Number(byLine.get(m)?.current_a ?? 0), 0);
+        const rateFor = (ms: string[]) => {
+          const s = sumA(ms);
+          return [25, 40, 63, 80].find((r) => r >= s * 1.25) ?? 63;
+        };
+        const created: { mark: string; rating: number; modules: number }[] = [];
+
+        for (const g of [...groups]) {
+          if (/100|300/.test(g.leakage ?? "")) continue;
+          const marks = g.lines
+            .map((t) => /QF\d+/i.exec(String(t))?.[0] ?? "")
+            .filter(Boolean);
+          const sockets = marks.filter((m) => /розет/i.test(byLine.get(m)?.name ?? ""));
+          if (sockets.length <= 3) continue;
+
+          const parts = Math.ceil(sockets.length / 3);
+          const per = Math.ceil(sockets.length / parts);
+          const chunks: string[][] = [];
+          for (let i = 0; i < sockets.length; i += per) chunks.push(sockets.slice(i, i + per));
+          const keep = chunks.shift() ?? [];
+          const others = marks.filter((m) => !sockets.includes(m));
+
+          g.lines = [...others, ...keep];
+          g.type = "A";
+          g.leakage = "30 мА";
+          g.rating = `${rateFor(g.lines)}А`;
+          g.note = `Линии: ${g.lines.join(", ")}. Отдельная изолированная N-шина группы. Сумма расчётных токов ${Math.round(sumA(g.lines))} А.`;
+
+          const template = railsSrc.flatMap((r) => r.items).find((i) => i.mark === g.mark);
+          const modules = Math.max(2, Math.round(template?.modules ?? 2));
+
+          for (const chunk of chunks) {
+            const mark = nextMark();
+            const rating = rateFor(chunk);
+            groups.push({
+              mark,
+              rating: `${rating}А`,
+              type: "A",
+              leakage: "30 мА",
+              lines: [...chunk],
+              note: `Выделено из ${g.mark}, чтобы одно срабатывание не обесточивало розетки всех комнат. Линии: ${chunk.join(", ")}. Отдельная изолированная N-шина. Сумма расчётных токов ${Math.round(sumA(chunk))} А.`,
+            });
+            for (const m of chunk) {
+              const l = byLine.get(m);
+              if (l) l.rcd = mark;
+            }
+            const target =
+              railsSrc.find((r) => r.items.some((i) => i.mark === g.mark)) ?? railsSrc[0];
+            if (target) {
+              const idx = target.items.findIndex((i) => i.mark === g.mark);
+              target.items.splice(idx + 1, 0, {
+                mark,
+                label: `УЗО ${rating}А тип A 30 мА`,
+                modules,
+              });
+            }
+            created.push({ mark, rating, modules });
+            add(
+              "info",
+              `Группа ${g.mark} разделена: розеточные линии ${chunk.join(", ")} переведены на новое УЗО ${mark} ${rating} А тип A 30 мА.`,
+              "Под одним УЗО 30 мА оставлено не более 3 розеточных линий независимых помещений; у новой группы своя изолированная N-шина.",
+            );
+          }
+        }
+
+        if (created.length) {
+          let pos = spec.reduce((m, s) => Math.max(m, Number(s.pos) || 0), 0);
+          for (const c of created) {
+            pos += 1;
+            spec.push({
+              pos,
+              name: `УЗО ${c.rating} А тип A, 30 мА (выделенная розеточная группа ${c.mark})`,
+              manufacturer: "",
+              model: "",
+              rating: `${c.rating}А 30 мА тип A`,
+              modules: c.modules,
+              qty: 1,
+              unit: "шт",
+            });
+            pos += 1;
+            spec.push({
+              pos,
+              name: `Шина нулевая изолированная на DIN-рейку для группы ${c.mark}`,
+              manufacturer: "",
+              model: "",
+              rating: "",
+              modules: 0,
+              qty: 1,
+              unit: "шт",
+            });
+          }
+          d = { ...d, rcd_groups: groups, lines, rails: railsSrc, spec };
+        }
+      }
+
+
       // --- единый итог: рейки, занятые модули, резерв и корпус считаются здесь
       const srcRails = d.rails ?? [];
       const capacity = 18;
