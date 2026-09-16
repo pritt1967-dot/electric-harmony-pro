@@ -623,6 +623,7 @@ ${data.lines_text}`;
       // --- групповые УЗО: номинал против суммы токов и принадлежность линий
       const byMark = new Map(linesAll.map((l) => [l.mark, l]));
       const assigned = new Map<string, string[]>();
+      const groupChecks: { text: string; ok: boolean }[] = [];
       for (const g of rcds) {
         if (/100|300/.test(g.leakage ?? "")) continue;
         const marks = (g.lines ?? []).map((t) => /QF\d+/i.exec(String(t))?.[0] ?? "").filter(Boolean);
