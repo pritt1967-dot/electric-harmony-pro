@@ -199,7 +199,11 @@ export const designPanel = createServerFn({ method: "POST" })
     await assertAdmin(context as never);
 
     const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
-    const cacheKey = stableKey(calcData);
+    // Версия инженерных правил входит в ключ: при изменении правил старые
+    // сохранённые расчёты не подставляются, а новый ввод по-прежнему
+    // повторяется побайтово.
+    const RULES_VERSION = "v3-relay-decision-qd-split";
+    const cacheKey = stableKey({ ...calcData, __rules: RULES_VERSION });
     const cacheTitle = hashKey(cacheKey);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
