@@ -104,6 +104,12 @@ export const DEFAULT_PANEL_INPUT: PanelInput = {
   ip: "IP40",
   lines_text: "",
   notes: "",
+  area_m2: 0,
+  input_cable: "",
+  rooms_text: "",
+  customer: "",
+  address: "",
+  doc_date: "",
 };
 
 export const ENCLOSURE_SIZES = [12, 18, 24, 36, 48, 54, 72, 96];
