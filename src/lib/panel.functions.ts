@@ -161,8 +161,17 @@ async function callGateway(
 /**
  * Кэш готовых расчётов: одинаковые исходные данные всегда дают один и тот же
  * проект (модель сама по себе не гарантирует побайтовую повторяемость).
+ * Память — быстрый слой, таблица panel_designs — устойчивый слой между
+ * перезапусками и экземплярами сервера (служебные записи скрыты из списка).
  */
 const designCache = new Map<string, PanelDesign>();
+
+const CACHE_PREFIX = "__cache__";
+function hashKey(value: string) {
+  let h = 5381;
+  for (let i = 0; i < value.length; i += 1) h = ((h << 5) + h + value.charCodeAt(i)) >>> 0;
+  return `${CACHE_PREFIX}${h.toString(36)}-${value.length.toString(36)}`;
+}
 
 export const designPanel = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
@@ -172,8 +181,23 @@ export const designPanel = createServerFn({ method: "POST" })
 
     const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
     const cacheKey = JSON.stringify(calcData);
+    const cacheTitle = hashKey(cacheKey);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const stored = await supabaseAdmin
+      .from("panel_designs")
+      .select("design")
+      .eq("title", cacheTitle)
+      .maybeSingle();
+    if (stored.data?.design) {
+      const design = stored.data.design as unknown as PanelDesign;
+      designCache.set(cacheKey, design);
+      return { ok: true, design };
+    }
+
+
 
 
 
