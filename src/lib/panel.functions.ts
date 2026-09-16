@@ -815,7 +815,7 @@ ${data.lines_text}`;
         // даже после перезапуска сервера.
         await supabaseAdmin
           .from("panel_designs")
-          .insert({ title: cacheTitle, input: calcData as never, design: audited as never, image: "" })
+          .insert({ title: cacheTitle, input: { ...calcData, __rules: RULES_VERSION } as never, design: audited as never, image: "" })
           .then(
             () => undefined,
             () => undefined,
