@@ -445,8 +445,19 @@ ${data.lines_text}`;
         if (rating && sum > rating * 1.6) {
           add("warning", `УЗО ${g.mark} ${rating} А: сумма расчётных токов линий ${Math.round(sum)} А.`, "Увеличить номинал УЗО или разделить группу.");
         }
-        if (marks.length > 6) {
-          add("warning", `УЗО ${g.mark} защищает ${marks.length} линий.`, "Разделить группу: при утечке обесточивается слишком много помещений.");
+        const socketLines = marks
+          .map((m) => byMark.get(m))
+          .filter((l) => l && /розет/i.test(l.name ?? ""));
+        if (socketLines.length > 4) {
+          const names = socketLines.map((l) => `${l!.mark} ${l!.name}`).join(", ");
+          const half = Math.ceil(socketLines.length / 2);
+          add(
+            "warning",
+            `Эксплуатационное замечание: под УЗО ${g.mark} объединены ${socketLines.length} розеточных линий независимых помещений (${names}). Одно срабатывание обесточит розетки во всех этих помещениях сразу.`,
+            `Разделить на две группы 30 мА тип A: первые ${half} линий оставить на ${g.mark}, остальные перевести на новое УЗО (+2 модуля и отдельная N-шина). Электрических нарушений в текущем варианте нет — решение эксплуатационное.`,
+          );
+        } else if (marks.length > 6) {
+          add("warning", `УЗО ${g.mark} защищает ${marks.length} линий.`, "Рассмотреть разделение группы: при утечке обесточивается большой объём нагрузки.");
         }
         for (const m of marks) assigned.set(m, [...(assigned.get(m) ?? []), g.mark]);
       }
