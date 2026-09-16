@@ -199,7 +199,7 @@ ${data.lines_text}`;
       );
       if (response.error) return response.error;
       const design = parse(response.text ?? "");
-      if (design) return { ok: true, design };
+      if (design) return { ok: true, design: auditDesign(design) };
     }
     return { ok: false, code: "unavailable", message: "Модель не вернула расчёт. Попробуйте ещё раз." };
   });
