@@ -51,6 +51,47 @@ const EXAMPLE = `Освещение 1 этаж — 0.6 кВт
 Насосная станция — 1.5 кВт
 Гараж розетки — 3 кВт`;
 
+/** Типовой список линий дома по помещениям — с правилами объединения. */
+const ROOMS_TEMPLATE = `САНУЗЕЛ:
+- стиральная машина — отдельная линия
+- розетки санузла — одна линия
+- вентилятор + подсветка зеркала — одна линия
+- освещение — объединить с освещением 1 этажа
+
+ПРИХОЖАЯ:
+- все розетки — одна линия
+- освещение + свет перед входом — объединить с освещением 1 этажа
+
+КУХНЯ:
+- газовый котёл — отдельная линия
+- посудомоечная машина — отдельная линия
+- электрическая духовка — отдельная линия
+- холодильник — отдельная линия
+- микроволновка + рабочие кухонные розетки — одна линия
+- вытяжка + мелкая кухонная техника — одна линия
+- освещение кухни — объединить с освещением 1 этажа
+
+ХОЛЛ:
+- розетки + компьютер — одна линия
+- освещение — объединить с общей линией освещения
+
+СПАЛЬНЯ 1:
+- розетки + компьютер — одна линия
+- общий свет + дополнительные источники света — одна линия
+
+СПАЛЬНЯ 2:
+- розетки + телевизор — одна линия
+- утюг — отдельная линия
+- общий свет + дополнительные источники света — одна линия
+
+ЛЕСТНИЦА / ВЕРХНИЙ ХОЛЛ:
+- розетки — одна линия
+- освещение — одна линия
+
+НАРУЖНЫЕ ЛИНИИ:
+- подсветка дома — отдельная линия
+- наружные розетки — отдельная линия`;
+
 export function PanelDesigner() {
   const navigate = useNavigate();
   const run = useServerFn(designPanel);
@@ -460,7 +501,7 @@ export function PanelDesigner() {
         </div>
 
         <div className="mt-4 space-y-1.5">
-          <div className="flex items-center justify-between gap-2"><Label>Список линий (по одной в строке)</Label><div className="flex items-center gap-1"><Button type="button" variant="ghost" size="sm" onClick={pasteLines}>Вставить</Button><Button type="button" variant="ghost" size="sm" onClick={() => set("lines_text", EXAMPLE)}>Пример</Button></div></div>
+          <div className="flex items-center justify-between gap-2"><Label>Список линий (по одной в строке)</Label><div className="flex items-center gap-1"><Button type="button" variant="ghost" size="sm" onClick={pasteLines}>Вставить</Button><Button type="button" variant="ghost" size="sm" onClick={() => set("lines_text", EXAMPLE)}>Пример</Button><Button type="button" variant="ghost" size="sm" onClick={() => set("lines_text", ROOMS_TEMPLATE)}>Дом по комнатам</Button></div></div>
           <Textarea rows={10} className="font-mono text-sm" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder={"Освещение кухня — 0.5 кВт\nРозетки спальня — 2 кВт"} value={input.lines_text} onChange={(e) => set("lines_text", e.target.value)} onPaste={(e) => { const text = e.clipboardData?.getData("text/plain"); if (!text) return; e.preventDefault(); const el = e.currentTarget; const start = el.selectionStart ?? el.value.length; const end = el.selectionEnd ?? el.value.length; const next = el.value.slice(0, start) + text + el.value.slice(end); set("lines_text", next); requestAnimationFrame(() => { const pos = start + text.length; el.setSelectionRange(pos, pos); }); }} />
         </div>
 
@@ -497,6 +538,7 @@ export function PanelDesigner() {
         </ResultErrorBoundary>
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Спецификация</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["№","Наименование","Производитель","Модель","Номинал","Кол-во","Ед."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{[...(design.spec ?? []), ...(design.materials ?? [])].map((r,i)=><tr key={i} className="border-t"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.manufacturer}</td><td className="px-2 py-2">{r.model}</td><td className="px-2 py-2">{r.rating}</td><td className="px-2 py-2">{r.qty}</td><td className="px-2 py-2">{r.unit}</td></tr>)}</tbody></table></div></section>
         {(image || imgBusy) && <section className="rounded-xl border bg-card p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Визуализация щита</h3>{image && <Button variant="outline" size="sm" onClick={downloadImage}><Download className="mr-2 h-4 w-4" /> Скачать визуализацию</Button>}</div>{imgBusy ? <p className="mt-2 text-sm text-muted-foreground">Генерация изображения…</p> : <img src={image} alt="Визуализация собранного электрощита" className="mt-3 w-full rounded-lg border" />}</section>}
+        {!!(design.questions ?? []).length && <section className="rounded-xl border border-primary/40 bg-primary/5 p-4 sm:p-6"><h3 className="font-semibold">Нужны уточнения по исходным данным</h3><p className="mt-1 text-sm text-muted-foreground">Ответьте в поле «Дополнительные требования» или в списке линий и повторите расчёт.</p><ul className="mt-3 space-y-2 text-sm">{(design.questions ?? []).map((q,i)=><li key={`q${i}`}>• {q}</li>)}</ul></section>}
         {(!!(design.issues ?? []).length || !!(design.assumptions ?? []).length) && <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Замечания и допущения</h3><ul className="mt-3 space-y-2 text-sm">{(design.issues ?? []).map((issue,i)=><li key={`i${i}`} className="rounded-lg bg-destructive/10 p-3"><span className="font-medium">{issue.text}</span>{issue.fix && <span className="text-muted-foreground"> → {issue.fix}</span>}</li>)}{(design.assumptions ?? []).map((a,i)=><li key={`a${i}`} className="text-muted-foreground">• {a}</li>)}</ul></section>}
       </div>}
     </div>

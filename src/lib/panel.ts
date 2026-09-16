@@ -79,6 +79,8 @@ export type PanelDesign = {
   checks: { text: string; ok: boolean }[];
   issues: PanelIssue[];
   assumptions: string[];
+  /** Вопросы AI о недостающих исходных данных (не выдумывать параметры ввода). */
+  questions?: string[];
   image_prompt: string;
 };
 
