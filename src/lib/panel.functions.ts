@@ -170,7 +170,8 @@ export const designPanel = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<DesignPanelResult> => {
     await assertAdmin(context as never);
 
-    const cacheKey = JSON.stringify(data);
+    const { customer: _c, address: _a, doc_date: _d, ...calcData } = data;
+    const cacheKey = JSON.stringify(calcData);
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
 
@@ -184,6 +185,9 @@ export const designPanel = createServerFn({ method: "POST" })
 Ввод: ${data.input_type}
 Выделенная мощность: ${data.power_kw} кВт
 Вводной автомат: ${data.main_breaker_a} А
+Площадь объекта: ${data.area_m2 ? `${data.area_m2} м²` : "не указана"}
+Вводной кабель: ${data.input_cable?.trim() || "не указан"}
+Помещения: ${data.rooms_text?.trim() ? data.rooms_text.replace(/\s+/g, " ").trim() : "не указаны"}
 Система заземления: ${data.grounding}
 Корпус: настенный, ${data.ip}, прозрачная дверца, количество модулей определить автоматически
 Дополнительно: ${data.notes || "нет"}

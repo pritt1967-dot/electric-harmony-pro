@@ -10,6 +10,16 @@ export type PanelInput = {
   ip: string;
   lines_text: string;
   notes: string;
+  /** Площадь объекта, м² (0 — не указана). */
+  area_m2?: number;
+  /** Марка и сечение вводного кабеля. */
+  input_cable?: string;
+  /** Перечень помещений объекта. */
+  rooms_text?: string;
+  /** Карточка проекта (не влияет на расчёт). */
+  customer?: string;
+  address?: string;
+  doc_date?: string;
 };
 
 export type PanelLine = {
@@ -94,6 +104,12 @@ export const DEFAULT_PANEL_INPUT: PanelInput = {
   ip: "IP40",
   lines_text: "",
   notes: "",
+  area_m2: 0,
+  input_cable: "",
+  rooms_text: "",
+  customer: "",
+  address: "",
+  doc_date: "",
 };
 
 export const ENCLOSURE_SIZES = [12, 18, 24, 36, 48, 54, 72, 96];

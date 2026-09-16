@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/browser-client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
-import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
+import { DEFAULT_PANEL_INPUT, railTotal } from "@/lib/panel";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import { PanelDrawings } from "@/components/admin/PanelDrawings";
 import { ResultErrorBoundary } from "@/components/admin/ResultErrorBoundary";
@@ -104,6 +104,9 @@ export function PanelDesigner() {
   const [imgBusy, setImgBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [aiError, setAiError] = useState<string>("");
+  const [showSvg, setShowSvg] = useState(false);
+  const [cost, setCost] = useState<{ total: number; missing: number } | null>(null);
+  const [costBusy, setCostBusy] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const shouldRevealResultRef = useRef(false);
 
@@ -277,6 +280,7 @@ export function PanelDesigner() {
     shouldRevealResultRef.current = true;
     setDesign(null);
     setImage("");
+    setCost(null);
     try {
       const res = await run({ data: input });
       if (!res || typeof res !== "object") {
@@ -431,6 +435,53 @@ export function PanelDesigner() {
     setExporting(false);
   }
 
+  /** Единый итог проекта: та же таблица для схемы, реек, спецификации и сметы. */
+  const finalRows = useMemo(() => {
+    if (!design) return [];
+    const groupOf = new Map<string, { mark: string; leakage: string }>();
+    (design.rcd_groups ?? []).forEach((g) =>
+      (g.lines ?? []).forEach((m) => groupOf.set(m, { mark: g.mark, leakage: g.leakage })),
+    );
+    return (design.lines ?? []).map((l) => {
+      const g = groupOf.get(l.mark);
+      return {
+        mark: l.mark,
+        name: l.name,
+        cable: l.cable,
+        breaker: l.breaker,
+        rcd: l.rcd || (g ? "УЗО" : "—"),
+        leakage: g?.leakage ?? (l.rcd && /\d+\s*мА/.test(l.rcd) ? (l.rcd.match(/\d+\s*мА/)?.[0] ?? "") : ""),
+        group: g?.mark ?? "—",
+        modules: l.modules,
+        power_kw: l.power_kw,
+        current_a: l.current_a,
+      };
+    });
+  }, [design]);
+
+  async function calcCost() {
+    if (!design) return;
+    setCostBusy(true);
+    try {
+      const rows = [...(design.spec ?? []), ...(design.materials ?? [])];
+      const { data: priceRows } = await supabase.from("price_items").select("name, price");
+      const priceMap = new Map(
+        (priceRows ?? []).map((p) => [p.name.trim().toLowerCase(), Number(p.price) || 0]),
+      );
+      let total = 0;
+      let missing = 0;
+      rows.forEach((r) => {
+        const price = priceMap.get(r.name.trim().toLowerCase());
+        if (price === undefined || price === 0) missing += 1;
+        total += (price ?? 0) * (r.qty || 1);
+      });
+      setCost({ total: Math.round(total), missing });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось рассчитать стоимость");
+    }
+    setCostBusy(false);
+  }
+
   const s = design?.summary;
 
   return (
@@ -497,7 +548,16 @@ export function PanelDesigner() {
           <div className="space-y-1.5"><Label>Вводной автомат, А</Label><Input type="number" value={input.main_breaker_a} onChange={(e) => set("main_breaker_a", Number(e.target.value))} /></div>
           <div className="space-y-1.5"><Label>Система заземления</Label><Select value={input.grounding} onValueChange={(v) => set("grounding", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TN-C-S">TN-C-S</SelectItem><SelectItem value="TN-S">TN-S</SelectItem><SelectItem value="TT">TT</SelectItem></SelectContent></Select></div>
           <div className="space-y-1.5"><Label>Степень защиты</Label><Input value={input.ip} onChange={(e) => set("ip", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Площадь объекта, м²</Label><Input type="number" value={input.area_m2 ?? 0} onChange={(e) => set("area_m2", Number(e.target.value))} /></div>
+          <div className="space-y-1.5"><Label>Вводной кабель</Label><Input value={input.input_cable ?? ""} placeholder="Например: ВВГнг-LS 5×10" onChange={(e) => set("input_cable", e.target.value)} /></div>
           <div className="space-y-1.5 sm:col-span-2"><Label>Дополнительные требования</Label><Input value={input.notes} placeholder="Например: реле напряжения, УЗИП, контактор для бойлера" onChange={(e) => set("notes", e.target.value)} /></div>
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-3"><Label>Помещения</Label><Textarea rows={3} value={input.rooms_text ?? ""} placeholder="Санузел, прихожая, кухня, холл, спальня 1, спальня 2, лестница, улица" onChange={(e) => set("rooms_text", e.target.value)} /></div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5"><Label>Заказчик</Label><Input value={input.customer ?? ""} onChange={(e) => set("customer", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Адрес объекта</Label><Input value={input.address ?? ""} onChange={(e) => set("address", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Дата</Label><Input type="date" value={input.doc_date || todayISO()} onChange={(e) => set("doc_date", e.target.value)} /></div>
         </div>
 
         <div className="mt-4 space-y-1.5">
@@ -507,7 +567,7 @@ export function PanelDesigner() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={handleDesign} disabled={busy}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}Спроектировать щит</Button>
-          {design && <><Button variant="secondary" onClick={() => revealResult()}><Download className="mr-2 h-4 w-4" /> К результату</Button><Button variant="outline" onClick={handlePdf} disabled={exporting}><FileDown className="mr-2 h-4 w-4" /> PDF-отчёт</Button><Button variant="outline" onClick={downloadSvg}><Download className="mr-2 h-4 w-4" /> Схема SVG</Button><Button variant="outline" onClick={handleImage} disabled={imgBusy}>{imgBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}Визуализация щита</Button><Button variant="secondary" onClick={toEstimate} disabled={exporting}><ClipboardList className="mr-2 h-4 w-4" /> Перенести в смету</Button></>}
+          {design && <><Button variant="outline" onClick={() => { setShowSvg((v) => !v); if (!showSvg) requestAnimationFrame(() => document.getElementById("panel-svg")?.scrollIntoView({ behavior: "smooth", block: "start" })); }}>{showSvg ? "Скрыть однолинейную схему" : "Показать однолинейную схему"}</Button><Button variant="outline" onClick={() => document.getElementById("panel-spec")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Спецификация</Button><Button variant="outline" onClick={() => document.getElementById("panel-rails")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Раскладка по DIN-рейкам</Button><Button variant="outline" onClick={calcCost} disabled={costBusy}>{costBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Рассчитать стоимость</Button><Button variant="secondary" onClick={() => revealResult()}><Download className="mr-2 h-4 w-4" /> К результату</Button><Button variant="outline" onClick={handlePdf} disabled={exporting}><FileDown className="mr-2 h-4 w-4" /> PDF-отчёт</Button><Button variant="outline" onClick={downloadSvg}><Download className="mr-2 h-4 w-4" /> Схема SVG</Button><Button variant="outline" onClick={handleImage} disabled={imgBusy}>{imgBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}Визуализация щита</Button><Button variant="secondary" onClick={toEstimate} disabled={exporting}><ClipboardList className="mr-2 h-4 w-4" /> Перенести в смету</Button></>}
         </div>
         {aiError && (
           <div role="alert" className="mt-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm">
@@ -526,6 +586,32 @@ export function PanelDesigner() {
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Итог</h3><dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Питание", s?.supply],["Заземление", s?.grounding],["Расчётная мощность", `${s?.calculated_power_kw ?? 0} кВт`],["Вводной автомат", s?.main_breaker],["Занято модулей", String(s?.used_modules ?? 0)],["Резерв", `${s?.reserve_modules ?? 0} мод.`],["Корпус", `${s?.enclosure ?? ""} (${s?.enclosure_modules ?? 0} мод.)`],["IP", s?.ip]].map(([k,v]) => <div key={k as string} className="rounded-lg bg-muted/50 p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="mt-0.5 text-sm font-medium">{v || "—"}</dd></div>)}</dl></section>
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Распределение по фазам</h3><div className="mt-3 grid gap-3 sm:grid-cols-3">{(design.phase_load ?? []).map((p) => <div key={p.phase} className="rounded-lg border p-3"><div className="text-sm font-semibold text-primary">{p.phase}</div><div className="text-sm">{p.kw} кВт · {p.current_a} А</div><div className="mt-1 text-xs text-muted-foreground">{(p.lines ?? []).join(", ")}</div></div>)}</div>{!!(design.protection_chain ?? []).length && <ol className="mt-4 space-y-1 text-sm">{design.protection_chain.map((step,i)=><li key={i} className="text-muted-foreground">{i+1}. {step}</li>)}</ol>}</section>
         <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Групповые линии</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["Марк.","Линия","кВт","А","Автомат","P","Фаза","УЗО","Кабель","Мод."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{(design.lines ?? []).map(l=><tr key={l.mark} className="border-t"><td className="px-2 py-2 font-medium text-primary">{l.mark}</td><td className="px-2 py-2">{l.name}</td><td className="px-2 py-2">{l.power_kw}</td><td className="px-2 py-2">{l.current_a}</td><td className="px-2 py-2">{l.breaker}</td><td className="px-2 py-2">{l.poles}</td><td className="px-2 py-2">{l.phase}</td><td className="px-2 py-2">{l.rcd}</td><td className="px-2 py-2">{l.cable}</td><td className="px-2 py-2">{l.modules}</td></tr>)}</tbody></table></div></section>
+        <section id="panel-final" className="rounded-xl border bg-card p-4 sm:p-6">
+          <h3 className="font-semibold">Итог проекта</h3>
+          <div className="mt-3 hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="text-left text-xs text-muted-foreground"><tr>{["№","Линия","Кабель","Автомат","УЗО","IΔn","Группа","Модули","Мощность","Ток"].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead>
+              <tbody>{finalRows.map((r,i)=><tr key={r.mark} className="border-t align-top"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.cable}</td><td className="px-2 py-2">{r.breaker}</td><td className="px-2 py-2">{r.rcd}</td><td className="px-2 py-2">{r.leakage}</td><td className="px-2 py-2">{r.group}</td><td className="px-2 py-2">{r.modules}</td><td className="px-2 py-2">{r.power_kw} кВт</td><td className="px-2 py-2">{r.current_a} А</td></tr>)}</tbody>
+            </table>
+          </div>
+          <ul className="mt-3 space-y-2 sm:hidden">{finalRows.map((r,i)=><li key={r.mark} className="rounded-lg border p-3 text-sm"><div className="font-medium">{i+1}. {r.name}</div><dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">{[["Кабель",r.cable],["Автомат",r.breaker],["УЗО",r.rcd],["IΔn",r.leakage],["Группа",r.group],["Модули",String(r.modules)],["Мощность",`${r.power_kw} кВт`],["Ток",`${r.current_a} А`]].map(([k,v])=><div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>)}</dl></li>)}</ul>
+        </section>
+
+        <section className="rounded-xl border bg-card p-4 sm:p-6">
+          <h3 className="font-semibold">Вводная часть и защита</h3>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Вводной автомат", s?.main_breaker],["Разделение PEN", `${s?.grounding ?? ""}: PEN → PE и N один раз на вводной шине`],["Расчётная нагрузка", `${s?.calculated_power_kw ?? 0} кВт из ${s?.total_power_kw ?? 0} кВт`],["Занято модулей", String(s?.used_modules ?? 0)],["Резерв", `${s?.reserve_modules ?? 0} мод.`],["DIN-рейки", String((design.rails ?? []).length)],["Корпус", `${s?.enclosure ?? ""} (${s?.enclosure_modules ?? 0} мод.)`],["IP", s?.ip]].map(([k,v])=><div key={k as string} className="rounded-lg bg-muted/50 p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="mt-0.5 text-sm font-medium">{v || "—"}</dd></div>)}</dl>
+          {!!(design.rcd_groups ?? []).length && <div className="mt-4 grid gap-2 sm:grid-cols-2">{design.rcd_groups.map(g=><div key={g.mark} className="rounded-lg border p-3 text-sm"><div className="font-medium text-primary">{g.mark} · {g.rating} · {g.type} · {g.leakage}</div><div className="mt-1 text-xs text-muted-foreground">{(g.lines ?? []).join(", ")}</div></div>)}</div>}
+        </section>
+
+        <section id="panel-rails" className="rounded-xl border bg-card p-4 sm:p-6">
+          <h3 className="font-semibold">Раскладка по DIN-рейкам</h3>
+          <div className="mt-3 space-y-3">{(design.rails ?? []).map(rail=>{const used=railTotal(rail);const cap=Math.max(used, Math.round((s?.enclosure_modules ?? 0)/Math.max((design.rails ?? []).length,1)));return <div key={rail.index} className="rounded-lg border p-3"><div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="font-medium">{rail.title || `Рейка ${rail.index}`}</span><span className="text-xs text-muted-foreground">{used} / {cap} мод.{cap>used?` · резерв ${cap-used}`:""}</span></div><div className="mt-2 flex flex-wrap gap-1.5">{rail.items.map((it,i)=><span key={`${rail.index}-${i}`} className="rounded border bg-muted/50 px-2 py-1 text-xs">[{it.mark}] {it.label} · {it.modules} мод.</span>)}{cap>used&&<span className="rounded border border-dashed px-2 py-1 text-xs text-muted-foreground">резерв {cap-used} мод.</span>}</div></div>;})}</div>
+        </section>
+
+        {showSvg && !!svg && <section id="panel-svg" className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Однолинейная схема</h3><div className="mt-3 overflow-x-auto" dangerouslySetInnerHTML={{ __html: svg }} /></section>}
+
+        {cost !== null && <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Расчёт стоимости по прайсу</h3><p className="mt-2 text-sm">Оборудование и материалы: <span className="font-semibold">{cost.total.toLocaleString("ru-RU")} ₽</span></p>{cost.missing > 0 && <p className="mt-1 text-xs text-muted-foreground">Позиций без цены в прайсе: {cost.missing} — добавьте их во вкладке «Прайс».</p>}</section>}
+
         <ResultErrorBoundary title="Чертежи щита недоступны">
           <PanelDrawings design={design} title={title} />
         </ResultErrorBoundary>
@@ -536,7 +622,7 @@ export function PanelDesigner() {
         >
           <PanelSpecVisual rows={[...(design.spec ?? []), ...(design.materials ?? [])]} />
         </ResultErrorBoundary>
-        <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Спецификация</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["№","Наименование","Производитель","Модель","Номинал","Кол-во","Ед."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{[...(design.spec ?? []), ...(design.materials ?? [])].map((r,i)=><tr key={i} className="border-t"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.manufacturer}</td><td className="px-2 py-2">{r.model}</td><td className="px-2 py-2">{r.rating}</td><td className="px-2 py-2">{r.qty}</td><td className="px-2 py-2">{r.unit}</td></tr>)}</tbody></table></div></section>
+        <section id="panel-spec" className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Спецификация</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["№","Наименование","Производитель","Модель","Номинал","Кол-во","Ед."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{[...(design.spec ?? []), ...(design.materials ?? [])].map((r,i)=><tr key={i} className="border-t"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.manufacturer}</td><td className="px-2 py-2">{r.model}</td><td className="px-2 py-2">{r.rating}</td><td className="px-2 py-2">{r.qty}</td><td className="px-2 py-2">{r.unit}</td></tr>)}</tbody></table></div></section>
         {(image || imgBusy) && <section className="rounded-xl border bg-card p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Визуализация щита</h3>{image && <Button variant="outline" size="sm" onClick={downloadImage}><Download className="mr-2 h-4 w-4" /> Скачать визуализацию</Button>}</div>{imgBusy ? <p className="mt-2 text-sm text-muted-foreground">Генерация изображения…</p> : <img src={image} alt="Визуализация собранного электрощита" className="mt-3 w-full rounded-lg border" />}</section>}
         {!!(design.questions ?? []).length && <section className="rounded-xl border border-primary/40 bg-primary/5 p-4 sm:p-6"><h3 className="font-semibold">Нужны уточнения по исходным данным</h3><p className="mt-1 text-sm text-muted-foreground">Ответьте в поле «Дополнительные требования» или в списке линий и повторите расчёт.</p><ul className="mt-3 space-y-2 text-sm">{(design.questions ?? []).map((q,i)=><li key={`q${i}`}>• {q}</li>)}</ul></section>}
         {(!!(design.issues ?? []).length || !!(design.assumptions ?? []).length) && <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Замечания и допущения</h3><ul className="mt-3 space-y-2 text-sm">{(design.issues ?? []).map((issue,i)=><li key={`i${i}`} className="rounded-lg bg-destructive/10 p-3"><span className="font-medium">{issue.text}</span>{issue.fix && <span className="text-muted-foreground"> → {issue.fix}</span>}</li>)}{(design.assumptions ?? []).map((a,i)=><li key={`a${i}`} className="text-muted-foreground">• {a}</li>)}</ul></section>}
