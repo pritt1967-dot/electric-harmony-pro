@@ -497,7 +497,16 @@ export function PanelDesigner() {
           <div className="space-y-1.5"><Label>Вводной автомат, А</Label><Input type="number" value={input.main_breaker_a} onChange={(e) => set("main_breaker_a", Number(e.target.value))} /></div>
           <div className="space-y-1.5"><Label>Система заземления</Label><Select value={input.grounding} onValueChange={(v) => set("grounding", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TN-C-S">TN-C-S</SelectItem><SelectItem value="TN-S">TN-S</SelectItem><SelectItem value="TT">TT</SelectItem></SelectContent></Select></div>
           <div className="space-y-1.5"><Label>Степень защиты</Label><Input value={input.ip} onChange={(e) => set("ip", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Площадь объекта, м²</Label><Input type="number" value={input.area_m2 ?? 0} onChange={(e) => set("area_m2", Number(e.target.value))} /></div>
+          <div className="space-y-1.5"><Label>Вводной кабель</Label><Input value={input.input_cable ?? ""} placeholder="Например: ВВГнг-LS 5×10" onChange={(e) => set("input_cable", e.target.value)} /></div>
           <div className="space-y-1.5 sm:col-span-2"><Label>Дополнительные требования</Label><Input value={input.notes} placeholder="Например: реле напряжения, УЗИП, контактор для бойлера" onChange={(e) => set("notes", e.target.value)} /></div>
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-3"><Label>Помещения</Label><Textarea rows={3} value={input.rooms_text ?? ""} placeholder="Санузел, прихожая, кухня, холл, спальня 1, спальня 2, лестница, улица" onChange={(e) => set("rooms_text", e.target.value)} /></div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5"><Label>Заказчик</Label><Input value={input.customer ?? ""} onChange={(e) => set("customer", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Адрес объекта</Label><Input value={input.address ?? ""} onChange={(e) => set("address", e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Дата</Label><Input type="date" value={input.doc_date || todayISO()} onChange={(e) => set("doc_date", e.target.value)} /></div>
         </div>
 
         <div className="mt-4 space-y-1.5">
