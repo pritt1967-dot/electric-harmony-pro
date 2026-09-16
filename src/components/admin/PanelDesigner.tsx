@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/browser-client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
-import { DEFAULT_PANEL_INPUT } from "@/lib/panel";
+import { DEFAULT_PANEL_INPUT, railTotal } from "@/lib/panel";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import { PanelDrawings } from "@/components/admin/PanelDrawings";
 import { ResultErrorBoundary } from "@/components/admin/ResultErrorBoundary";
@@ -280,6 +280,7 @@ export function PanelDesigner() {
     shouldRevealResultRef.current = true;
     setDesign(null);
     setImage("");
+    setCost(null);
     try {
       const res = await run({ data: input });
       if (!res || typeof res !== "object") {
@@ -621,7 +622,7 @@ export function PanelDesigner() {
         >
           <PanelSpecVisual rows={[...(design.spec ?? []), ...(design.materials ?? [])]} />
         </ResultErrorBoundary>
-        <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Спецификация</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["№","Наименование","Производитель","Модель","Номинал","Кол-во","Ед."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{[...(design.spec ?? []), ...(design.materials ?? [])].map((r,i)=><tr key={i} className="border-t"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.manufacturer}</td><td className="px-2 py-2">{r.model}</td><td className="px-2 py-2">{r.rating}</td><td className="px-2 py-2">{r.qty}</td><td className="px-2 py-2">{r.unit}</td></tr>)}</tbody></table></div></section>
+        <section id="panel-spec" className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Спецификация</h3><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[700px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr>{["№","Наименование","Производитель","Модель","Номинал","Кол-во","Ед."].map(h=><th key={h} className="px-2 py-2 font-medium">{h}</th>)}</tr></thead><tbody>{[...(design.spec ?? []), ...(design.materials ?? [])].map((r,i)=><tr key={i} className="border-t"><td className="px-2 py-2">{i+1}</td><td className="px-2 py-2">{r.name}</td><td className="px-2 py-2">{r.manufacturer}</td><td className="px-2 py-2">{r.model}</td><td className="px-2 py-2">{r.rating}</td><td className="px-2 py-2">{r.qty}</td><td className="px-2 py-2">{r.unit}</td></tr>)}</tbody></table></div></section>
         {(image || imgBusy) && <section className="rounded-xl border bg-card p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Визуализация щита</h3>{image && <Button variant="outline" size="sm" onClick={downloadImage}><Download className="mr-2 h-4 w-4" /> Скачать визуализацию</Button>}</div>{imgBusy ? <p className="mt-2 text-sm text-muted-foreground">Генерация изображения…</p> : <img src={image} alt="Визуализация собранного электрощита" className="mt-3 w-full rounded-lg border" />}</section>}
         {!!(design.questions ?? []).length && <section className="rounded-xl border border-primary/40 bg-primary/5 p-4 sm:p-6"><h3 className="font-semibold">Нужны уточнения по исходным данным</h3><p className="mt-1 text-sm text-muted-foreground">Ответьте в поле «Дополнительные требования» или в списке линий и повторите расчёт.</p><ul className="mt-3 space-y-2 text-sm">{(design.questions ?? []).map((q,i)=><li key={`q${i}`}>• {q}</li>)}</ul></section>}
         {(!!(design.issues ?? []).length || !!(design.assumptions ?? []).length) && <section className="rounded-xl border bg-card p-4 sm:p-6"><h3 className="font-semibold">Замечания и допущения</h3><ul className="mt-3 space-y-2 text-sm">{(design.issues ?? []).map((issue,i)=><li key={`i${i}`} className="rounded-lg bg-destructive/10 p-3"><span className="font-medium">{issue.text}</span>{issue.fix && <span className="text-muted-foreground"> → {issue.fix}</span>}</li>)}{(design.assumptions ?? []).map((a,i)=><li key={`a${i}`} className="text-muted-foreground">• {a}</li>)}</ul></section>}
