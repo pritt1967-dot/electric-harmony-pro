@@ -620,6 +620,21 @@ ${data.lines_text}`;
         }
       }
 
+      // --- паспортные данные не выдумываем
+      const hasRatedInput = /\d\s*(?:квт|вт)\b/i.test(String(data.lines_text ?? ""));
+      if (!hasRatedInput) {
+        const noPrelim = linesAll.filter((l) => !/предварительн/i.test(l.note ?? ""));
+        if (noPrelim.length) {
+          add(
+            "warning",
+            `ТРЕБУЕТ УТОЧНЕНИЯ: паспортные мощности потребителей не заданы, расчёт линий ${noPrelim.map((l) => l.mark).join(", ")} выполнен по принятой предварительной нагрузке.`,
+            "Указать паспортные мощности приборов; до этого в проекте писать «Расчётная мощность принята предварительно: … кВт. Паспортная мощность не задана».",
+          );
+        }
+      }
+
+
+
       // --- групповые УЗО: номинал против суммы токов и принадлежность линий
       const byMark = new Map(linesAll.map((l) => [l.mark, l]));
       const assigned = new Map<string, string[]>();
