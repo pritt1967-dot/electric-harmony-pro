@@ -431,6 +431,53 @@ export function PanelDesigner() {
     setExporting(false);
   }
 
+  /** Единый итог проекта: та же таблица для схемы, реек, спецификации и сметы. */
+  const finalRows = useMemo(() => {
+    if (!design) return [];
+    const groupOf = new Map<string, { mark: string; leakage: string }>();
+    (design.rcd_groups ?? []).forEach((g) =>
+      (g.lines ?? []).forEach((m) => groupOf.set(m, { mark: g.mark, leakage: g.leakage })),
+    );
+    return (design.lines ?? []).map((l) => {
+      const g = groupOf.get(l.mark);
+      return {
+        mark: l.mark,
+        name: l.name,
+        cable: l.cable,
+        breaker: l.breaker,
+        rcd: l.rcd || (g ? "УЗО" : "—"),
+        leakage: g?.leakage ?? (l.rcd && /\d+\s*мА/.test(l.rcd) ? (l.rcd.match(/\d+\s*мА/)?.[0] ?? "") : ""),
+        group: g?.mark ?? "—",
+        modules: l.modules,
+        power_kw: l.power_kw,
+        current_a: l.current_a,
+      };
+    });
+  }, [design]);
+
+  async function calcCost() {
+    if (!design) return;
+    setCostBusy(true);
+    try {
+      const rows = [...(design.spec ?? []), ...(design.materials ?? [])];
+      const { data: priceRows } = await supabase.from("price_items").select("name, price");
+      const priceMap = new Map(
+        (priceRows ?? []).map((p) => [p.name.trim().toLowerCase(), Number(p.price) || 0]),
+      );
+      let total = 0;
+      let missing = 0;
+      rows.forEach((r) => {
+        const price = priceMap.get(r.name.trim().toLowerCase());
+        if (price === undefined || price === 0) missing += 1;
+        total += (price ?? 0) * (r.qty || 1);
+      });
+      setCost({ total: Math.round(total), missing });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось рассчитать стоимость");
+    }
+    setCostBusy(false);
+  }
+
   const s = design?.summary;
 
   return (
