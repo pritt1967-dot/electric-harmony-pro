@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requirePanelAuth } from "./panel-auth.middleware";
 
-import type { PanelDesign, PanelInput } from "./panel";
+import { ENCLOSURE_SIZES } from "./panel";
+import type { PanelDesign, PanelInput, PanelRail } from "./panel";
 
 export type PanelAiError = {
   ok: false;
