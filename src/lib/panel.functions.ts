@@ -107,9 +107,15 @@ async function callGateway(
     });
   }
 
-  const relayUrl = process.env["AI_RELAY_URL"];
+  // Стабильный адрес реле в инфраструктуре Lovable — используется, когда
+  // внешний деплой (REG.RU / Vercel) не задал собственный AI_RELAY_URL.
+  const relayUrl = process.env["AI_RELAY_URL"] || DEFAULT_RELAY_URL;
   const relaySecret = process.env["AI_RELAY_SECRET"];
-  if (!relayUrl || !relaySecret) throw new Error("AI недоступен: нет ключа");
+  if (!relaySecret) {
+    throw new Error(
+      "AI недоступен: на сервере не задан AI_RELAY_SECRET для доступа к AI Lovable.",
+    );
+  }
 
   return fetch(relayUrl.replace(/\/+$/, ""), {
     method: "POST",
