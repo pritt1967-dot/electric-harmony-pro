@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_reviews: {
+        Row: {
+          admin_note: string
+          consent: boolean
+          created_at: string
+          id: string
+          ip_hash: string
+          location: string
+          name: string
+          photo_path: string
+          published_at: string | null
+          rating: number
+          status: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string
+          consent?: boolean
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          location?: string
+          name?: string
+          photo_path?: string
+          published_at?: string | null
+          rating?: number
+          status?: string
+          text?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string
+          consent?: boolean
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          location?: string
+          name?: string
+          photo_path?: string
+          published_at?: string | null
+          rating?: number
+          status?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commercial_offers: {
         Row: {
           created_at: string
