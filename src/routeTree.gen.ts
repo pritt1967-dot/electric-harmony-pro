@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PricesRouteImport } from './routes/prices'
+import { Route as OtzyvyRouteImport } from './routes/otzyvy'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ContactCardRouteImport } from './routes/contact-card'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -43,6 +44,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PricesRoute = PricesRouteImport.update({
   id: '/prices',
   path: '/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OtzyvyRoute = OtzyvyRouteImport.update({
+  id: '/otzyvy',
+  path: '/otzyvy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
+  '/otzyvy': typeof OtzyvyRoute
   '/prices': typeof PricesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
+  '/otzyvy': typeof OtzyvyRoute
   '/prices': typeof PricesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/contact-card': typeof ContactCardRoute
   '/mcp': typeof McpRoute
+  '/otzyvy': typeof OtzyvyRoute
   '/prices': typeof PricesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact-card'
     | '/mcp'
+    | '/otzyvy'
     | '/prices'
     | '/sitemap.xml'
     | '/.mcp/list-tools'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact-card'
     | '/mcp'
+    | '/otzyvy'
     | '/prices'
     | '/sitemap.xml'
     | '/.mcp/list-tools'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact-card'
     | '/mcp'
+    | '/otzyvy'
     | '/prices'
     | '/sitemap.xml'
     | '/.mcp/list-tools'
@@ -334,6 +346,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactCardRoute: typeof ContactCardRoute
   McpRoute: typeof McpRoute
+  OtzyvyRoute: typeof OtzyvyRoute
   PricesRoute: typeof PricesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -367,6 +380,13 @@ declare module '@tanstack/react-router' {
       path: '/prices'
       fullPath: '/prices'
       preLoaderRoute: typeof PricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/otzyvy': {
+      id: '/otzyvy'
+      path: '/otzyvy'
+      fullPath: '/otzyvy'
+      preLoaderRoute: typeof OtzyvyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -553,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactCardRoute: ContactCardRoute,
   McpRoute: McpRoute,
+  OtzyvyRoute: OtzyvyRoute,
   PricesRoute: PricesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,

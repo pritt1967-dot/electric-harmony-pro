@@ -775,6 +775,18 @@ export type Database = {
         Returns: boolean
       }
       public_estimate_by_token: { Args: { p_token: string }; Returns: Json }
+      published_client_reviews: {
+        Args: never
+        Returns: {
+          id: string
+          location: string
+          name: string
+          photo_path: string
+          published_at: string
+          rating: number
+          text: string
+        }[]
+      }
       request_public_order_payment: {
         Args: { p_kind?: string; p_token: string }
         Returns: Json
