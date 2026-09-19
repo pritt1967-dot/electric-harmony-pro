@@ -6,7 +6,7 @@ const NAV = [
   { label: "Услуги", href: "/#services" },
   { label: "Наши работы", href: "/raboty" },
   { label: "Цены", href: "/prices" },
-  { label: "Отзывы", href: "/#reviews" },
+  { label: "Отзывы", href: "/otzyvy" },
   { label: "Контакты", href: "/#contacts" },
 ];
 
