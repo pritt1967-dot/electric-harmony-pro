@@ -26,11 +26,11 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Package application output
-        run: tar -czf sm-electric-site.tar.gz -C .output .
+        run: tar -czf sm-electric-site.tar.gz -C dist .
       - name: Upload application artifact
         uses: actions/upload-artifact@v4
         with:
           name: sm-electric-site
           path: sm-electric-site.tar.gz
           retention-days: 7
-      # REG.RU deployment uses the Node/Nitro output produced by vite.config.ts.
+      # REG.RU deployment uses the Nitro output in dist/ produced by vite.config.ts.
