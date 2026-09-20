@@ -23,7 +23,7 @@ const reviewsQuery = queryOptions({
 
 export const Route = createFileRoute("/otzyvy")({
   validateSearch: (search: Record<string, unknown>) => ({
-    form: search.form === "1" || search.form === 1,
+    form: search.form === "1" || search.form === 1 || search.form === true,
   }),
   head: () => ({
     meta: [
