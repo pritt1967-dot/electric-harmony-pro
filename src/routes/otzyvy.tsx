@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { PenLine } from "lucide-react";
@@ -22,6 +22,9 @@ const reviewsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/otzyvy")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    form: search.form === "1" || search.form === 1,
+  }),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -55,12 +58,8 @@ function formatDate(value: string) {
 
 function ReviewsPage() {
   const { data: reviews } = useSuspenseQuery(reviewsQuery);
-  const [formOpen, setFormOpen] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("form") === "1") setFormOpen(true);
-  }, []);
+  const { form } = Route.useSearch();
+  const [formOpen, setFormOpen] = useState(form);
 
   const average =
     reviews.length > 0
