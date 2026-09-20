@@ -20,25 +20,45 @@ function runtimeValue(name: string): string | undefined {
   );
 }
 
+type Pair = { url: string; key: string };
+
+function pair(
+  url: string | undefined,
+  ...keys: (string | undefined)[]
+): Pair | undefined {
+  const key = keys.find((k) => k !== undefined);
+  return url && key ? { url, key } : undefined;
+}
+
 /**
  * Public backend connection settings for browsers and every server runtime.
- * Runtime configuration wins; Vite build values and safe public defaults keep
- * standalone Node builds independent from Lovable-managed environment values.
+ *
+ * URL и ключ всегда берутся ПАРОЙ из одного источника, иначе можно получить
+ * адрес одного проекта с ключом другого. Значения, зафиксированные Vite при
+ * сборке, — каноническая конфигурация сайта: на стороннем хостинге серверные
+ * переменные с теми же именами могут остаться от другого проекта (например,
+ * финансового), и тогда публичный сайт уходит в чужую базу с ошибкой вида
+ * "Could not find the table 'public.services' in the schema cache".
+ * Поэтому runtime-переменные используются только как запасной вариант.
  */
-export function getPublicSupabaseConfig(): { url: string; key: string } {
-  const url =
-    runtimeValue("SUPABASE_URL") ??
-    runtimeValue("VITE_SUPABASE_URL") ??
-    cleanPublicValue(import.meta.env.VITE_SUPABASE_URL as string | undefined) ??
-    DEFAULT_SUPABASE_URL;
-  const key =
-    runtimeValue("SUPABASE_PUBLISHABLE_KEY") ??
-    runtimeValue("VITE_SUPABASE_PUBLISHABLE_KEY") ??
-    runtimeValue("VITE_SUPABASE_ANON_KEY") ??
-    cleanPublicValue(
-      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined,
+export function getPublicSupabaseConfig(): Pair {
+  return (
+    pair(
+      cleanPublicValue(import.meta.env.VITE_SUPABASE_URL as string | undefined),
+      cleanPublicValue(
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined,
+      ),
     ) ??
-    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
-
-  return { url, key };
+    pair(
+      runtimeValue("VITE_SUPABASE_URL"),
+      runtimeValue("VITE_SUPABASE_PUBLISHABLE_KEY"),
+      runtimeValue("VITE_SUPABASE_ANON_KEY"),
+    ) ??
+    pair(
+      runtimeValue("SUPABASE_URL"),
+      runtimeValue("SUPABASE_PUBLISHABLE_KEY"),
+      runtimeValue("SUPABASE_ANON_KEY"),
+    ) ?? { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_PUBLISHABLE_KEY }
+  );
 }
+
