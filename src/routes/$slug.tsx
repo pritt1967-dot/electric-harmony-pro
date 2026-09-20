@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, Phone } from "lucide-react";
+import { ArrowRight, Check, PenLine, Phone } from "lucide-react";
 
 import { Header, MobileCtaBar } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -304,6 +304,17 @@ function ServicePageView() {
                 </a>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="border-t border-ink-border bg-ink py-12 text-ink-foreground lg:py-16">
+          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <h2 className="max-w-3xl text-2xl font-extrabold sm:text-3xl">
+              Уже работали с нами? Оставьте отзыв о выполненной работе.
+            </h2>
+            <a href="/otzyvy?form=1" className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brand px-6 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02]">
+              <PenLine className="size-4" /> Оставить отзыв
+            </a>
           </div>
         </section>
       </main>

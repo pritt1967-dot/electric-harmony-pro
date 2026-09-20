@@ -22,6 +22,9 @@ const reviewsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/otzyvy")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    form: search.form === "1" || search.form === 1 || search.form === true,
+  }),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -55,7 +58,8 @@ function formatDate(value: string) {
 
 function ReviewsPage() {
   const { data: reviews } = useSuspenseQuery(reviewsQuery);
-  const [formOpen, setFormOpen] = useState(false);
+  const { form } = Route.useSearch();
+  const [formOpen, setFormOpen] = useState(form);
 
   const average =
     reviews.length > 0

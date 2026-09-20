@@ -93,11 +93,10 @@ function Index() {
           title={c.works_title ?? "Наши работы"}
           subtitle={c.works_subtitle ?? ""}
         />
+        <Reviews reviews={data.clientReviews} />
         <Process />
         <Advantages />
         <Prices items={data.priceHighlights ?? []} />
-        <Reviews reviews={data.reviews} title={c.reviews_title ?? "Отзывы"} />
-
         <About title={c.about_title ?? "О компании"} text={c.about_text ?? ""} />
         <Contact />
       </main>
