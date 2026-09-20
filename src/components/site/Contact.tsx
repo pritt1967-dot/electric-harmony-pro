@@ -11,6 +11,7 @@ import {
   Loader2,
   Printer,
   Download,
+  PenLine,
 } from "lucide-react";
 
 import { CONTACTS } from "./contacts";
@@ -178,6 +179,13 @@ export function Contact() {
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2.5">
+              <a
+                href="/otzyvy?form=1"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-brand px-4 py-2.5 text-sm font-bold text-brand-foreground"
+              >
+                <PenLine className="size-4" />
+                Оставить отзыв
+              </a>
               <a
                 href="/contact-card?print=1"
                 target="_blank"

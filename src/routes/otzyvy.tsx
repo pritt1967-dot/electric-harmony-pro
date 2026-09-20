@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { PenLine } from "lucide-react";
@@ -56,6 +56,11 @@ function formatDate(value: string) {
 function ReviewsPage() {
   const { data: reviews } = useSuspenseQuery(reviewsQuery);
   const [formOpen, setFormOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("form") === "1") setFormOpen(true);
+  }, []);
 
   const average =
     reviews.length > 0
