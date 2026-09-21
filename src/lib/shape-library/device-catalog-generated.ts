@@ -1659,6 +1659,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "ekf-пакетный-выключатель-пв-2-63-м3-исп-3-ekf-proxima",
+    "vendor": "EKF",
+    "name": "Пакетный выключатель ПВ 2-63 М3 исп.3 EKF PROxima",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 2,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 41.0,
+    "error": null
+  },
+  {
     "id": "ekf-предохранитель-разъединитель-для-пвц-14x51-с-индикацией-ekf-proxima",
     "vendor": "EKF",
     "name": "Предохранитель-разъединитель для ПВЦ 14x51 (с индикацией) EKF PROxima",
@@ -1880,6 +1893,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "ekf-трехфазное-реле-напряжения-и-тока-с-дисп-mrva-63a-ekf",
+    "vendor": "EKF",
+    "name": "Трехфазное реле напряжения и тока с дисп. MRVA 63A EKF",
+    "format": "vss",
+    "locked": false,
+    "category": "relay",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 126.5,
+    "error": null
+  },
+  {
     "id": "ekf-трехфазное-реле-напряжения-и-тока-с-дисп-mrva-3-63a-ekf",
     "vendor": "EKF",
     "name": "Трехфазное реле напряжения и тока с дисп. MRVA-3 63A EKF",
@@ -1936,6 +1962,36 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     ],
     "text_total": 2,
     "size_kb": 99.5,
+    "error": null
+  },
+  {
+    "id": "ekf-устройство-защиты-от-дугового-пробоя-уздп-3p-n-proxima-ekf",
+    "vendor": "EKF",
+    "name": "Устройство защиты от дугового пробоя (УЗДП) 3P+N PROXIMA EKF",
+    "format": "vss",
+    "locked": false,
+    "category": "terminal",
+    "masters": 1,
+    "texts": [
+      "63A"
+    ],
+    "text_total": 1,
+    "size_kb": 100.5,
+    "error": null
+  },
+  {
+    "id": "ekf-устройство-защиты-от-дугового-пробоя-с-автоматическим-выключателем-дифференц",
+    "vendor": "EKF",
+    "name": "Устройство защиты от дугового пробоя с автоматическим выключателем дифференциального тока (УЗДП + АВДТ) 1P+N С6",
+    "format": "vss",
+    "locked": false,
+    "category": "rcbo",
+    "masters": 1,
+    "texts": [
+      "C25 I∆n 30mA"
+    ],
+    "text_total": 1,
+    "size_kb": 93.0,
     "error": null
   },
   {
@@ -3194,6 +3250,24 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "iek-автоматический-выключатель-дифференциального-тока-авдт32em-1p-n-karat-iek",
+    "vendor": "IEK",
+    "name": "Автоматический выключатель дифференциального тока АВДТ32EM 1P+N KARAT IEK",
+    "format": "vss",
+    "locked": false,
+    "category": "rcbo",
+    "masters": 1,
+    "texts": [
+      "230V~",
+      "C16",
+      "I∆n 30mA",
+      "O-OFF"
+    ],
+    "text_total": 4,
+    "size_kb": 77.5,
+    "error": null
+  },
+  {
     "id": "iek-бокс-щрн-п-24-модуля-навесной-пластик-ip41-prime-iek",
     "vendor": "IEK",
     "name": "Бокс ЩРН-П-24 модуля навесной пластик IP41 PRIME IEK",
@@ -3272,6 +3346,26 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     ],
     "text_total": 6,
     "size_kb": 112.0,
+    "error": null
+  },
+  {
+    "id": "iek-выключатели-нагрузки-вн-32-iek",
+    "vendor": "IEK",
+    "name": "Выключатели нагрузки ВН-32 IEK",
+    "format": "vss",
+    "locked": false,
+    "category": "switch",
+    "masters": 4,
+    "texts": [
+      "20A",
+      "230/400В~",
+      "25A",
+      "32A",
+      "400В~",
+      "40A"
+    ],
+    "text_total": 6,
+    "size_kb": 163.5,
     "error": null
   },
   {
@@ -3869,6 +3963,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "innel-устройство-защитное-противопожарное-k5sg-innel",
+    "vendor": "Innel",
+    "name": "Устройство защитное противопожарное K5SG innel",
+    "format": "vss",
+    "locked": false,
+    "category": "enclosure",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 79.5,
+    "error": null
+  },
+  {
     "id": "keaz-optibox-p-bnk-2-36",
     "vendor": "KEAZ",
     "name": "OptiBox P-BNK-2-36",
@@ -3983,6 +4090,47 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "keaz-автоматические-выключатели-дифференциального-тока-optidin-d63-6ка-keaz",
+    "vendor": "KEAZ",
+    "name": "Автоматические выключатели дифференциального тока OptiDin D63 6кА KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "breaker",
+    "masters": 2,
+    "texts": [
+      "C16",
+      "C25",
+      "I∆n 0,03A",
+      "OptiDin D63 22С16",
+      "OptiDin D63 22С25",
+      "~230V 50Hz"
+    ],
+    "text_total": 6,
+    "size_kb": 107.5,
+    "error": null
+  },
+  {
+    "id": "keaz-автоматические-выключатели-дифференциального-тока-optidin-vd63-keaz",
+    "vendor": "KEAZ",
+    "name": "Автоматические выключатели дифференциального тока OptiDin VD63 KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "breaker",
+    "masters": 2,
+    "texts": [
+      "C25",
+      "I∆n 0,03A",
+      "I∆n 0,1A",
+      "OptiDin VD63-22C25",
+      "OptiDin VD63-43C25",
+      "~230V 50Hz",
+      "~400V 50Hz"
+    ],
+    "text_total": 7,
+    "size_kb": 148.5,
+    "error": null
+  },
+  {
     "id": "keaz-вн-keaz-вм63р-v-2",
     "vendor": "KEAZ",
     "name": "ВН KEAZ ВМ63Р v.2",
@@ -4059,6 +4207,27 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "keaz-выключатели-нагрузки-модульные-optidin-bm63p-keaz",
+    "vendor": "KEAZ",
+    "name": "Выключатели нагрузки модульные OptiDin BM63P KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "switch",
+    "masters": 4,
+    "texts": [
+      "20A",
+      "OptiDin BM63 P-1",
+      "OptiDin BM63 P-2",
+      "OptiDin BM63 P-3",
+      "OptiDin BM63 P-4",
+      "~230V 50Hz",
+      "~400V 50Hz"
+    ],
+    "text_total": 7,
+    "size_kb": 164.5,
+    "error": null
+  },
+  {
     "id": "keaz-выключатели-нагрузки-модульные-optidin-bm63pl-keaz",
     "vendor": "KEAZ",
     "name": "Выключатели нагрузки модульные OptiDin BM63PL KEAZ",
@@ -4082,6 +4251,26 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "keaz-выключатель-дифференциального-тока-optidin-dm63-4-5-ka-keaz",
+    "vendor": "KEAZ",
+    "name": "Выключатель дифференциального тока OptiDin DM63 4,5 kA KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 2,
+    "texts": [
+      "25A",
+      "I∆n 0,03A",
+      "OptiDin DM63 2225",
+      "OptiDin DM63 4225",
+      "~230/400V 50/60Hz",
+      "~230V 50/60Hz"
+    ],
+    "text_total": 6,
+    "size_kb": 121.0,
+    "error": null
+  },
+  {
     "id": "keaz-корпус-пластиковый-optibox-p-bvk-z-s-o-n-2-24-ip41",
     "vendor": "KEAZ",
     "name": "Корпус пластиковый OptiBox P-BVK(Z,S,O,N)-2-24-IP41",
@@ -4092,6 +4281,23 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 62.3,
+    "error": null
+  },
+  {
+    "id": "keaz-лампы-сигнальные-optidin-sl63-keaz",
+    "vendor": "KEAZ",
+    "name": "Лампы сигнальные OptiDin SL63 KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 2,
+    "texts": [
+      "AC230V",
+      "Ie≤20mA",
+      "OptiDin SL63"
+    ],
+    "text_total": 3,
+    "size_kb": 68.0,
     "error": null
   },
   {
@@ -4118,6 +4324,28 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 69.5,
+    "error": null
+  },
+  {
+    "id": "keaz-устройства-защитного-отключения-optidin-dm63-6-ка-keaz",
+    "vendor": "KEAZ",
+    "name": "Устройства защитного отключения OptiDin DM63 6 кА KEAZ",
+    "format": "vss",
+    "locked": false,
+    "category": "enclosure",
+    "masters": 2,
+    "texts": [
+      "In 25A",
+      "In 63A",
+      "I∆n 0.03A",
+      "I∆n 0.1A",
+      "OptiDin DM63 2225",
+      "OptiDin DM63 4363",
+      "Un ~230V 50/60Hz",
+      "Un ~230V/400V 50/60Hz"
+    ],
+    "text_total": 8,
+    "size_kb": 121.0,
     "error": null
   },
   {
@@ -4453,6 +4681,24 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "meandr-зуммер-сигнализатор-зм-1м-меандр",
+    "vendor": "Meandr",
+    "name": "Зуммер (сигнализатор) ЗМ-1М Меандр",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 1,
+    "texts": [
+      "3М-1М",
+      "A1",
+      "A2",
+      "Зуммер"
+    ],
+    "text_total": 4,
+    "size_kb": 29.5,
+    "error": null
+  },
+  {
     "id": "meandr-измеритель-тока-короткого-замыкания-и-сопротивления-цепи-фаза-ноль-сети-в",
     "vendor": "Meandr",
     "name": "Измеритель тока короткого замыкания и сопротивления цепи фаза-ноль сети ВРТ-М02 с функцией вольтметра Меандр",
@@ -4625,6 +4871,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "meandr-устройство-защиты-многофункциональное-узм-50цм-меандр",
+    "vendor": "Meandr",
+    "name": "Устройство защиты многофункциональное УЗМ-50ЦМ Меандр",
+    "format": "vss",
+    "locked": false,
+    "category": "relay",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 83.5,
+    "error": null
+  },
+  {
     "id": "meanwell-блоки-питания-ndr-75-120-240-480-mean-well",
     "vendor": "MeanWell",
     "name": "Блоки питания NDR-75,120,240,480 Mean Well",
@@ -4755,6 +5014,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 58.3,
+    "error": null
+  },
+  {
+    "id": "noname-разное-амперметр-ad101-22am",
+    "vendor": "NoName(разное)",
+    "name": "Амперметр AD101-22AM",
+    "format": "vss",
+    "locked": false,
+    "category": "rcbo",
+    "masters": 2,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 64.0,
     "error": null
   },
   {
@@ -6005,6 +6277,21 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "schneider-electric-низковольтные-ограничители-перенапряжений-iprd1-12-5r-acti9-s",
+    "vendor": "Schneider electric",
+    "name": "Низковольтные ограничители перенапряжений iPRD1 12.5r Acti9 Schneider electric",
+    "format": "vss",
+    "locked": false,
+    "category": "spd",
+    "masters": 5,
+    "texts": [
+      "14 11 12"
+    ],
+    "text_total": 1,
+    "size_kb": 108.5,
+    "error": null
+  },
+  {
     "id": "schneider-electric-пластиковые-распределительные-щиты-навесного-исполнения-easy9",
     "vendor": "Schneider electric",
     "name": "Пластиковые распределительные щиты навесного исполнения Easy9 Box Schneider electric",
@@ -6562,6 +6849,26 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "systeme-electric-компактные-автоматические-выключатели-дифференциального-тока-ав",
+    "vendor": "Systeme electric",
+    "name": "Компактные автоматические выключатели дифференциального тока АВДТ City9 Systeme electric",
+    "format": "vss",
+    "locked": false,
+    "category": "rcbo",
+    "masters": 2,
+    "texts": [
+      "30mA",
+      "C16",
+      "C25",
+      "C9D53616",
+      "C9D73625",
+      "City9 Set RCBO"
+    ],
+    "text_total": 6,
+    "size_kb": 111.5,
+    "error": null
+  },
+  {
     "id": "tdm-автоматические-выключатели-ва47-29-tdm",
     "vendor": "TDM",
     "name": "Автоматические выключатели ВА47-29 TDM",
@@ -6800,6 +7107,32 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "timvisio-addstencilstimvisio",
+    "vendor": "TimVisio",
+    "name": "AddStencilsTimVisio",
+    "format": "vss",
+    "locked": false,
+    "category": "schematic",
+    "masters": 2,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 47.5,
+    "error": null
+  },
+  {
+    "id": "timvisio-animationtimvisio",
+    "vendor": "TimVisio",
+    "name": "AnimationTimVisio",
+    "format": "vss",
+    "locked": false,
+    "category": "schematic",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 122.0,
+    "error": null
+  },
+  {
     "id": "timvisio-colorpagetimvisio",
     "vendor": "TimVisio",
     "name": "ColorPageTimVisio",
@@ -6883,6 +7216,21 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 41.0,
+    "error": null
+  },
+  {
+    "id": "timvisio-ringingtimvisio",
+    "vendor": "TimVisio",
+    "name": "RingingTimVisio",
+    "format": "vss",
+    "locked": false,
+    "category": "schematic",
+    "masters": 7,
+    "texts": [
+      "TimVisio"
+    ],
+    "text_total": 1,
+    "size_kb": 108.5,
     "error": null
   },
   {
@@ -7322,6 +7670,35 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "timvisio-шаблоны-линий-витая-пара-большое-количество-тормозит-приложение",
+    "vendor": "TimVisio",
+    "name": "Шаблоны линий витая пара(большое количество тормозит приложение)",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 31,
+    "texts": [
+      "Инструкция.",
+      "После добавления набора в визио. В формате фигуры (клавиша F3 или shift+F3) у Вас появятся новые штрихи линий."
+    ],
+    "text_total": 2,
+    "size_kb": 394.0,
+    "error": null
+  },
+  {
+    "id": "timvisio-шина-n-timvisio",
+    "vendor": "TimVisio",
+    "name": "Шина N TimVisio",
+    "format": "vss",
+    "locked": false,
+    "category": "terminal",
+    "masters": 3,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 41.0,
+    "error": null
+  },
+  {
     "id": "timvisio-шина-timvisio",
     "vendor": "TimVisio",
     "name": "Шина TimVisio",
@@ -7426,6 +7803,32 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "error": null
   },
   {
+    "id": "tomzn-мультиметр-на-din-рейку-d52-2066-tomzn",
+    "vendor": "Tomzn",
+    "name": "Мультиметр на DIN рейку D52-2066 TOMZN",
+    "format": "vss",
+    "locked": false,
+    "category": "measure",
+    "masters": 2,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 62.0,
+    "error": null
+  },
+  {
+    "id": "tomzn-реле-контроля-напряжения-трехфазное-tompd-8s-tomzn",
+    "vendor": "Tomzn",
+    "name": "Реле контроля напряжения трехфазное TOMPD-8S Tomzn",
+    "format": "vss",
+    "locked": false,
+    "category": "relay",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 61.0,
+    "error": null
+  },
+  {
     "id": "tomzn-реле-напряжения-tomzn-dds238-vap-63a-80a",
     "vendor": "Tomzn",
     "name": "Реле напряжения TOMZN DDS238-VAP 63A-80A",
@@ -7464,6 +7867,19 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 55.5,
+    "error": null
+  },
+  {
+    "id": "voltmark-ограничители-на-din-рейку-voltmark",
+    "vendor": "Voltmark",
+    "name": "Ограничители на DIN-рейку VOLTMARK",
+    "format": "vss",
+    "locked": false,
+    "category": "misc",
+    "masters": 6,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 56.5,
     "error": null
   },
   {
@@ -7622,6 +8038,45 @@ export const DEVICE_STENCILS: DeviceStencil[] = [
     "texts": [],
     "text_total": 0,
     "size_kb": 38.3,
+    "error": null
+  },
+  {
+    "id": "wirenboard-modbus-dali-шлюз-wb-dali3-wirenboard",
+    "vendor": "WirenBoard",
+    "name": "Modbus-DALI шлюз WB-DALI3 WirenBoard",
+    "format": "vss",
+    "locked": false,
+    "category": "automation",
+    "masters": 1,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 144.0,
+    "error": null
+  },
+  {
+    "id": "wirenboard-modbus-dali-шлюз-wb-dali3-wirenboard-2",
+    "vendor": "WirenBoard",
+    "name": "Modbus-DALI шлюз WB-DALI3 WirenBoard",
+    "format": "vssx",
+    "locked": false,
+    "category": "automation",
+    "masters": 0,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 107.6,
+    "error": null
+  },
+  {
+    "id": "wirenboard-modbus-dali-шлюз-wb-mdali-3-wirenboard",
+    "vendor": "WirenBoard",
+    "name": "Modbus-DALI шлюз WB-MDALI-3 WirenBoard",
+    "format": "vss",
+    "locked": false,
+    "category": "automation",
+    "masters": 2,
+    "texts": [],
+    "text_total": 0,
+    "size_kb": 237.0,
     "error": null
   },
   {
