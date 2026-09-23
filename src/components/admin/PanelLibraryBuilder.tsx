@@ -401,9 +401,24 @@ export function PanelLibraryBuilder() {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Занято модулей: {totalModules} / {rails * railModules}
+        <div className="w-36">
+          <Label className="text-xs">Резерв, модулей</Label>
+          <Input
+            type="number"
+            min={0}
+            value={reserveModules}
+            onChange={(e) => setReserveModules(Math.max(0, Number(e.target.value) || 0))}
+          />
         </div>
+        <div className="text-sm text-muted-foreground">
+          Занято модулей: {totalModules} / {capacity} · свободно {freeModules} мод. · резерв{" "}
+          <span className={reserveOk ? "text-emerald-600" : "text-destructive"}>
+            {Math.min(freeModules, reserveModules)} из {reserveModules} мод.
+          </span>
+        </div>
+        <Button size="sm" variant="outline" onClick={loadTestPanel}>
+          Тестовый щит 230 В
+        </Button>
       </div>
 
       {/* --- визуализация DIN-реек --- */}
