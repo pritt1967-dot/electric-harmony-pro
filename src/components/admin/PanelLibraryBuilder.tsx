@@ -31,11 +31,24 @@ import {
   type CatalogDevice,
 } from "@/lib/shape-library/device-tree";
 import { BUS_N, BUS_PE, testPanel230 } from "@/lib/shape-library/test-panel-230";
+import {
+  buildChain,
+  placeItems,
+  validatePanel,
+  type PanelRole,
+} from "@/lib/shape-library/panel-logic";
 
 const ALL = "all";
 const SCALE = 2.4; // px на мм
 const DEVICE_H_MM = 85;
 const LAYOUT_KIND = "library-layout";
+
+const ROLE_TEXT: Record<PanelRole, string> = {
+  main: "ввод",
+  rcd: "УЗО",
+  group: "группа",
+  other: "прочее",
+};
 
 type LayoutItem = {
   key: string;
@@ -47,6 +60,8 @@ type LayoutItem = {
   modules: number;
   /** Маркировка отходящей линии (QF1, «Розетки кухни» и т. п.). */
   label?: string;
+  /** Роль в цепочке: ввод, УЗО, групповой аппарат. */
+  role?: PanelRole;
   /** Временный тестовый аналог: точного аппарата в библиотеке нет. */
   substitute?: boolean;
   note?: string;
@@ -109,12 +124,19 @@ export function PanelLibraryBuilder() {
   const freeModules = capacity - totalModules;
   const reserveOk = freeModules >= reserveModules;
 
+  const logic = useMemo(() => {
+    const { placed } = placeItems(items, rails, railModules);
+    const chain = buildChain(placed);
+    const checks = validatePanel(placed, chain, { rails, railModules, reserveModules });
+    return { placed, chain, checks };
+  }, [items, rails, railModules, reserveModules]);
+
   function setLabel(key: string, label: string) {
     setItems((prev) => prev.map((i) => (i.key === key ? { ...i, label } : i)));
   }
 
   /** Тестовый однофазный щит 230 В — проверка конструктора на реальном составе. */
-  function loadTestPanel() {
+  function loadTestPanel(projectTitle = "Тестовый щит 230 В (испытание конструктора)") {
     const rows = testPanel230();
     let rail = 0;
     let used = 0;
@@ -133,6 +155,7 @@ export function PanelLibraryBuilder() {
         ratedCurrent: r.device.ratedCurrent,
         modules: r.device.modules,
         label: r.label,
+        role: r.role,
         substitute: r.substitute,
         note: r.note,
       });
@@ -141,22 +164,34 @@ export function PanelLibraryBuilder() {
     setRails(Math.max(rails, rail + 1));
     setItems(next);
     setReserveModules(2);
-    setTitle((t) => t || "Тестовый щит 230 В (испытание конструктора)");
+    setTitle(projectTitle);
     toast.success(`Собран тестовый щит: ${next.length} аппаратов`);
   }
 
   function addDevice(d: CatalogDevice) {
-    const free = railModules - (railsUsed[activeRail] ?? 0);
-    if (d.modules > free) {
-      toast.error(`На рейке ${activeRail + 1} свободно ${free} мод., нужно ${d.modules}`);
+    // место ищем начиная с активной рейки: при заполнении аппарат переходит на следующую
+    let target = -1;
+    for (let r = activeRail; r < rails; r++) {
+      if (railModules - (railsUsed[r] ?? 0) >= d.modules) {
+        target = r;
+        break;
+      }
+    }
+    if (target < 0) {
+      toast.error(
+        `Свободных ${d.modules} мод. нет ни на одной рейке начиная с ${activeRail + 1} — добавьте DIN-рейку`,
+      );
       return;
+    }
+    if (target !== activeRail) {
+      toast.message(`Рейка ${activeRail + 1} заполнена — аппарат установлен на рейку ${target + 1}`);
     }
     setItems((prev) => [
       ...prev,
       {
         key: `${d.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         deviceId: d.id,
-        rail: activeRail,
+        rail: target,
         manufacturer: d.manufacturer,
         model: d.model,
         ratedCurrent: d.ratedCurrent,
@@ -416,8 +451,15 @@ export function PanelLibraryBuilder() {
             {Math.min(freeModules, reserveModules)} из {reserveModules} мод.
           </span>
         </div>
-        <Button size="sm" variant="outline" onClick={loadTestPanel}>
+        <Button size="sm" variant="outline" onClick={() => loadTestPanel()}>
           Тестовый щит 230 В
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => loadTestPanel("Инженерный тест щита 230 В")}
+        >
+          Инженерный тест щита 230 В
         </Button>
       </div>
 
@@ -505,6 +547,101 @@ export function PanelLibraryBuilder() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* --- инженерная логика щита --- */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border bg-card">
+          <div className="border-b p-3 text-sm font-semibold">
+            Параметры аппаратов и координаты на DIN-рейке
+          </div>
+          <div className="overflow-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="p-2">ID</th>
+                  <th className="p-2">Роль</th>
+                  <th className="p-2">Производитель · серия · модель</th>
+                  <th className="p-2">P</th>
+                  <th className="p-2">Мод.</th>
+                  <th className="p-2">Номинал</th>
+                  <th className="p-2">Хар-ка</th>
+                  <th className="p-2">Координата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logic.placed.map((p) => (
+                  <tr key={p.key} className={p.outOfRail ? "bg-destructive/10" : ""}>
+                    <td className="p-2 font-mono text-[10px]">{p.key.slice(-10)}</td>
+                    <td className="p-2">{ROLE_TEXT[p.role]}</td>
+                    <td className="p-2">
+                      {p.manufacturer}
+                      {p.series ? ` · ${p.series}` : ""} · {p.model}
+                    </td>
+                    <td className="p-2">{p.poles != null ? `${p.poles}P` : "—"}</td>
+                    <td className="p-2">{p.modules}</td>
+                    <td className="p-2">{p.ratedCurrent != null ? `${p.ratedCurrent} А` : "—"}</td>
+                    <td className="p-2">{p.curve ?? "—"}</td>
+                    <td className="p-2">
+                      рейка {p.rail + 1}, мод. {p.startModule}
+                      {p.endModule > p.startModule ? `–${p.endModule}` : ""}
+                    </td>
+                  </tr>
+                ))}
+                {!logic.placed.length && (
+                  <tr>
+                    <td className="p-3 text-muted-foreground" colSpan={8}>
+                      Щит пуст.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border bg-card p-3 text-sm">
+            <div className="font-semibold">Логическая цепочка</div>
+            <div className="mt-2 space-y-1 text-xs">
+              <div>
+                Ввод {logic.chain.supply.phases} фаза · {logic.chain.supply.voltage} В (L, N, PE)
+              </div>
+              <div className="pl-3">
+                ↓ {logic.chain.main
+                  ? `${logic.chain.main.label ?? logic.chain.main.model} (${logic.chain.main.modules} мод.)`
+                  : "вводной аппарат не определён"}
+              </div>
+              {logic.chain.branches.map((b, i) => (
+                <div key={i} className="pl-6">
+                  <div>
+                    ↓ {b.rcd ? `${b.rcd.label ?? b.rcd.model}` : "без УЗО (прямые линии)"} · шина{" "}
+                    <span className="font-medium">{b.nBus}</span>
+                  </div>
+                  {b.lines.map((l) => (
+                    <div key={l.item.key} className="pl-6 text-muted-foreground">
+                      ↓ {l.item.label ?? l.item.model} · L + {l.nBus} + {l.pe} → нагрузка
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div className="pt-1">
+                Шины N: {logic.chain.nBuses.join(", ") || "—"} · {logic.chain.peBus}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-3 text-sm">
+            <div className="font-semibold">Проверки раскладки и логики</div>
+            <ul className="mt-2 space-y-1 text-xs">
+              {logic.checks.map((c) => (
+                <li key={c.id} className={c.ok ? "text-emerald-700" : "text-destructive"}>
+                  {c.ok ? "✓" : "✗"} {c.title} — <span className="text-muted-foreground">{c.detail}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 

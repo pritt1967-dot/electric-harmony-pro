@@ -59,11 +59,14 @@ export const MCB_1P_C16 = pick(
 export const BUS_N = byId("abb-abb-mistral-65-24m-шина-n-5");
 export const BUS_PE = byId("abb-abb-mistral-65-24m-шина-pe-4");
 
+export type TestPanelRole = "main" | "rcd" | "group";
+
 export type TestPanelItem = {
   label: string;
   device: CatalogDevice;
   substitute: boolean;
   note: string;
+  role: TestPanelRole;
 };
 
 /** Состав тестового щита: ввод → УЗО → отходящие линии. */
@@ -71,12 +74,14 @@ export function testPanel230(): TestPanelItem[] {
   const rows: (TestPanelItem | null)[] = [
     MAIN_2P_C25.device && {
       label: "QF1 Ввод 2P C25",
+      role: "main" as const,
       device: MAIN_2P_C25.device,
       substitute: MAIN_2P_C25.substitute,
       note: MAIN_2P_C25.substitute ? "временный тестовый аналог" : "реальный аппарат библиотеки",
     },
     RCD_2P_40.device && {
       label: "QD1 УЗО 40 А / 30 мА",
+      role: "rcd" as const,
       device: RCD_2P_40.device,
       substitute: RCD_2P_40.substitute,
       note: RCD_2P_40.substitute
@@ -96,6 +101,7 @@ export function testPanel230(): TestPanelItem[] {
       return s.device
         ? {
             label: label as string,
+            role: "group" as const,
             device: s.device,
             substitute: s.substitute,
             note: s.substitute ? "временный тестовый аналог" : "реальный аппарат библиотеки",
