@@ -30,6 +30,7 @@ import {
   typesOf,
   type CatalogDevice,
 } from "@/lib/shape-library/device-tree";
+import { BUS_N, BUS_PE, testPanel230 } from "@/lib/shape-library/test-panel-230";
 
 const ALL = "all";
 const SCALE = 2.4; // px на мм
