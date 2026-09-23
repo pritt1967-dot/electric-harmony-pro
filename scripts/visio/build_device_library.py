@@ -139,7 +139,7 @@ def normalize(svg: str, pad: float = 2.0):
     w = max(x1 - x0, 0.5) + pad * 2
     h = max(y1 - y0, 0.5) + pad * 2
     out = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0 - pad:.2f} {y0 - pad:.2f} {w:.2f} {h:.2f}" '
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="{x0 - pad:.2f} {y0 - pad:.2f} {w:.2f} {h:.2f}" '
         f'width="100%" height="100%" preserveAspectRatio="xMidYMid meet">{body}</svg>'
     )
     return out, (w, h)
