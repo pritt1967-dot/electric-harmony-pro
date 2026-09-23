@@ -481,24 +481,27 @@ export function PanelLibraryBuilder() {
             );
           })}
 
-          {/* --- шины N и PE (реальные фигуры библиотеки) --- */}
+          {/* --- шины N и PE --- */}
           {[
-            { name: "Шина N", dev: BUS_N, color: "bg-sky-50" },
-            { name: "Шина PE", dev: BUS_PE, color: "bg-emerald-50" },
+            { name: "Шина N (нулевая рабочая)", dev: BUS_N, color: "bg-sky-100", mark: "N" },
+            { name: "Шина PE (защитная)", dev: BUS_PE, color: "bg-emerald-100", mark: "PE" },
           ].map((b) => (
-            <div key={b.name}>
-              <div className="mb-1 text-xs text-neutral-500">{b.name}</div>
+            <div key={b.mark}>
+              <div className="mb-1 text-xs text-neutral-500">
+                {b.name}
+                {b.dev ? " · фигура библиотеки: " + b.dev.model : " · фигуры в библиотеке нет"}
+              </div>
               <div
-                className={`flex items-center gap-2 border border-neutral-300 px-2 py-1 ${b.color}`}
+                className={`flex items-center gap-1 border border-neutral-400 px-2 py-2 ${b.color}`}
                 style={{ width: railModules * MODULE_WIDTH_MM * SCALE }}
               >
-                {b.dev ? (
-                  <div className="h-8 w-full"><img src={b.dev.svgAsset} alt={b.name} className="h-full w-full object-contain" /></div>
-                ) : (
-                  <span className="text-[11px] text-red-600">
-                    Фигура шины отсутствует в библиотеке
-                  </span>
-                )}
+                <span className="mr-1 text-xs font-bold text-neutral-700">{b.mark}</span>
+                {Array.from({ length: railModules }, (_, i) => (
+                  <span
+                    key={i}
+                    className="h-4 flex-1 rounded-sm border border-neutral-400 bg-white/70"
+                  />
+                ))}
               </div>
             </div>
           ))}
