@@ -311,7 +311,7 @@ def render(out, conns=(), pad=0.05, mark_connections=True):
     marks = (f'<g data-role="connection-points">{"".join(pts)}</g>'
              if (mark_connections and pts) else '')
 
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W:.2f} {H:.2f}" '
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 {W:.2f} {H:.2f}" '
            f'width="{W:.2f}" height="{H:.2f}">' + ''.join(body) + marks + '</svg>')
     # координаты точек подключения в мм от левого-нижнего угла bbox
     conn_mm = [{'id': c['id'],

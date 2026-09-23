@@ -30,6 +30,7 @@ import {
   typesOf,
   type CatalogDevice,
 } from "@/lib/shape-library/device-tree";
+import { BUS_N, BUS_PE, testPanel230 } from "@/lib/shape-library/test-panel-230";
 
 const ALL = "all";
 const SCALE = 2.4; // px на мм
@@ -44,6 +45,11 @@ type LayoutItem = {
   model: string;
   ratedCurrent: number | null;
   modules: number;
+  /** Маркировка отходящей линии (QF1, «Розетки кухни» и т. п.). */
+  label?: string;
+  /** Временный тестовый аналог: точного аппарата в библиотеке нет. */
+  substitute?: boolean;
+  note?: string;
 };
 
 type SavedLayout = {
@@ -51,6 +57,7 @@ type SavedLayout = {
   version: 1;
   rails: number;
   railModules: number;
+  reserveModules?: number;
   items: LayoutItem[];
 };
 
@@ -64,6 +71,8 @@ export function PanelLibraryBuilder() {
   const [rails, setRails] = useState(3);
   const [activeRail, setActiveRail] = useState(0);
   const [items, setItems] = useState<LayoutItem[]>([]);
+
+  const [reserveModules, setReserveModules] = useState(2);
 
   const [title, setTitle] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -96,6 +105,45 @@ export function PanelLibraryBuilder() {
   }, [items, rails]);
 
   const totalModules = items.reduce((s, i) => s + i.modules, 0);
+  const capacity = rails * railModules;
+  const freeModules = capacity - totalModules;
+  const reserveOk = freeModules >= reserveModules;
+
+  function setLabel(key: string, label: string) {
+    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, label } : i)));
+  }
+
+  /** Тестовый однофазный щит 230 В — проверка конструктора на реальном составе. */
+  function loadTestPanel() {
+    const rows = testPanel230();
+    let rail = 0;
+    let used = 0;
+    const next: LayoutItem[] = [];
+    for (const r of rows) {
+      if (used + r.device.modules > railModules) {
+        rail += 1;
+        used = 0;
+      }
+      next.push({
+        key: `${r.device.id}-${next.length}-${Math.random().toString(36).slice(2, 7)}`,
+        deviceId: r.device.id,
+        rail,
+        manufacturer: r.device.manufacturer,
+        model: r.device.model,
+        ratedCurrent: r.device.ratedCurrent,
+        modules: r.device.modules,
+        label: r.label,
+        substitute: r.substitute,
+        note: r.note,
+      });
+      used += r.device.modules;
+    }
+    setRails(Math.max(rails, rail + 1));
+    setItems(next);
+    setReserveModules(2);
+    setTitle((t) => t || "Тестовый щит 230 В (испытание конструктора)");
+    toast.success(`Собран тестовый щит: ${next.length} аппаратов`);
+  }
 
   function addDevice(d: CatalogDevice) {
     const free = railModules - (railsUsed[activeRail] ?? 0);
@@ -172,7 +220,14 @@ export function PanelLibraryBuilder() {
     setSaving(true);
     try {
       const name = title.trim() || `Щит из библиотеки — ${new Date().toLocaleDateString("ru-RU")}`;
-      const payload: SavedLayout = { kind: LAYOUT_KIND, version: 1, rails, railModules, items };
+      const payload: SavedLayout = {
+        kind: LAYOUT_KIND,
+        version: 1,
+        rails,
+        railModules,
+        reserveModules,
+        items,
+      };
       const row = { title: name, input: payload as never, design: null as never, image: "" };
       if (sessionId && !asNew) {
         const { error } = await supabase.from("panel_designs").update(row).eq("id", sessionId);
@@ -210,6 +265,7 @@ export function PanelLibraryBuilder() {
     setTitle(data.title);
     setRails(saved.rails ?? 3);
     setRailModules(saved.railModules ?? 12);
+    setReserveModules(saved.reserveModules ?? 0);
     setItems(Array.isArray(saved.items) ? saved.items : []);
     setActiveRail(0);
     toast.success("Проект открыт");
@@ -345,9 +401,24 @@ export function PanelLibraryBuilder() {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Занято модулей: {totalModules} / {rails * railModules}
+        <div className="w-36">
+          <Label className="text-xs">Резерв, модулей</Label>
+          <Input
+            type="number"
+            min={0}
+            value={reserveModules}
+            onChange={(e) => setReserveModules(Math.max(0, Number(e.target.value) || 0))}
+          />
         </div>
+        <div className="text-sm text-muted-foreground">
+          Занято модулей: {totalModules} / {capacity} · свободно {freeModules} мод. · резерв{" "}
+          <span className={reserveOk ? "text-emerald-600" : "text-destructive"}>
+            {Math.min(freeModules, reserveModules)} из {reserveModules} мод.
+          </span>
+        </div>
+        <Button size="sm" variant="outline" onClick={loadTestPanel}>
+          Тестовый щит 230 В
+        </Button>
       </div>
 
       {/* --- визуализация DIN-реек --- */}
@@ -373,18 +444,33 @@ export function PanelLibraryBuilder() {
                       <div
                         key={it.key}
                         title={`${it.manufacturer} ${it.model}`}
-                        className="flex flex-col items-center justify-center border-r border-neutral-300 bg-white"
+                        className="flex flex-col items-center justify-between border-r border-neutral-300 bg-white"
                         style={{ width: it.modules * MODULE_WIDTH_MM * SCALE }}
                       >
                         {dev ? (
-                          <img
-                            src={dev.svgAsset}
-                            alt={it.model}
-                            className="h-full w-full object-contain p-0.5"
-                          />
+                          <div
+                            className="w-full"
+                            style={{ height: DEVICE_H_MM * SCALE - (it.label ? 14 : 0) }}
+                          >
+                            <img
+                              src={dev.svgAsset}
+                              alt={it.model}
+                              className="h-full w-full object-contain p-0.5"
+                            />
+                          </div>
                         ) : (
                           <span className="p-1 text-center text-[10px] text-red-600">
                             Фигура отсутствует в библиотеке
+                          </span>
+                        )}
+                        {it.label && (
+                          <span
+                            className={`w-full truncate px-0.5 pb-0.5 text-center text-[9px] leading-tight ${
+                              it.substitute ? "text-amber-600" : "text-neutral-600"
+                            }`}
+                            title={it.label}
+                          >
+                            {it.label}
                           </span>
                         )}
                       </div>
@@ -394,6 +480,31 @@ export function PanelLibraryBuilder() {
               </div>
             );
           })}
+
+          {/* --- шины N и PE --- */}
+          {[
+            { name: "Шина N (нулевая рабочая)", dev: BUS_N, color: "bg-sky-100", mark: "N" },
+            { name: "Шина PE (защитная)", dev: BUS_PE, color: "bg-emerald-100", mark: "PE" },
+          ].map((b) => (
+            <div key={b.mark}>
+              <div className="mb-1 text-xs text-neutral-500">
+                {b.name}
+                {b.dev ? " · фигура библиотеки: " + b.dev.model : " · фигуры в библиотеке нет"}
+              </div>
+              <div
+                className={`flex items-center gap-1 border border-neutral-400 px-2 py-2 ${b.color}`}
+                style={{ width: railModules * MODULE_WIDTH_MM * SCALE }}
+              >
+                <span className="mr-1 text-xs font-bold text-neutral-700">{b.mark}</span>
+                {Array.from({ length: railModules }, (_, i) => (
+                  <span
+                    key={i}
+                    className="h-4 flex-1 rounded-sm border border-neutral-400 bg-white/70"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -404,10 +515,21 @@ export function PanelLibraryBuilder() {
           {items.map((it) => (
             <div key={it.key} className="flex flex-wrap items-center gap-2 p-2">
               <span className="text-xs text-muted-foreground">Рейка {it.rail + 1}</span>
+              <Input
+                className="h-8 w-52"
+                value={it.label ?? ""}
+                onChange={(e) => setLabel(it.key, e.target.value)}
+                placeholder="Маркировка линии"
+              />
               <span className="font-medium">{it.manufacturer} {it.model}</span>
               <span className="text-xs text-muted-foreground">
                 {it.ratedCurrent ? `${it.ratedCurrent} А · ` : ""}{it.modules} мод.
               </span>
+              {it.substitute && (
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800">
+                  временный тестовый аналог
+                </span>
+              )}
               <div className="ml-auto flex gap-1">
                 <Button size="icon" variant="ghost" onClick={() => moveInRail(it.key, -1)} aria-label="Левее">
                   <ArrowLeft className="h-4 w-4" />
