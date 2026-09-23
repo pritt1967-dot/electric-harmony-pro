@@ -265,6 +265,7 @@ export function PanelLibraryBuilder() {
     setTitle(data.title);
     setRails(saved.rails ?? 3);
     setRailModules(saved.railModules ?? 12);
+    setReserveModules(saved.reserveModules ?? 0);
     setItems(Array.isArray(saved.items) ? saved.items : []);
     setActiveRail(0);
     toast.success("Проект открыт");
