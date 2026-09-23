@@ -72,6 +72,8 @@ export function PanelLibraryBuilder() {
   const [activeRail, setActiveRail] = useState(0);
   const [items, setItems] = useState<LayoutItem[]>([]);
 
+  const [reserveModules, setReserveModules] = useState(2);
+
   const [title, setTitle] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<{ id: string; title: string }[]>([]);
