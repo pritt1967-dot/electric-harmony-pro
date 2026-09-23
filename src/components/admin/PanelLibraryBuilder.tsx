@@ -448,11 +448,16 @@ export function PanelLibraryBuilder() {
                         style={{ width: it.modules * MODULE_WIDTH_MM * SCALE }}
                       >
                         {dev ? (
-                          <img
-                            src={dev.svgAsset}
-                            alt={it.model}
-                            className="min-h-0 w-full flex-1 object-contain p-0.5"
-                          />
+                          <div
+                            className="w-full"
+                            style={{ height: DEVICE_H_MM * SCALE - (it.label ? 14 : 0) }}
+                          >
+                            <img
+                              src={dev.svgAsset}
+                              alt={it.model}
+                              className="h-full w-full object-contain p-0.5"
+                            />
+                          </div>
                         ) : (
                           <span className="p-1 text-center text-[10px] text-red-600">
                             Фигура отсутствует в библиотеке
