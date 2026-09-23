@@ -493,7 +493,7 @@ export function PanelLibraryBuilder() {
                 style={{ width: railModules * MODULE_WIDTH_MM * SCALE }}
               >
                 {b.dev ? (
-                  <img src={b.dev.svgAsset} alt={b.name} className="h-8 w-full object-contain" />
+                  <div className="h-8 w-full"><img src={b.dev.svgAsset} alt={b.name} className="h-full w-full object-contain" /></div>
                 ) : (
                   <span className="text-[11px] text-red-600">
                     Фигура шины отсутствует в библиотеке
