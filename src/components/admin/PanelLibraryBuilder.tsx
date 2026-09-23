@@ -105,6 +105,45 @@ export function PanelLibraryBuilder() {
   }, [items, rails]);
 
   const totalModules = items.reduce((s, i) => s + i.modules, 0);
+  const capacity = rails * railModules;
+  const freeModules = capacity - totalModules;
+  const reserveOk = freeModules >= reserveModules;
+
+  function setLabel(key: string, label: string) {
+    setItems((prev) => prev.map((i) => (i.key === key ? { ...i, label } : i)));
+  }
+
+  /** Тестовый однофазный щит 230 В — проверка конструктора на реальном составе. */
+  function loadTestPanel() {
+    const rows = testPanel230();
+    let rail = 0;
+    let used = 0;
+    const next: LayoutItem[] = [];
+    for (const r of rows) {
+      if (used + r.device.modules > railModules) {
+        rail += 1;
+        used = 0;
+      }
+      next.push({
+        key: `${r.device.id}-${next.length}-${Math.random().toString(36).slice(2, 7)}`,
+        deviceId: r.device.id,
+        rail,
+        manufacturer: r.device.manufacturer,
+        model: r.device.model,
+        ratedCurrent: r.device.ratedCurrent,
+        modules: r.device.modules,
+        label: r.label,
+        substitute: r.substitute,
+        note: r.note,
+      });
+      used += r.device.modules;
+    }
+    setRails(Math.max(rails, rail + 1));
+    setItems(next);
+    setReserveModules(2);
+    setTitle((t) => t || "Тестовый щит 230 В (испытание конструктора)");
+    toast.success(`Собран тестовый щит: ${next.length} аппаратов`);
+  }
 
   function addDevice(d: CatalogDevice) {
     const free = railModules - (railsUsed[activeRail] ?? 0);
