@@ -45,6 +45,11 @@ type LayoutItem = {
   model: string;
   ratedCurrent: number | null;
   modules: number;
+  /** Маркировка отходящей линии (QF1, «Розетки кухни» и т. п.). */
+  label?: string;
+  /** Временный тестовый аналог: точного аппарата в библиотеке нет. */
+  substitute?: boolean;
+  note?: string;
 };
 
 type SavedLayout = {
@@ -52,6 +57,7 @@ type SavedLayout = {
   version: 1;
   rails: number;
   railModules: number;
+  reserveModules?: number;
   items: LayoutItem[];
 };
 
