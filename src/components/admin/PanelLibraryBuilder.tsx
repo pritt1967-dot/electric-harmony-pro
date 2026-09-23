@@ -220,7 +220,14 @@ export function PanelLibraryBuilder() {
     setSaving(true);
     try {
       const name = title.trim() || `Щит из библиотеки — ${new Date().toLocaleDateString("ru-RU")}`;
-      const payload: SavedLayout = { kind: LAYOUT_KIND, version: 1, rails, railModules, items };
+      const payload: SavedLayout = {
+        kind: LAYOUT_KIND,
+        version: 1,
+        rails,
+        railModules,
+        reserveModules,
+        items,
+      };
       const row = { title: name, input: payload as never, design: null as never, image: "" };
       if (sessionId && !asNew) {
         const { error } = await supabase.from("panel_designs").update(row).eq("id", sessionId);
