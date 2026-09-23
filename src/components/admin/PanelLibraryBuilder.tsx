@@ -507,10 +507,21 @@ export function PanelLibraryBuilder() {
           {items.map((it) => (
             <div key={it.key} className="flex flex-wrap items-center gap-2 p-2">
               <span className="text-xs text-muted-foreground">Рейка {it.rail + 1}</span>
+              <Input
+                className="h-8 w-52"
+                value={it.label ?? ""}
+                onChange={(e) => setLabel(it.key, e.target.value)}
+                placeholder="Маркировка линии"
+              />
               <span className="font-medium">{it.manufacturer} {it.model}</span>
               <span className="text-xs text-muted-foreground">
                 {it.ratedCurrent ? `${it.ratedCurrent} А · ` : ""}{it.modules} мод.
               </span>
+              {it.substitute && (
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800">
+                  временный тестовый аналог
+                </span>
+              )}
               <div className="ml-auto flex gap-1">
                 <Button size="icon" variant="ghost" onClick={() => moveInRail(it.key, -1)} aria-label="Левее">
                   <ArrowLeft className="h-4 w-4" />
