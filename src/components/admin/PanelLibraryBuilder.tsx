@@ -444,18 +444,28 @@ export function PanelLibraryBuilder() {
                       <div
                         key={it.key}
                         title={`${it.manufacturer} ${it.model}`}
-                        className="flex flex-col items-center justify-center border-r border-neutral-300 bg-white"
+                        className="flex flex-col items-center justify-between border-r border-neutral-300 bg-white"
                         style={{ width: it.modules * MODULE_WIDTH_MM * SCALE }}
                       >
                         {dev ? (
                           <img
                             src={dev.svgAsset}
                             alt={it.model}
-                            className="h-full w-full object-contain p-0.5"
+                            className="min-h-0 w-full flex-1 object-contain p-0.5"
                           />
                         ) : (
                           <span className="p-1 text-center text-[10px] text-red-600">
                             Фигура отсутствует в библиотеке
+                          </span>
+                        )}
+                        {it.label && (
+                          <span
+                            className={`w-full truncate px-0.5 pb-0.5 text-center text-[9px] leading-tight ${
+                              it.substitute ? "text-amber-600" : "text-neutral-600"
+                            }`}
+                            title={it.label}
+                          >
+                            {it.label}
                           </span>
                         )}
                       </div>
@@ -465,6 +475,28 @@ export function PanelLibraryBuilder() {
               </div>
             );
           })}
+
+          {/* --- шины N и PE (реальные фигуры библиотеки) --- */}
+          {[
+            { name: "Шина N", dev: BUS_N, color: "bg-sky-50" },
+            { name: "Шина PE", dev: BUS_PE, color: "bg-emerald-50" },
+          ].map((b) => (
+            <div key={b.name}>
+              <div className="mb-1 text-xs text-neutral-500">{b.name}</div>
+              <div
+                className={`flex items-center gap-2 border border-neutral-300 px-2 py-1 ${b.color}`}
+                style={{ width: railModules * MODULE_WIDTH_MM * SCALE }}
+              >
+                {b.dev ? (
+                  <img src={b.dev.svgAsset} alt={b.name} className="h-8 w-full object-contain" />
+                ) : (
+                  <span className="text-[11px] text-red-600">
+                    Фигура шины отсутствует в библиотеке
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
