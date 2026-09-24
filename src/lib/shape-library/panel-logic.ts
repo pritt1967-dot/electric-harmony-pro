@@ -82,12 +82,19 @@ export function placeItems(
 
   items.forEach((it, index) => {
     const device = CATALOG_BY_ID.get(it.deviceId) ?? null;
-    const start = (cursor.get(it.rail) ?? 0) + 1;
+    // Аппарат не должен выходить за пределы рейки: если не помещается — ищем следующую.
+    let rail = it.rail;
+    let start = (cursor.get(rail) ?? 0) + 1;
+    while (start + it.modules - 1 > railModules && rail < rails - 1) {
+      rail += 1;
+      start = (cursor.get(rail) ?? 0) + 1;
+    }
     const end = start + it.modules - 1;
-    cursor.set(it.rail, end);
-    if (railUsed[it.rail] != null) railUsed[it.rail]! += it.modules;
+    cursor.set(rail, end);
+    if (railUsed[rail] != null) railUsed[rail]! += it.modules;
     placed.push({
       ...it,
+      rail,
       order: index,
       startModule: start,
       endModule: end,
@@ -96,7 +103,7 @@ export function placeItems(
       poles: device?.poles ?? null,
       curve: device?.curve ?? null,
       series: device?.series ?? "",
-      outOfRail: it.rail < 0 || it.rail >= rails || end > railModules,
+      outOfRail: rail < 0 || rail >= rails || end > railModules,
     });
   });
 
@@ -210,7 +217,7 @@ export function validatePanel(
     "reserve",
     "Резерв модулей",
     capacity - used >= opts.reserveModules,
-    `всего ${capacity}, занято ${used}, свободно ${capacity - used}, требуется резерв ${opts.reserveModules}`,
+    `всего ${capacity}, занято ${used}, свободно ${Math.max(0, capacity - used)}, требуется резерв ${opts.reserveModules}`,
   );
 
   // 6. цепочка
