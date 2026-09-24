@@ -121,7 +121,8 @@ export function PanelLibraryBuilder() {
 
   const totalModules = items.reduce((s, i) => s + i.modules, 0);
   const capacity = rails * railModules;
-  const freeModules = capacity - totalModules;
+  // Свободные модули не могут быть отрицательными — в интерфейсе всегда >= 0.
+  const freeModules = Math.max(0, capacity - totalModules);
   const reserveOk = freeModules >= reserveModules;
 
   const logic = useMemo(() => {
@@ -178,9 +179,10 @@ export function PanelLibraryBuilder() {
       }
     }
     if (target < 0) {
-      toast.error(
-        `Свободных ${d.modules} мод. нет ни на одной рейке начиная с ${activeRail + 1} — добавьте DIN-рейку`,
-      );
+      toast.error("Недостаточно места на DIN-рейке", {
+        description: `Для ${d.model} нужно ${d.modules} свободных мод. — добавьте новую DIN-рейку`,
+        action: { label: "Добавить рейку", onClick: () => setRails((r) => r + 1) },
+      });
       return;
     }
     if (target !== activeRail) {
@@ -227,7 +229,9 @@ export function PanelLibraryBuilder() {
       if (target < 0 || target >= rails) return prev;
       const used = prev.filter((i) => i.rail === target).reduce((s, i) => s + i.modules, 0);
       if (used + it.modules > railModules) {
-        toast.error(`На рейке ${target + 1} недостаточно места`);
+        toast.error("Недостаточно места на DIN-рейке", {
+          description: `На рейке ${target + 1} свободно ${Math.max(0, railModules - used)} мод., нужно ${it.modules}`,
+        });
         return prev;
       }
       return prev.map((i) => (i.key === key ? { ...i, rail: target } : i));
