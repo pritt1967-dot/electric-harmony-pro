@@ -7,7 +7,7 @@ export class AiProviderError extends Error {
   }
 }
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "gpt-6-luna";
 const TIMEOUT_MS = 45_000;
 const MAX_RESPONSE_CHARS = 60_000;
 
