@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { AiCheckPanel } from "@/components/admin/AiCheckPanel";
 import { BUS_CONNECTION_LABEL } from "@/lib/shape-library/bus-connection";
 import {
   CATALOG_BY_ID,
@@ -646,6 +647,43 @@ export function PanelLibraryBuilder() {
               ))}
             </ul>
           </div>
+
+          <AiCheckPanel
+            onApply={(ch) => ch.key && ch.value && setLabel(ch.key, ch.value)}
+            getSnapshot={() => {
+              const mark = (p: (typeof logic.placed)[number]) => p.label || `${p.manufacturer} ${p.model}`;
+              return {
+                network: { phases: 1, voltage: 230, grounding: "не указана", ip: "не указан" },
+                rails: { count: rails, modules: railModules, reserve: reserveModules },
+                main: logic.chain.main ? mark(logic.chain.main) : null,
+                devices: logic.placed.map((p) => ({
+                  key: p.key,
+                  mark: (p.label ?? "").slice(0, 80),
+                  role: p.role,
+                  manufacturer: p.manufacturer,
+                  series: p.series,
+                  model: p.model,
+                  rated_a: p.ratedCurrent,
+                  curve: p.curve,
+                  poles: p.poles,
+                  modules: p.modules,
+                  rail: p.rail + 1,
+                  start: p.startModule,
+                  end: p.endModule,
+                  out_of_rail: p.outOfRail,
+                  substitute: !!p.substitute,
+                })),
+                chain: logic.chain.branches.map((b) => ({
+                  rcd: b.rcd ? mark(b.rcd) : null,
+                  n_bus: b.nBus,
+                  lines: b.lines.map((l) => mark(l.item)),
+                })),
+                n_buses: logic.chain.nBuses,
+                pe_bus: logic.chain.peBus,
+                checks: logic.checks.map((c) => ({ title: c.title, ok: c.ok, detail: c.detail.slice(0, 400) })),
+              };
+            }}
+          />
         </div>
       </div>
 
