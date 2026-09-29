@@ -57,9 +57,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    // Vercel: Nitro собирает .vercel/output (статика + serverless-функция).
-    // Локально/на VPS можно переопределить: NITRO_PRESET=node-server npm run build
-    preset: process.env.NITRO_PRESET ?? "vercel",
+    // Пресет задаётся через env NITRO_PRESET (см. vercel.json → build.env).
+    // По умолчанию — cloudflare-module (Lovable); для VPS: NITRO_PRESET=node-server.
+    ...(process.env.NITRO_PRESET ? { preset: process.env.NITRO_PRESET } : {}),
   },
   vite: {
     plugins: [mcpPlugin()],
