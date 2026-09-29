@@ -57,7 +57,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    preset: "node-server",
+    // Vercel: Nitro собирает .vercel/output (статика + serverless-функция).
+    // Локально/на VPS можно переопределить: NITRO_PRESET=node-server npm run build
+    preset: process.env.NITRO_PRESET ?? "vercel",
   },
   vite: {
     plugins: [mcpPlugin()],
