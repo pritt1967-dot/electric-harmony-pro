@@ -1,11 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "buildCommand": "npm run build",
-  "build": {
-    "env": {
-      "NITRO_PRESET": "vercel"
-    }
-  },
+  "installCommand": "npm install",
   "headers": [
     {
       "source": "/((?!_build|assets|_serverFn|api).*)",
@@ -38,7 +35,12 @@
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "www.sm-electric.ru" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.sm-electric.ru"
+        }
+      ],
       "destination": "https://sm-electric.ru/$1",
       "permanent": true
     }

@@ -59,7 +59,13 @@ export default defineConfig({
   nitro: {
     // Пресет задаётся через env NITRO_PRESET (см. vercel.json → build.env).
     // По умолчанию — cloudflare-module (Lovable); для VPS: NITRO_PRESET=node-server.
-    ...(process.env.NITRO_PRESET ? { preset: process.env.NITRO_PRESET } : {}),
+    // На Vercel (env VERCEL=1 задаётся платформой автоматически) — пресет vercel
+    // → Build Output API v3 в .vercel/output.
+    ...(process.env.NITRO_PRESET
+      ? { preset: process.env.NITRO_PRESET }
+      : process.env.VERCEL
+        ? { preset: "vercel" }
+        : {}),
   },
   vite: {
     plugins: [mcpPlugin()],
