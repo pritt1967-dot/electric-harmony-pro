@@ -208,8 +208,9 @@ export const designPanel = createServerFn({ method: "POST" })
     const cached = designCache.get(cacheKey);
     if (cached) return { ok: true, design: cached };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const stored = await supabaseAdmin
+    // Чтение кэша расчётов — под пользователем после проверки прав
+    // администратора (assertAdmin выше): служебный ключ не требуется.
+    const stored = await (context as { supabase: any }).supabase
       .from("panel_designs")
       .select("design, input")
       .eq("title", cacheTitle)
@@ -813,7 +814,7 @@ ${data.lines_text}`;
         designCache.set(cacheKey, audited);
         // Устойчивая повторяемость: тот же ввод всегда отдаёт этот же проект,
         // даже после перезапуска сервера.
-        await supabaseAdmin
+        await (context as { supabase: any }).supabase
           .from("panel_designs")
           .insert({ title: cacheTitle, input: { ...calcData, __rules: RULES_VERSION } as never, design: audited as never, image: "" })
           .then(
