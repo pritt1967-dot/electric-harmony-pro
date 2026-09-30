@@ -22,6 +22,13 @@
       "when": 1790628199915,
       "tag": "0002_create_ai_check_log",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790777980994,
+      "tag": "0003_reviews_without_service_role",
+      "breakpoints": true
     }
   ]
 }

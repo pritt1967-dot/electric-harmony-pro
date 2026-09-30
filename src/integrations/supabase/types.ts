@@ -794,6 +794,11 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_first_admin: { Args: never; Returns: string }
+      client_review_recent_count: {
+        Args: { _ip_hash: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

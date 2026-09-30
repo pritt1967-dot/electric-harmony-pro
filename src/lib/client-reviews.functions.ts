@@ -67,18 +67,15 @@ export const submitClientReview = createServerFn({ method: "POST" })
       "unknown";
     const ipHash = await hashIp(ip);
 
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
+    // Публичный клиент (publishable key): права ограничены правилами RLS —
+    // вставка разрешена только со статусом «pending».
+    const supabase = createPublicSupabaseClient();
 
     // 2. Ограничение частоты: не более 3 отзывов в час с одного отправителя.
-    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count } = await supabaseAdmin
-      .from("client_reviews")
-      .select("id", { count: "exact", head: true })
-      .eq("ip_hash", ipHash)
-      .gte("created_at", since);
-    if ((count ?? 0) >= 3) {
+    const { data: recent } = await supabase.rpc("client_review_recent_count", {
+      _ip_hash: ipHash,
+    });
+    if ((recent ?? 0) >= 3) {
       throw new Error(
         "Вы уже отправили отзыв. Попробуйте позже — каждый отзыв проверяется вручную.",
       );
@@ -98,7 +95,7 @@ export const submitClientReview = createServerFn({ method: "POST" })
             ? "webp"
             : "jpg";
       const path = `reviews/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabaseAdmin.storage
+      const { error: uploadError } = await supabase.storage
         .from("projects")
         .upload(path, bytes, { contentType: data.photo.type, upsert: false });
       if (uploadError) {
@@ -108,7 +105,7 @@ export const submitClientReview = createServerFn({ method: "POST" })
       }
     }
 
-    const { error } = await supabaseAdmin.from("client_reviews").insert({
+    const { error } = await supabase.from("client_reviews").insert({
       name,
       location,
       rating: data.rating,
@@ -142,20 +139,18 @@ export const deleteClientReview = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("Forbidden");
 
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    const { data: row } = await supabaseAdmin
+    // Сессия администратора: RLS «Admins manage …» разрешает чтение/удаление.
+    const { data: row } = await context.supabase
       .from("client_reviews")
       .select("photo_path")
       .eq("id", data.id)
       .maybeSingle();
 
     if (row?.photo_path) {
-      await supabaseAdmin.storage.from("projects").remove([row.photo_path]);
+      await context.supabase.storage.from("projects").remove([row.photo_path]);
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await context.supabase
       .from("client_reviews")
       .delete()
       .eq("id", data.id);
