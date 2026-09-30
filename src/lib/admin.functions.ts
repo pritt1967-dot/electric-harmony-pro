@@ -4,36 +4,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 /**
  * Grants the `admin` role to the current user ONLY when no admin exists yet
  * (first-run bootstrap). If an admin already exists, it succeeds only for that
- * same admin — nobody else can self-promote.
+ * same admin — nobody else can self-promote. Runs under the user's own session
+ * via the `claim_first_admin` database function (no service key needed).
  */
 export const claimAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-
-    const { count, error: countError } = await supabaseAdmin
-      .from("user_roles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
-
-    if (countError) throw new Error(countError.message);
-
-    if ((count ?? 0) > 0) {
-      const { data } = await supabaseAdmin
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", context.userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      return { granted: Boolean(data), reason: data ? "ok" : "exists" };
-    }
-
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
-
+    const { data, error } = await context.supabase.rpc("claim_first_admin");
     if (error) throw new Error(error.message);
-    return { granted: true, reason: "bootstrapped" };
+    const reason = (data as string) ?? "exists";
+    return { granted: reason === "ok" || reason === "bootstrapped", reason };
   });
