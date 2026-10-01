@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 Tuqo deployment test
+- GigaChat (src/lib/ai-check/providers/gigachat.server.ts) is an optional server-only advisor for panel-validator: its advice never changes validator status/checks or the project; missing GIGACHAT_AUTH_KEY means unavailable, not an error.
