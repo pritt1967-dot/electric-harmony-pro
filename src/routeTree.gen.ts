@@ -9,60 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PricesRouteImport } from './routes/prices'
-import { Route as OtzyvyRouteImport } from './routes/otzyvy'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as ContactCardRouteImport } from './routes/contact-card'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as RabotyIndexRouteImport } from './routes/raboty.index'
-import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
-import { Route as RabotySlugRouteImport } from './routes/raboty.$slug'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactCardRouteImport } from './routes/contact-card'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as OtzyvyRouteImport } from './routes/otzyvy'
+import { Route as PricesRouteImport } from './routes/prices'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
-import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/public/supabase-keepalive'
-import { Route as ApiPublicFinanceRelayRouteImport } from './routes/api/public/finance-relay'
-import { Route as ApiPublicFinanceHealthRouteImport } from './routes/api/public/finance-health'
-import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
-import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as RabotyIndexRouteImport } from './routes/raboty.index'
+import { Route as RabotySlugRouteImport } from './routes/raboty.$slug'
+import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as ApiPublicSbSplatRouteImport } from './routes/api/public/sb/$'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
+import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
+import { Route as ApiPublicFinanceHealthRouteImport } from './routes/api/public/finance-health'
+import { Route as ApiPublicFinanceRelayRouteImport } from './routes/api/public/finance-relay'
+import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/public/supabase-keepalive'
+import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo/$'
+import { Route as ApiPublicSbSplatRouteImport } from './routes/api/public/sb/$'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricesRoute = PricesRouteImport.update({
-  id: '/prices',
-  path: '/prices',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OtzyvyRoute = OtzyvyRouteImport.update({
-  id: '/otzyvy',
-  path: '/otzyvy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactCardRoute = ContactCardRouteImport.update({
-  id: '/contact-card',
-  path: '/contact-card',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SlugRoute = SlugRouteImport.update({
@@ -74,19 +49,56 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ContactCardRoute = ContactCardRouteImport.update({
+  id: '/contact-card',
+  path: '/contact-card',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OtzyvyRoute = OtzyvyRouteImport.update({
+  id: '/otzyvy',
+  path: '/otzyvy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricesRoute = PricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const RabotyIndexRoute = RabotyIndexRouteImport.update({
   id: '/raboty/',
   path: '/raboty/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SmetaTokenRoute = SmetaTokenRouteImport.update({
-  id: '/smeta/$token',
-  path: '/smeta/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RabotySlugRoute = RabotySlugRouteImport.update({
@@ -94,26 +106,41 @@ const RabotySlugRoute = RabotySlugRouteImport.update({
   path: '/raboty/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const SmetaTokenRoute = SmetaTokenRouteImport.update({
+  id: '/smeta/$token',
+  path: '/smeta/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedEstimateIdRoute = AuthenticatedEstimateIdRouteImport.update({
+  id: '/estimate/$id',
+  path: '/estimate/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
+const ApiPublicContactCardDotpdfRoute =
+  ApiPublicContactCardDotpdfRouteImport.update({
+    id: '/api/public/contact-card.pdf',
+    path: '/api/public/contact-card.pdf',
     getParentRoute: () => rootRouteImport,
   } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicTelegramHealthRoute = ApiPublicTelegramHealthRouteImport.update({
-  id: '/api/public/telegram-health',
-  path: '/api/public/telegram-health',
+const ApiPublicFinanceHealthRoute = ApiPublicFinanceHealthRouteImport.update({
+  id: '/api/public/finance-health',
+  path: '/api/public/finance-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicFinanceRelayRoute = ApiPublicFinanceRelayRouteImport.update({
+  id: '/api/public/finance-relay',
+  path: '/api/public/finance-relay',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicSupabaseKeepaliveRoute =
@@ -122,46 +149,19 @@ const ApiPublicSupabaseKeepaliveRoute =
     path: '/api/public/supabase-keepalive',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicFinanceRelayRoute = ApiPublicFinanceRelayRouteImport.update({
-  id: '/api/public/finance-relay',
-  path: '/api/public/finance-relay',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicFinanceHealthRoute = ApiPublicFinanceHealthRouteImport.update({
-  id: '/api/public/finance-health',
-  path: '/api/public/finance-health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicContactCardDotpdfRoute =
-  ApiPublicContactCardDotpdfRouteImport.update({
-    id: '/api/public/contact-card.pdf',
-    path: '/api/public/contact-card.pdf',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedEstimateIdRoute = AuthenticatedEstimateIdRouteImport.update({
-  id: '/estimate/$id',
-  path: '/estimate/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSbSplatRoute = ApiPublicSbSplatRouteImport.update({
-  id: '/api/public/sb/$',
-  path: '/api/public/sb/$',
+const ApiPublicTelegramHealthRoute = ApiPublicTelegramHealthRouteImport.update({
+  id: '/api/public/telegram-health',
+  path: '/api/public/telegram-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   id: '/api/public/photo/$',
   path: '/api/public/photo/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSbSplatRoute = ApiPublicSbSplatRouteImport.update({
+  id: '/api/public/sb/$',
+  path: '/api/public/sb/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -355,46 +355,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/prices': {
-      id: '/prices'
-      path: '/prices'
-      fullPath: '/prices'
-      preLoaderRoute: typeof PricesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/otzyvy': {
-      id: '/otzyvy'
-      path: '/otzyvy'
-      fullPath: '/otzyvy'
-      preLoaderRoute: typeof OtzyvyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact-card': {
-      id: '/contact-card'
-      path: '/contact-card'
-      fullPath: '/contact-card'
-      preLoaderRoute: typeof ContactCardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$slug': {
@@ -411,46 +376,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/raboty/': {
-      id: '/raboty/'
-      path: '/raboty'
-      fullPath: '/raboty/'
-      preLoaderRoute: typeof RabotyIndexRouteImport
+    '/contact-card': {
+      id: '/contact-card'
+      path: '/contact-card'
+      fullPath: '/contact-card'
+      preLoaderRoute: typeof ContactCardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/smeta/$token': {
-      id: '/smeta/$token'
-      path: '/smeta/$token'
-      fullPath: '/smeta/$token'
-      preLoaderRoute: typeof SmetaTokenRouteImport
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/raboty/$slug': {
-      id: '/raboty/$slug'
-      path: '/raboty/$slug'
-      fullPath: '/raboty/$slug'
-      preLoaderRoute: typeof RabotySlugRouteImport
+    '/otzyvy': {
+      id: '/otzyvy'
+      path: '/otzyvy'
+      fullPath: '/otzyvy'
+      preLoaderRoute: typeof OtzyvyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/prices': {
+      id: '/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof PricesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -460,53 +425,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/telegram-health': {
-      id: '/api/public/telegram-health'
-      path: '/api/public/telegram-health'
-      fullPath: '/api/public/telegram-health'
-      preLoaderRoute: typeof ApiPublicTelegramHealthRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/supabase-keepalive': {
-      id: '/api/public/supabase-keepalive'
-      path: '/api/public/supabase-keepalive'
-      fullPath: '/api/public/supabase-keepalive'
-      preLoaderRoute: typeof ApiPublicSupabaseKeepaliveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/finance-relay': {
-      id: '/api/public/finance-relay'
-      path: '/api/public/finance-relay'
-      fullPath: '/api/public/finance-relay'
-      preLoaderRoute: typeof ApiPublicFinanceRelayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/finance-health': {
-      id: '/api/public/finance-health'
-      path: '/api/public/finance-health'
-      fullPath: '/api/public/finance-health'
-      preLoaderRoute: typeof ApiPublicFinanceHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/contact-card.pdf': {
-      id: '/api/public/contact-card.pdf'
-      path: '/api/public/contact-card.pdf'
-      fullPath: '/api/public/contact-card.pdf'
-      preLoaderRoute: typeof ApiPublicContactCardDotpdfRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/estimate/$id': {
-      id: '/_authenticated/estimate/$id'
-      path: '/estimate/$id'
-      fullPath: '/estimate/$id'
-      preLoaderRoute: typeof AuthenticatedEstimateIdRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/raboty/': {
+      id: '/raboty/'
+      path: '/raboty'
+      fullPath: '/raboty/'
+      preLoaderRoute: typeof RabotyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/raboty/$slug': {
+      id: '/raboty/$slug'
+      path: '/raboty/$slug'
+      fullPath: '/raboty/$slug'
+      preLoaderRoute: typeof RabotySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/smeta/$token': {
+      id: '/smeta/$token'
+      path: '/smeta/$token'
+      fullPath: '/smeta/$token'
+      preLoaderRoute: typeof SmetaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -516,11 +467,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/sb/$': {
-      id: '/api/public/sb/$'
-      path: '/api/public/sb/$'
-      fullPath: '/api/public/sb/$'
-      preLoaderRoute: typeof ApiPublicSbSplatRouteImport
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/estimate/$id': {
+      id: '/_authenticated/estimate/$id'
+      path: '/estimate/$id'
+      fullPath: '/estimate/$id'
+      preLoaderRoute: typeof AuthenticatedEstimateIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/contact-card.pdf': {
+      id: '/api/public/contact-card.pdf'
+      path: '/api/public/contact-card.pdf'
+      fullPath: '/api/public/contact-card.pdf'
+      preLoaderRoute: typeof ApiPublicContactCardDotpdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/finance-health': {
+      id: '/api/public/finance-health'
+      path: '/api/public/finance-health'
+      fullPath: '/api/public/finance-health'
+      preLoaderRoute: typeof ApiPublicFinanceHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/finance-relay': {
+      id: '/api/public/finance-relay'
+      path: '/api/public/finance-relay'
+      fullPath: '/api/public/finance-relay'
+      preLoaderRoute: typeof ApiPublicFinanceRelayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/supabase-keepalive': {
+      id: '/api/public/supabase-keepalive'
+      path: '/api/public/supabase-keepalive'
+      fullPath: '/api/public/supabase-keepalive'
+      preLoaderRoute: typeof ApiPublicSupabaseKeepaliveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telegram-health': {
+      id: '/api/public/telegram-health'
+      path: '/api/public/telegram-health'
+      fullPath: '/api/public/telegram-health'
+      preLoaderRoute: typeof ApiPublicTelegramHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/photo/$': {
@@ -528,6 +521,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/photo/$'
       fullPath: '/api/public/photo/$'
       preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sb/$': {
+      id: '/api/public/sb/$'
+      path: '/api/public/sb/$'
+      fullPath: '/api/public/sb/$'
+      preLoaderRoute: typeof ApiPublicSbSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
