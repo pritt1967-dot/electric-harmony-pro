@@ -56,7 +56,7 @@ export const Route = createFileRoute("/prices")({
   component: PricesPage,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-center text-muted-foreground">
-      Не удалось загрузить прайс. {error.message}
+      Не удалось загрузить прайс. {error instanceof Error ? error.message : String(error)}
     </div>
   ),
 });

@@ -43,7 +43,7 @@ export const Route = createFileRoute("/raboty/")({
   component: WorksIndex,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-center text-muted-foreground">
-      Не удалось загрузить объекты. {error.message}
+      Не удалось загрузить объекты. {error instanceof Error ? error.message : String(error)}
     </div>
   ),
 });
