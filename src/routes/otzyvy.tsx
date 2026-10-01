@@ -43,7 +43,7 @@ export const Route = createFileRoute("/otzyvy")({
   component: ReviewsPage,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-center text-muted-foreground">
-      Не удалось загрузить отзывы. {error.message}
+      Не удалось загрузить отзывы. {error instanceof Error ? error.message : String(error)}
     </div>
   ),
 });
