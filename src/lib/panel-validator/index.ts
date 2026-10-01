@@ -30,7 +30,7 @@ const numOrNull = (v: unknown): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 const ratingOf = (t: string): number | null => {
-  const m = t.match(/(\d{1,3})\s*(?:А|A)\b/i) ?? t.match(/\b[BCDСс]\s?(\d{1,3})\b/);
+  const m = t.match(/(\d{1,3})\s*(?:А|A)(?![\p{L}\d])/iu) ?? t.match(/\b[BCDСс]\s?(\d{1,3})\b/);
   return m ? Number(m[1]) : null;
 };
 const polesOf = (t: string): number | null => {
@@ -39,6 +39,13 @@ const polesOf = (t: string): number | null => {
   if (/3P\+N|4P/i.test(t)) return 4;
   return null;
 };
+// "QF3 Стиральная машина" → "QF3"; строка без распознаваемой марки остаётся как есть.
+const markOf = (t: string): string => {
+  const m = t.match(/^\s*([A-Za-zА-Яа-я]{1,4}\d+(?:[.\-]\d+)?)(?![\p{L}\d])/u);
+  return m ? m[1]! : t;
+};
+const isReserveItem = (it: Record<string, unknown>) =>
+  /^(RESERVE|РЕЗЕРВ)$/i.test(str(it["mark"])) || /^(свободно|резерв)/i.test(str(it["label"]));
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -84,7 +91,7 @@ export function normalize(raw: unknown): VProject {
       rating: ratingOf(rating) ?? numOrNull(rating),
       type: str(r["type"]),
       leakage: str(r["leakage"]),
-      lines: arr(r["lines"]).map(str).filter(Boolean),
+      lines: arr(r["lines"]).map(str).filter(Boolean).map(markOf),
       poles: polesOf(rating),
       nBus: str(r["n_bus"]),
     };
@@ -93,7 +100,7 @@ export function normalize(raw: unknown): VProject {
   const rails = arr(design["rails"]);
   const railsModules = rails.length
     ? rails.reduce<number>(
-        (a, r) => a + arr(obj(r)["items"]).reduce<number>((b, it) => b + (numOrNull(obj(it)["modules"]) ?? 0), 0),
+        (a, r) => a + arr(obj(r)["items"]).reduce<number>((b, it) => (isReserveItem(obj(it)) ? b : b + (numOrNull(obj(it)["modules"]) ?? 0)), 0),
         0,
       )
     : null;
