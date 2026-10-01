@@ -144,10 +144,7 @@ async function callGateway(
       n: 1,
     }),
   });
-  if (!res.ok) {
-    console.error("[panel] OpenAI image status", res.status);
-    return new Response(null, { status: res.status });
-  }
+  if (!res.ok) return res;
   const json = (await res.json()) as { data?: { b64_json?: string; url?: string }[] };
   const item = json.data?.[0];
   const url = item?.b64_json ? `data:image/png;base64,${item.b64_json}` : item?.url;
@@ -155,6 +152,27 @@ async function callGateway(
     choices: [{ message: { images: url ? [{ image_url: { url } }] : [] } }],
   });
 }
+
+/**
+ * Безопасная диагностика ошибки OpenAI: только HTTP-статус и error.code/type/message
+ * из тела ответа. Ключ и заголовки не возвращаются; строки вида sk-... вырезаются.
+ */
+async function openAiErrorDetail(res: Response): Promise<string> {
+  let code = "";
+  let message = "";
+  try {
+    const body = (await res.json()) as { error?: { code?: unknown; type?: unknown; message?: unknown } };
+    code = String(body.error?.code ?? body.error?.type ?? "");
+    message = String(body.error?.message ?? "");
+  } catch {
+    /* тело не JSON */
+  }
+  const clean = (s: string) => s.replace(/sk-[A-Za-z0-9_\-*]+/g, "sk-***").slice(0, 400);
+  const out = `HTTP ${res.status}${code ? ` [${clean(code)}]` : ""}${message ? `: ${clean(message)}` : ""}`;
+  console.error("[panel] OpenAI", out);
+  return out;
+}
+
 
 
 /**
@@ -245,10 +263,11 @@ ${data.lines_text}`;
         prompt: prompt + extra,
       });
 
-      if (res.status === 429) return { error: { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." } };
-      if (res.status === 402) return { error: { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." } };
-      if (res.status === 403) return { error: { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." } };
-      if (!res.ok) return { error: { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." } };
+      if (!res.ok) {
+        const diag = await openAiErrorDetail(res);
+        const code = res.status === 429 ? "rate_limited" : res.status === 403 ? "policy_blocked" : res.status === 402 ? "payment_required" : "unavailable";
+        return { error: { ok: false, code, message: `OpenAI ошибка ${diag}` } as PanelAiError };
+      }
       const json = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
       };
@@ -833,10 +852,11 @@ Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, nea
     const res = await callGateway("image", { prompt });
 
 
-    if (res.status === 429) return { ok: false, code: "rate_limited", message: "Слишком много запросов. Попробуйте позже." };
-    if (res.status === 402) return { ok: false, code: "payment_required", message: "Недостаточно кредитов AI. Пополните баланс в разделе «Настройки → Планы и кредиты»." };
-    if (res.status === 403) return { ok: false, code: "policy_blocked", message: "Доступ к AI ограничен настройками рабочего пространства. Обратитесь к администратору." };
-    if (!res.ok) return { ok: false, code: "unavailable", message: "Сервис AI временно недоступен. Попробуйте позже." };
+    if (!res.ok) {
+      const diag = await openAiErrorDetail(res);
+      const code = res.status === 429 ? "rate_limited" : res.status === 403 ? "policy_blocked" : res.status === 402 ? "payment_required" : "unavailable";
+      return { ok: false, code, message: `OpenAI ошибка ${diag}` } as RenderPanelImageResult;
+    }
 
     const json = (await res.json()) as {
       choices?: { message?: { images?: { image_url?: { url?: string } }[] } }[];
