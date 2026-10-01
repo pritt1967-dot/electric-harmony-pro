@@ -105,75 +105,48 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
 }
 
 /**
- * Транспорт к OpenAI (напрямую с сервера сайта).
- * Ключ OPENAI_API_KEY читается только на сервере; модель — из AI_CHECK_MODEL
- * (по умолчанию gpt-6-luna), картинка — из AI_IMAGE_MODEL (по умолчанию gpt-image-1).
- * Ответ приводится к прежнему формату, поэтому промпты и разбор не меняются.
+ * Транспорт к GigaChat (напрямую с сервера сайта). Ключ GIGACHAT_AUTH_KEY
+ * читается только на сервере. Ответ приводится к прежнему формату,
+ * поэтому промпты и разбор не меняются.
  */
 async function callGateway(
   kind: "design" | "image",
   payload: { system?: string; prompt: string },
 ): Promise<Response> {
-  const key = process.env["OPENAI_API_KEY"]?.trim();
-  if (!key) {
-    throw new Error("AI недоступен: на сервере не задан OPENAI_API_KEY.");
-  }
-  const headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
-
-  if (kind === "design") {
-    return fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: process.env["AI_CHECK_MODEL"]?.trim() || "gpt-6-luna",
-        messages: [
-          { role: "system", content: payload.system },
+  const { gigaChat, gigaImage, GigaChatError } = await import("./ai-check/providers/gigachat-client.server");
+  try {
+    if (kind === "design") {
+      const content = await gigaChat(
+        [
+          { role: "system", content: payload.system ?? "" },
           { role: "user", content: payload.prompt },
         ],
-      }),
-    });
+        { timeoutMs: 120_000 },
+      );
+      return Response.json({ choices: [{ message: { content } }] });
+    }
+    const url = await gigaImage(payload.prompt);
+    return Response.json({ choices: [{ message: { images: [{ image_url: { url } }] } }] });
+  } catch (e) {
+    const g = e instanceof GigaChatError ? e : null;
+    const status = g && g.status >= 400 ? g.status : 503;
+    return Response.json({ error: { message: g?.message ?? "ошибка GigaChat" } }, { status });
   }
-
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: process.env["AI_IMAGE_MODEL"]?.trim() || "gpt-image-1",
-      prompt: payload.prompt,
-      size: "1024x1024",
-      n: 1,
-    }),
-  });
-  if (!res.ok) return res;
-  const json = (await res.json()) as { data?: { b64_json?: string; url?: string }[] };
-  const item = json.data?.[0];
-  const url = item?.b64_json ? `data:image/png;base64,${item.b64_json}` : item?.url;
-  return Response.json({
-    choices: [{ message: { images: url ? [{ image_url: { url } }] : [] } }],
-  });
 }
 
-/**
- * Безопасная диагностика ошибки OpenAI: только HTTP-статус и error.code/type/message
- * из тела ответа. Ключ и заголовки не возвращаются; строки вида sk-... вырезаются.
- */
-async function openAiErrorDetail(res: Response): Promise<string> {
-  let code = "";
+/** Безопасная диагностика ошибки GigaChat: HTTP-статус и текст без секретов. */
+async function aiErrorDetail(res: Response): Promise<string> {
   let message = "";
   try {
-    const body = (await res.json()) as { error?: { code?: unknown; type?: unknown; message?: unknown } };
-    code = String(body.error?.code ?? body.error?.type ?? "");
+    const body = (await res.json()) as { error?: { message?: unknown } };
     message = String(body.error?.message ?? "");
   } catch {
     /* тело не JSON */
   }
-  const clean = (s: string) => s.replace(/sk-[A-Za-z0-9_\-*]+/g, "sk-***").slice(0, 400);
-  const out = `HTTP ${res.status}${code ? ` [${clean(code)}]` : ""}${message ? `: ${clean(message)}` : ""}`;
-  console.error("[panel] OpenAI", out);
+  const out = message.slice(0, 400) || `HTTP ${res.status}`;
+  console.error("[panel] GigaChat", out);
   return out;
 }
-
-
 
 /**
  * Кэш готовых расчётов: одинаковые исходные данные всегда дают один и тот же
@@ -264,9 +237,9 @@ ${data.lines_text}`;
       });
 
       if (!res.ok) {
-        const diag = await openAiErrorDetail(res);
+        const diag = await aiErrorDetail(res);
         const code = res.status === 429 ? "rate_limited" : res.status === 403 ? "policy_blocked" : res.status === 402 ? "payment_required" : "unavailable";
-        return { error: { ok: false, code, message: `OpenAI ошибка ${diag}` } as PanelAiError };
+        return { error: { ok: false, code, message: `GigaChat ошибка: ${diag}` } as PanelAiError };
       }
       const json = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
@@ -853,9 +826,9 @@ Realistic European DIN-rail modular devices in correct 17.5 mm module sizes, nea
 
 
     if (!res.ok) {
-      const diag = await openAiErrorDetail(res);
+      const diag = await aiErrorDetail(res);
       const code = res.status === 429 ? "rate_limited" : res.status === 403 ? "policy_blocked" : res.status === 402 ? "payment_required" : "unavailable";
-      return { ok: false, code, message: `OpenAI ошибка ${diag}` } as RenderPanelImageResult;
+      return { ok: false, code, message: `GigaChat ошибка: ${diag}` } as RenderPanelImageResult;
     }
 
     const json = (await res.json()) as {
