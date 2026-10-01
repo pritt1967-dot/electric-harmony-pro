@@ -229,7 +229,20 @@ function ruleRcdConflicts(p: VProject): VRuleResult {
       if (!marks.has(m)) out.push(`УЗО ${r.mark} ссылается на несуществующую линию ${m}`);
       owner.set(m, [...(owner.get(m) ?? []), r.mark]);
     }
-  for (const [m, rs] of owner) if (rs.length > 1) out.push(`линия ${m} в нескольких УЗО: ${rs.join(", ")}`);
+  // Каскад (вышестоящее УЗО, состав которого полностью включает состав нижестоящего) — не конфликт.
+  // Конфликт — только если составы УЗО, общие для линии, не вложены друг в друга.
+  const setOf = new Map(p.rcds.map((r) => [r.mark, new Set(r.lines)]));
+  const nested = (a: string, b: string) => {
+    const A = setOf.get(a), B = setOf.get(b);
+    if (!A || !B) return false;
+    const sub = (x: Set<string>, y: Set<string>) => [...x].every((v) => y.has(v));
+    return sub(A, B) || sub(B, A);
+  };
+  for (const [m, rs] of owner) {
+    if (rs.length < 2) continue;
+    const bad = rs.some((a, i) => rs.slice(i + 1).some((b) => !nested(a, b)));
+    if (bad) out.push(`линия ${m} в нескольких независимых УЗО: ${rs.join(", ")}`);
+  }
   const rcdMarks = new Set(p.rcds.map((r) => r.mark));
   for (const l of p.lines) {
     if (!l.rcd || /^(нет|—|-|без)/i.test(l.rcd)) continue;
