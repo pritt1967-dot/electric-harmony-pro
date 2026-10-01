@@ -27,7 +27,6 @@ import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
-import { Route as ApiPublicAiRelayRouteImport } from './routes/api/public/ai-relay'
 import { Route as ApiPublicContactCardDotpdfRouteImport } from './routes/api/public/contact-card[.]pdf'
 import { Route as ApiPublicFinanceHealthRouteImport } from './routes/api/public/finance-health'
 import { Route as ApiPublicFinanceRelayRouteImport } from './routes/api/public/finance-relay'
@@ -128,11 +127,6 @@ const AuthenticatedEstimateIdRoute = AuthenticatedEstimateIdRouteImport.update({
   path: '/estimate/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiPublicAiRelayRoute = ApiPublicAiRelayRouteImport.update({
-  id: '/api/public/ai-relay',
-  path: '/api/public/ai-relay',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicContactCardDotpdfRoute =
   ApiPublicContactCardDotpdfRouteImport.update({
     id: '/api/public/contact-card.pdf',
@@ -189,7 +183,6 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
-  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
@@ -216,7 +209,6 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/estimate/$id': typeof AuthenticatedEstimateIdRoute
-  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
@@ -245,7 +237,6 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/estimate/$id': typeof AuthenticatedEstimateIdRoute
-  '/api/public/ai-relay': typeof ApiPublicAiRelayRoute
   '/api/public/contact-card.pdf': typeof ApiPublicContactCardDotpdfRoute
   '/api/public/finance-health': typeof ApiPublicFinanceHealthRoute
   '/api/public/finance-relay': typeof ApiPublicFinanceRelayRoute
@@ -274,7 +265,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
-    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/finance-health'
     | '/api/public/finance-relay'
@@ -301,7 +291,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/estimate/$id'
-    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/finance-health'
     | '/api/public/finance-relay'
@@ -329,7 +318,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/estimate/$id'
-    | '/api/public/ai-relay'
     | '/api/public/contact-card.pdf'
     | '/api/public/finance-health'
     | '/api/public/finance-relay'
@@ -356,7 +344,6 @@ export interface RootRouteChildren {
   RabotyIndexRoute: typeof RabotyIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
-  ApiPublicAiRelayRoute: typeof ApiPublicAiRelayRoute
   ApiPublicContactCardDotpdfRoute: typeof ApiPublicContactCardDotpdfRoute
   ApiPublicFinanceHealthRoute: typeof ApiPublicFinanceHealthRoute
   ApiPublicFinanceRelayRoute: typeof ApiPublicFinanceRelayRoute
@@ -494,13 +481,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstimateIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/ai-relay': {
-      id: '/api/public/ai-relay'
-      path: '/api/public/ai-relay'
-      fullPath: '/api/public/ai-relay'
-      preLoaderRoute: typeof ApiPublicAiRelayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/contact-card.pdf': {
       id: '/api/public/contact-card.pdf'
       path: '/api/public/contact-card.pdf'
@@ -584,7 +564,6 @@ const rootRouteChildren: RootRouteChildren = {
   RabotyIndexRoute: RabotyIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
-  ApiPublicAiRelayRoute: ApiPublicAiRelayRoute,
   ApiPublicContactCardDotpdfRoute: ApiPublicContactCardDotpdfRoute,
   ApiPublicFinanceHealthRoute: ApiPublicFinanceHealthRoute,
   ApiPublicFinanceRelayRoute: ApiPublicFinanceRelayRoute,

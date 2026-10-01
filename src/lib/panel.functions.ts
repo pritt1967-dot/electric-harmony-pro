@@ -96,10 +96,6 @@ const SYSTEM = `Ты — инженер-проектировщик низков�
 }
 Все тексты (кроме image_prompt) — на русском языке.`;
 
-/** Адрес AI-реле Lovable по умолчанию (там доступен управляемый LOVABLE_API_KEY). */
-const DEFAULT_RELAY_URL =
-  "https://project--a97cfcc1-6e84-4897-ab6b-f8f8a9da8d9d.lovable.app/api/public/ai-relay";
-
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
@@ -109,57 +105,54 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
 }
 
 /**
- * Транспорт к Lovable AI Gateway.
- * Внутри Lovable ключ доступен локально — идём напрямую.
- * На внешнем деплое (Vercel) ключа нет: запрос уходит через AI-реле
- * (маршрут /api/public/ai-relay в инфраструктуре Lovable).
- * Логика проектировщика, промпты и модели при этом не меняются.
+ * Транспорт к OpenAI (напрямую с сервера сайта).
+ * Ключ OPENAI_API_KEY читается только на сервере; модель — из AI_CHECK_MODEL
+ * (по умолчанию gpt-6-luna), картинка — из AI_IMAGE_MODEL (по умолчанию gpt-image-1).
+ * Ответ приводится к прежнему формату, поэтому промпты и разбор не меняются.
  */
 async function callGateway(
   kind: "design" | "image",
   payload: { system?: string; prompt: string },
 ): Promise<Response> {
-  const key = process.env["LOVABLE_API_KEY"];
-  if (key) {
-    const body =
-      kind === "design"
-        ? {
-            model: "google/gemini-3.6-flash",
-            temperature: 0,
-            top_p: 0,
-            seed: 20260916,
-            messages: [
-              { role: "system", content: payload.system },
-              { role: "user", content: payload.prompt },
-            ],
-          }
-        : {
-            model: "google/gemini-3-pro-image",
-            messages: [{ role: "user", content: payload.prompt }],
-            modalities: ["image", "text"],
-          };
+  const key = process.env["OPENAI_API_KEY"]?.trim();
+  if (!key) {
+    throw new Error("AI недоступен: на сервере не задан OPENAI_API_KEY.");
+  }
+  const headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 
-    return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  if (kind === "design") {
+    return fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Lovable-API-Key": key, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers,
+      body: JSON.stringify({
+        model: process.env["AI_CHECK_MODEL"]?.trim() || "gpt-6-luna",
+        messages: [
+          { role: "system", content: payload.system },
+          { role: "user", content: payload.prompt },
+        ],
+      }),
     });
   }
 
-  // Стабильный адрес реле в инфраструктуре Lovable — используется, когда
-  // внешний деплой (REG.RU / Vercel) не задал собственный AI_RELAY_URL.
-  const relayUrl = process.env["AI_RELAY_URL"] || DEFAULT_RELAY_URL;
-  const relaySecret = process.env["AI_RELAY_SECRET"];
-  if (!relaySecret) {
-    throw new Error(
-      "AI недоступен: на сервере не задан AI_RELAY_SECRET для доступа к AI Lovable.",
-    );
-  }
-
-  return fetch(relayUrl.replace(/\/+$/, ""), {
+  const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
-    headers: { "X-Relay-Secret": relaySecret, "Content-Type": "application/json" },
-    body: JSON.stringify({ kind, ...payload }),
+    headers,
+    body: JSON.stringify({
+      model: process.env["AI_IMAGE_MODEL"]?.trim() || "gpt-image-1",
+      prompt: payload.prompt,
+      size: "1024x1024",
+      n: 1,
+    }),
+  });
+  if (!res.ok) {
+    console.error("[panel] OpenAI image status", res.status);
+    return new Response(null, { status: res.status });
+  }
+  const json = (await res.json()) as { data?: { b64_json?: string; url?: string }[] };
+  const item = json.data?.[0];
+  const url = item?.b64_json ? `data:image/png;base64,${item.b64_json}` : item?.url;
+  return Response.json({
+    choices: [{ message: { images: url ? [{ image_url: { url } }] : [] } }],
   });
 }
 
