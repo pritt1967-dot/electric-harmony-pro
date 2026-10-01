@@ -59,9 +59,20 @@ export async function getGigaToken(signal?: AbortSignal): Promise<string> {
 type Msg = { role: "system" | "user" | "assistant"; content: string };
 
 /** Запрос chat/completions. Возвращает текст ответа; ошибки — GigaChatError без секретов. */
+export type GigaMeta = {
+  status: number;
+  contentType: string;
+  hasChoices: boolean;
+  hasChoice0: boolean;
+  hasMessage: boolean;
+  hasContent: boolean;
+  contentType_: string;
+  preview: string;
+};
+
 export async function gigaChat(
   messages: Msg[],
-  opts: { temperature?: number; timeoutMs?: number; functionCall?: "auto" } = {},
+  opts: { temperature?: number; timeoutMs?: number; functionCall?: "auto"; onMeta?: (m: GigaMeta) => void } = {},
 ): Promise<string> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 90_000);
@@ -89,8 +100,29 @@ export async function gigaChat(
       if (res.status === 401) tokenCache = null;
       throw new GigaChatError(res.status, `HTTP ${res.status}${body ? `: ${body}` : ""}`);
     }
-    const j = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    return j.choices?.[0]?.message?.content ?? "";
+    const raw = await res.text();
+    let j: any = null;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      j = null;
+    }
+    const choice0 = Array.isArray(j?.choices) ? j.choices[0] : undefined;
+    const c = choice0?.message?.content;
+    const content = typeof c === "string" ? c : c == null ? "" : JSON.stringify(c);
+    const meta: GigaMeta = {
+      status: res.status,
+      contentType: res.headers.get("content-type") ?? "",
+      hasChoices: Array.isArray(j?.choices),
+      hasChoice0: !!choice0,
+      hasMessage: !!choice0?.message,
+      hasContent: c != null,
+      contentType_: typeof c,
+      preview: redactSecrets((j ? content : raw).slice(0, 500)),
+    };
+    console.info("[gigachat] ответ", JSON.stringify(meta));
+    opts.onMeta?.(meta);
+    return content;
   } finally {
     clearTimeout(timer);
   }
