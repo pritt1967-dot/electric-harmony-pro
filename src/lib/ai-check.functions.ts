@@ -41,7 +41,7 @@ export const aiCheckPanel = createServerFn({ method: "POST" })
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) return { ok: false, code: "invalid", message: "Доступ только для администратора" };
 
-    const model = process.env["AI_CHECK_MODEL"]?.trim() || "default";
+    const model = process.env["GIGACHAT_MODEL"]?.trim() || "GigaChat-3-Ultra";
     const fingerprint = await sha256(stable({ data, v: PROMPT_VERSION, model }));
 
     // Кэш: неизменённый щит не отправляется в ИИ повторно.
@@ -72,7 +72,7 @@ export const aiCheckPanel = createServerFn({ method: "POST" })
       return { ok: false, code: "rate_limited", message: "Превышен лимит ИИ-проверок. Попробуйте позже." };
     }
 
-    const { AiProviderError } = await import("./ai-check/providers/openai.server");
+    const { AiProviderError } = await import("./ai-check/providers/gigachat-check.server");
     try {
       const result = await provider.check(data);
       await supabase.from("ai_check_log").insert({ user_id: userId, fingerprint, status: "ok", result });
