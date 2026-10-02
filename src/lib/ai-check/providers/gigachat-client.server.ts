@@ -109,7 +109,14 @@ export async function gigaChat(
     }
     const choice0 = Array.isArray(j?.choices) ? j.choices[0] : undefined;
     const c = choice0?.message?.content;
-    const content = typeof c === "string" ? c : c == null ? "" : JSON.stringify(c);
+    const content =
+      typeof c === "string"
+        ? c
+        : c == null
+          ? ""
+          : Array.isArray(c)
+            ? c.map((p: any) => (typeof p === "string" ? p : typeof p?.text === "string" ? p.text : JSON.stringify(p))).join("")
+            : JSON.stringify(c);
     const meta: GigaMeta = {
       status: res.status,
       contentType: res.headers.get("content-type") ?? "",

@@ -16,7 +16,8 @@ errors — явные инженерные ошибки; warnings — риски
 recommendations — улучшения; explanations — пояснения к схеме.
 suggested_change: только {"action":"set_label","key":<key аппарата>,"value":<маркировка>} для исправления маркировки,
 иначе {"action":"none","key":null,"value":null}. Проект напрямую не меняешь.
-ОТВЕТ — ТОЛЬКО ОДИН JSON-ОБЪЕКТ. Без markdown, без \`\`\`, без пояснений до или после JSON.
+Ответь ТОЛЬКО валидным JSON без markdown и без пояснений вне JSON. Ключи разделов строго на английском:
+{"errors":[],"warnings":[],"recommendations":[],"explanations":[]}
 Формат:
 {"errors":[ITEM],"warnings":[ITEM],"recommendations":[ITEM],"explanations":[ITEM]}
 где ITEM = {"id":"строка","text":"строка","related_marks":["QF1"],"suggested_change":{"action":"none","key":null,"value":null}}`;
@@ -89,23 +90,33 @@ export function normalizeGigaChatResponse(content: string): AiCheckResult {
   try {
     obj = JSON.parse(t);
   } catch {
-    const found = findJsonObject(t) ?? findJsonObject(content);
-    if (!found) throw new Error("JSON-объект не найден");
-    obj = JSON.parse(found);
+    const a = t.indexOf("{"), b = t.lastIndexOf("}");
+    let parsed = false;
+    if (a >= 0 && b > a) {
+      try {
+        obj = JSON.parse(t.slice(a, b + 1));
+        parsed = true;
+      } catch {}
+    }
+    if (!parsed) {
+      const found = findJsonObject(t) ?? findJsonObject(content);
+      if (!found) throw new Error("JSON-объект не найден");
+      obj = JSON.parse(found);
+    }
   }
   if (typeof obj === "string") obj = JSON.parse(obj);
   if (obj && typeof obj === "object" && !Array.isArray(obj) && obj.result && typeof obj.result === "object") obj = obj.result;
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) throw new Error("JSON не является объектом");
+  console.info("[ai-check] разобран JSON", JSON.stringify({ typeofParsed: typeof obj, keys: Object.keys(obj).slice(0, 20) }));
+  const lower: Record<string, unknown> = {};
+  for (const k of Object.keys(obj)) lower[k.toLowerCase()] = obj[k];
   const out = {} as AiCheckResult;
-  let any = false;
   for (const sec of SECTIONS) {
-    const key = ALIASES[sec].find((k) => k in obj);
-    const arr = key ? obj[key] : [];
-    if (key) any = true;
+    const key = ALIASES[sec].find((k) => k in lower);
+    const arr = key ? lower[key] : [];
     const list = Array.isArray(arr) ? arr : arr ? [arr] : [];
     out[sec] = list.map((x, i) => normItem(x, sec, i)).filter((x): x is AiCheckItem => !!x).slice(0, 40);
   }
-  if (!any) throw new Error("нет ожидаемых разделов errors/warnings/recommendations/explanations");
   return AiCheckResultSchema.parse(out);
 }
 
