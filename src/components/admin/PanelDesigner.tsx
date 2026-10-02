@@ -92,7 +92,13 @@ const ROOMS_TEMPLATE = `САНУЗЕЛ:
 - подсветка дома — отдельная линия
 - наружные розетки — отдельная линия`;
 
-export function PanelDesigner() {
+export function PanelDesigner({
+  onDesignChange,
+  openRequest,
+}: {
+  onDesignChange?: (d: { design: PanelDesign | null; title: string }) => void;
+  openRequest?: { id: string; nonce: number } | null;
+} = {}) {
   const navigate = useNavigate();
   const run = useServerFn(designPanel);
   const renderImg = useServerFn(renderPanelImage);
@@ -214,6 +220,15 @@ export function PanelDesigner() {
     setImage(data.image ?? "");
     toast.success("Сессия загружена");
   }
+
+  useEffect(() => {
+    onDesignChange?.({ design, title });
+  }, [design, title, onDesignChange]);
+
+  useEffect(() => {
+    if (openRequest?.id) void openSession(openRequest.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest?.nonce]);
 
   async function deleteSession() {
     if (!sessionId) return;
