@@ -201,6 +201,7 @@ export function PanelDesigner({
       setTitle(name);
       await loadSessions();
       toast.success("Сессия сохранена");
+      onSaved?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Не удалось сохранить");
     }
