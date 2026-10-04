@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { snapshotFromDesign } from "./from-design";
 import { PanelSnapshotSchema } from "./types";
 import type { PanelDesign } from "@/lib/panel";
@@ -18,15 +19,15 @@ const design = {
 describe("snapshotFromDesign", () => {
   test("валидный снимок текущего щита", () => {
     const s = PanelSnapshotSchema.parse(snapshotFromDesign(design));
-    expect(s.network).toEqual({ phases: 3, voltage: 400, grounding: "TN-C-S", ip: "IP40" });
-    expect(s.devices.map((d) => d.key)).toEqual(["QD1", "QF1", "QF2"]);
+    assert.deepEqual(s.network, { phases: 3, voltage: 400, grounding: "TN-C-S", ip: "IP40" });
+    assert.deepEqual(s.devices.map((d) => d.key), ["QD1", "QF1", "QF2"]);
     const qf1 = s.devices.find((d) => d.key === "QF1")!;
-    expect([qf1.rated_a, qf1.curve, qf1.rail, qf1.start]).toEqual([16, "C", 1, 3]);
-    expect(s.chain).toEqual([{ rcd: "QD1 25А 30мА", n_bus: "N1", lines: ["QF1"] }, { rcd: null, n_bus: "N", lines: ["QF2"] }]);
+    assert.deepEqual([qf1.rated_a, qf1.curve, qf1.rail, qf1.start], [16, "C", 1, 3]);
+    assert.deepEqual(s.chain, [{ rcd: "QD1 25А 30мА", n_bus: "N1", lines: ["QF1"] }, { rcd: null, n_bus: "N", lines: ["QF2"] }]);
   });
   test("не меняет исходный щит", () => {
     const before = JSON.stringify(design);
     snapshotFromDesign(design);
-    expect(JSON.stringify(design)).toBe(before);
+    assert.equal(JSON.stringify(design), before);
   });
 });
