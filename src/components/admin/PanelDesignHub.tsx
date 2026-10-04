@@ -17,6 +17,8 @@ import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
 import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
 import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
 import { PanelBuildTest } from "@/components/admin/PanelBuildTest";
+import { AiCheckPanel } from "@/components/admin/AiCheckPanel";
+import { snapshotFromDesign } from "@/lib/ai-check/from-design";
 
 const SUB = [
   { value: "constructor", label: "Конструктор" },
@@ -42,6 +44,7 @@ export function PanelDesignHub() {
   const [tab, setTab] = useState("constructor");
   const [current, setCurrent] = useState<{ design: PanelDesign | null; title: string }>({ design: null, title: "" });
   const [openReq, setOpenReq] = useState<{ id: string; nonce: number } | null>(null);
+  const [labelReq, setLabelReq] = useState<{ mark: string; value: string; nonce: number } | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const onDesignChange = useCallback((d: { design: PanelDesign | null; title: string }) => setCurrent(d), []);
 
@@ -73,7 +76,12 @@ export function PanelDesignHub() {
 
         {/* Конструктор остаётся смонтированным, чтобы текущий щит не терялся при переключении вкладок */}
         <TabsContent value="constructor" forceMount className="mt-5 data-[state=inactive]:hidden">
-          <PanelDesigner onDesignChange={onDesignChange} openRequest={openReq} />
+          <PanelDesigner
+            onDesignChange={onDesignChange}
+            openRequest={openReq}
+            labelRequest={labelReq}
+            onSaved={() => void loadSessions()}
+          />
         </TabsContent>
 
         <TabsContent value="scheme" className="mt-5 space-y-8">
@@ -104,11 +112,34 @@ export function PanelDesignHub() {
           <Block title="Модульные устройства"><ModularDeviceLibrary /></Block>
         </TabsContent>
 
-        <TabsContent value="ai" className="mt-5">
-          <p className="mb-3 text-sm text-muted-foreground">
-            ИИ только советует: изменения применяются лишь после вашего подтверждения.
+        <TabsContent value="ai" className="mt-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            ИИ проверяет текущий щит из конструктора и только советует. Разрешено лишь переименование линии — после
+            вашего подтверждения. Номиналы, кабели, PE/N/PEN и защита не меняются.
           </p>
-          <PanelLibraryBuilder />
+          {current.design ? (
+            <>
+              <div className="text-sm font-medium">Щит: {current.title || "без названия"}</div>
+              <AiCheckPanel
+                getSnapshot={() => snapshotFromDesign(current.design!)}
+                onApply={(ch) => {
+                  if (ch.action === "set_label" && ch.key && ch.value)
+                    setLabelReq({ mark: ch.key, value: ch.value, nonce: Date.now() });
+                }}
+              />
+            </>
+          ) : (
+            <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+              В конструкторе ещё нет рассчитанного щита.
+              <div className="mt-3">
+                <Button size="sm" variant="outline" onClick={() => setTab("constructor")}>Перейти в конструктор</Button>
+              </div>
+            </div>
+          )}
+          <details className="rounded-xl border bg-card p-3">
+            <summary className="cursor-pointer text-sm font-semibold">Тестовая сборка из библиотеки Visio (отдельный щит)</summary>
+            <div className="mt-3"><PanelLibraryBuilder /></div>
+          </details>
         </TabsContent>
 
         <TabsContent value="saved" className="mt-5 space-y-8">

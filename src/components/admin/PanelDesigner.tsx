@@ -95,9 +95,14 @@ const ROOMS_TEMPLATE = `САНУЗЕЛ:
 export function PanelDesigner({
   onDesignChange,
   openRequest,
+  labelRequest,
+  onSaved,
 }: {
   onDesignChange?: (d: { design: PanelDesign | null; title: string }) => void;
   openRequest?: { id: string; nonce: number } | null;
+  /** Подтверждённое пользователем переименование линии (только подпись, без электрических параметров). */
+  labelRequest?: { mark: string; value: string; nonce: number } | null;
+  onSaved?: () => void;
 } = {}) {
   const navigate = useNavigate();
   const run = useServerFn(designPanel);
@@ -196,6 +201,7 @@ export function PanelDesigner({
       setTitle(name);
       await loadSessions();
       toast.success("Сессия сохранена");
+      onSaved?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Не удалось сохранить");
     }
@@ -229,6 +235,15 @@ export function PanelDesigner({
     if (openRequest?.id) void openSession(openRequest.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequest?.nonce]);
+
+  useEffect(() => {
+    if (!labelRequest) return;
+    setDesign((d) =>
+      d
+        ? { ...d, lines: d.lines.map((l) => (l.mark === labelRequest.mark ? { ...l, name: labelRequest.value } : l)) }
+        : d,
+    );
+  }, [labelRequest]);
 
   async function deleteSession() {
     if (!sessionId) return;
