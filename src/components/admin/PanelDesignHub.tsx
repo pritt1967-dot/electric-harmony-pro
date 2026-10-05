@@ -12,11 +12,6 @@ import { ShapeLibrary } from "@/components/admin/ShapeLibrary";
 import { SchematicSymbolLibrary } from "@/components/admin/SchematicSymbolLibrary";
 import { DeviceCatalog } from "@/components/admin/DeviceCatalog";
 import { ModularDeviceLibrary } from "@/components/admin/ModularDeviceLibrary";
-import { PanelLibraryBuilder } from "@/components/admin/PanelLibraryBuilder";
-import { PanelAssemblyTest } from "@/components/admin/PanelAssemblyTest";
-import { SpecAssemblyTest } from "@/components/admin/SpecAssemblyTest";
-import { GroupAssemblyTest } from "@/components/admin/GroupAssemblyTest";
-import { PanelBuildTest } from "@/components/admin/PanelBuildTest";
 import { AiCheckPanel } from "@/components/admin/AiCheckPanel";
 import { snapshotFromDesign } from "@/lib/ai-check/from-design";
 
@@ -25,7 +20,6 @@ const SUB = [
   { value: "scheme", label: "Однолинейная схема" },
   { value: "scheme-lib", label: "Библиотека схемы" },
   { value: "devices", label: "Аппараты" },
-  { value: "ai", label: "Проверка ИИ" },
   { value: "saved", label: "Щиты и шаблоны" },
 ];
 
@@ -41,6 +35,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function PanelDesignHub() {
+  const [mode, setMode] = useState<"design" | "check">("design");
   const [tab, setTab] = useState("constructor");
   const [current, setCurrent] = useState<{ design: PanelDesign | null; title: string }>({ design: null, title: "" });
   const [openReq, setOpenReq] = useState<{ id: string; nonce: number } | null>(null);
@@ -62,8 +57,40 @@ export function PanelDesignHub() {
 
   return (
     <div>
-      <h2 className="text-lg font-bold">Проектирование щита</h2>
-      <Tabs value={tab} onValueChange={setTab} className="mt-3">
+      <h2 className="text-lg font-bold">AI-конструктор щита</h2>
+      <div className="mt-3 inline-flex rounded-lg border bg-card p-1">
+        <Button size="sm" variant={mode === "design" ? "default" : "ghost"} onClick={() => setMode("design")}>Проектирование щита</Button>
+        <Button size="sm" variant={mode === "check" ? "default" : "ghost"} onClick={() => setMode("check")}>Проверка готового щита</Button>
+      </div>
+      {mode === "check" && (
+        <div className="mt-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            ИИ проверяет текущий щит из конструктора и только советует. Разрешено лишь переименование линии — после
+            вашего подтверждения. Номиналы, кабели, PE/N/PEN и защита не меняются.
+          </p>
+          {current.design ? (
+            <>
+              <div className="text-sm font-medium">Щит: {current.title || "без названия"}</div>
+              <AiCheckPanel
+                getSnapshot={() => snapshotFromDesign(current.design!)}
+                onApply={(ch) => {
+                  if (ch.action === "set_label" && ch.key && ch.value)
+                    setLabelReq({ mark: ch.key, value: ch.value, nonce: Date.now() });
+                }}
+              />
+            </>
+          ) : (
+            <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+              В конструкторе ещё нет рассчитанного щита.
+              <div className="mt-3">
+                <Button size="sm" variant="outline" onClick={() => { setMode("design"); setTab("constructor"); }}>Перейти в конструктор</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+      )}
+      <Tabs value={tab} onValueChange={setTab} className={mode === "design" ? "mt-3" : "hidden"}>
         <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide sm:mx-0 sm:px-0">
           <TabsList className="flex h-auto w-max flex-nowrap gap-1 p-1">
             {SUB.map((t) => (
@@ -112,36 +139,6 @@ export function PanelDesignHub() {
           <Block title="Модульные устройства"><ModularDeviceLibrary /></Block>
         </TabsContent>
 
-        <TabsContent value="ai" className="mt-5 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            ИИ проверяет текущий щит из конструктора и только советует. Разрешено лишь переименование линии — после
-            вашего подтверждения. Номиналы, кабели, PE/N/PEN и защита не меняются.
-          </p>
-          {current.design ? (
-            <>
-              <div className="text-sm font-medium">Щит: {current.title || "без названия"}</div>
-              <AiCheckPanel
-                getSnapshot={() => snapshotFromDesign(current.design!)}
-                onApply={(ch) => {
-                  if (ch.action === "set_label" && ch.key && ch.value)
-                    setLabelReq({ mark: ch.key, value: ch.value, nonce: Date.now() });
-                }}
-              />
-            </>
-          ) : (
-            <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-              В конструкторе ещё нет рассчитанного щита.
-              <div className="mt-3">
-                <Button size="sm" variant="outline" onClick={() => setTab("constructor")}>Перейти в конструктор</Button>
-              </div>
-            </div>
-          )}
-          <details className="rounded-xl border bg-card p-3">
-            <summary className="cursor-pointer text-sm font-semibold">Тестовая сборка из библиотеки Visio (отдельный щит)</summary>
-            <div className="mt-3"><PanelLibraryBuilder /></div>
-          </details>
-        </TabsContent>
-
         <TabsContent value="saved" className="mt-5 space-y-8">
           <Block title="Сохранённые щиты">
             <div className="flex justify-end">
@@ -174,23 +171,6 @@ export function PanelDesignHub() {
               </ul>
             )}
           </Block>
-          <details className="rounded-xl border bg-card p-3">
-            <summary className="cursor-pointer text-sm font-semibold">Шаблоны и тестовые сборки</summary>
-            <Tabs defaultValue="assembly" className="mt-3">
-              <div className="overflow-x-auto scrollbar-hide">
-                <TabsList className="flex h-auto w-max flex-nowrap gap-1 p-1">
-                  <TabsTrigger value="assembly">Сборка щита</TabsTrigger>
-                  <TabsTrigger value="spec">Из спецификации</TabsTrigger>
-                  <TabsTrigger value="group">Группировка</TabsTrigger>
-                  <TabsTrigger value="build">Сборка v2</TabsTrigger>
-                </TabsList>
-              </div>
-              <TabsContent value="assembly" className="mt-4"><PanelAssemblyTest /></TabsContent>
-              <TabsContent value="spec" className="mt-4"><SpecAssemblyTest /></TabsContent>
-              <TabsContent value="group" className="mt-4"><GroupAssemblyTest /></TabsContent>
-              <TabsContent value="build" className="mt-4"><PanelBuildTest /></TabsContent>
-            </Tabs>
-          </details>
         </TabsContent>
       </Tabs>
     </div>
