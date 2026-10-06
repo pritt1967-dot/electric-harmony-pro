@@ -5,6 +5,35 @@
  */
 
 import type { Conductor, PanelProject, ProjectCircuit, ProjectDevice } from "./project-model";
+import { getSchematicSymbol } from "@/lib/shape-library/schematic-library";
+
+/* ------------------------------------------------------------------ */
+/* Фигуры из «Библиотеки схемы» (VSS). Геометрия библиотеки не меняется: */
+/* фигура вставляется как есть, выводы совмещаются с линией колонки.     */
+/* ------------------------------------------------------------------ */
+
+const PT_PER_MM = 72 / 25.4;
+
+/** Вставить УГО из библиотеки: вход сверху (y), выход снизу (y + SYM_H). null — фигуры нет. */
+function libSym(id: string, x: number, y: number): string | null {
+  const s = getSchematicSymbol(id);
+  if (!s?.svg) return null;
+  const vb = s.svg.match(/viewBox="([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)"/);
+  const lead = s.svg.match(/M\s*([-\d.]+),\s*0\.0000/);
+  if (!vb || !lead) return null;
+  const [vx, vy, vw, vh] = vb.slice(1, 5).map(Number) as [number, number, number, number];
+  const leadX = Number(lead[1]);
+  const bodyH = 42.5197 / PT_PER_MM; // высота фигуры между выводами, мм
+  const inner = s.svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  const w = vw / PT_PER_MM;
+  const h = vh / PT_PER_MM;
+  const sx = x - (leadX - vx) / PT_PER_MM;
+  const sy = y - vy / PT_PER_MM * -1 * -1 + vy / PT_PER_MM; // верхний вывод = y
+  return (
+    `<svg x="${sx.toFixed(3)}" y="${sy.toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" viewBox="${vx} ${vy} ${vw} ${vh}" overflow="visible">${inner}</svg>` +
+    `<line x1="${x}" y1="${y + bodyH}" x2="${x}" y2="${y + SYM_H}" stroke="#000" stroke-width="0.3"/>`
+  );
+}
 
 export type SheetFormat = "A4" | "A3" | "A2";
 
@@ -53,6 +82,10 @@ export const SYM_H = 16;
 
 /** Автоматический выключатель (QF). */
 export function symBreaker(x: number, y: number, poles = 1): string {
+  const lib = libSym("qf", x, y);
+  if (lib && poles > 1) return lib + L(x - 3.2, y + 6.4, x + 1.6, y + 4.4, 0.3) + T(x - 4.2, y + 4.6, poles, { size: 2.2, anchor: "end" });
+  if (lib) return lib;
+
   const p: string[] = [];
   p.push(L(x, y, x, y + 3));
   p.push(DOT(x, y + 3, 0.55));
@@ -70,6 +103,9 @@ export function symBreaker(x: number, y: number, poles = 1): string {
 
 /** УЗО / ВДТ. */
 export function symRcd(x: number, y: number): string {
+  const lib = libSym("qd", x, y);
+  if (lib) return lib;
+
   const p: string[] = [];
   p.push(L(x, y, x, y + 2));
   p.push(R(x - 5, y + 2, 10, 12));
@@ -84,6 +120,9 @@ export function symRcd(x: number, y: number): string {
 
 /** Дифференциальный автомат (АВДТ). */
 export function symRcbo(x: number, y: number): string {
+  const lib = libSym("qfd", x, y);
+  if (lib) return lib;
+
   const p: string[] = [];
   p.push(L(x, y, x, y + 1.6));
   p.push(R(x - 5, y + 1.6, 10, 12.8));
@@ -132,6 +171,9 @@ export function symRelay(x: number, y: number): string {
 
 /** Контактор. */
 export function symContactor(x: number, y: number): string {
+  const lib = libSym("km", x, y);
+  if (lib) return lib;
+
   return [
     L(x, y, x, y + 4),
     DOT(x, y + 4, 0.55),
@@ -144,6 +186,9 @@ export function symContactor(x: number, y: number): string {
 
 /** Рубильник / выключатель нагрузки (вводной разъединитель). */
 export function symSwitch(x: number, y: number): string {
+  const lib = libSym("qs", x, y);
+  if (lib) return lib;
+
   return [
     L(x, y, x, y + 4),
     DOT(x, y + 4, 0.55),
