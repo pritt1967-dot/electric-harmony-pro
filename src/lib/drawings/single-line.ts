@@ -28,7 +28,7 @@ function libSym(id: string, x: number, y: number): string | null {
   const w = vw / PT_PER_MM;
   const h = vh / PT_PER_MM;
   const sx = x - (leadX - vx) / PT_PER_MM;
-  const sy = y - vy / PT_PER_MM * -1 * -1 + vy / PT_PER_MM; // верхний вывод = y
+  const sy = y + vy / PT_PER_MM; // верхний вывод фигуры (y=0 в её координатах) = y
   return (
     `<svg x="${sx.toFixed(3)}" y="${sy.toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" viewBox="${vx} ${vy} ${vw} ${vh}" overflow="visible">${inner}</svg>` +
     `<line x1="${x}" y1="${y + bodyH}" x2="${x}" y2="${y + SYM_H}" stroke="#000" stroke-width="0.3"/>`
