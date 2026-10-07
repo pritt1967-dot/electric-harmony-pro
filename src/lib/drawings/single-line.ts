@@ -198,7 +198,7 @@ export function symSwitch(x: number, y: number): string {
   ].join("");
 }
 
-function symbolFor(kind: ProjectDevice["kind"], x: number, y: number, poles: number) {
+function symbolFor(kind: ProjectDevice["kind"], x: number, y: number, poles: number, label = "") {
   switch (kind) {
     case "meter":
       return symMeter(x, y);
@@ -213,7 +213,7 @@ function symbolFor(kind: ProjectDevice["kind"], x: number, y: number, poles: num
     case "rcbo":
       return symRcbo(x, y);
     case "input":
-      return /рубильник|нагрузк|разъедин/i.test(kind) ? symSwitch(x, y) : symBreaker(x, y, poles);
+      return /рубильник|нагрузк|разъедин|вн(?![а-яё])/i.test(label) ? symSwitch(x, y) : symBreaker(x, y, poles);
     default:
       return symBreaker(x, y, poles);
   }
@@ -349,7 +349,7 @@ function sheetSvg(
     const cx = inX + col * colGap;
     const cyTop = chainTop + row * step;
     if (row === 0 && col > 0) parts.push(L(lastX, lastY, cx, lastY), L(cx, lastY, cx, cyTop));
-    parts.push(symbolFor(d.kind as ProjectDevice["kind"], cx, cyTop, d.poles));
+    parts.push(symbolFor(d.kind as ProjectDevice["kind"], cx, cyTop, d.poles, `${d.name} ${d.model} ${d.rating}`));
     const bits = [d.manufacturer, d.model, d.rating || (d.ratedCurrent ? `${d.ratedCurrent} А` : "")];
     if (d.poles && !/\dP/i.test(d.rating)) bits.push(`${d.poles}P`);
     if (d.leakage && !d.rating.includes(d.leakage.replace(" мА", ""))) bits.push(d.leakage);
