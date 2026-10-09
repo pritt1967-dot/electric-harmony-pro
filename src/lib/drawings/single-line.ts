@@ -14,24 +14,37 @@ import { getSchematicSymbol } from "@/lib/shape-library/schematic-library";
 
 const PT_PER_MM = 72 / 25.4;
 
-/** Вставить УГО из библиотеки: вход сверху (y), выход снизу (y + SYM_H). null — фигуры нет. */
-function libSym(id: string, x: number, y: number): string | null {
+/** Вставить полную библиотечную геометрию, масштабируя обе оси одинаково. */
+function libSym(id: string, x: number, y: number): string {
   const s = getSchematicSymbol(id);
-  if (!s?.svg) return null;
-  const vb = s.svg.match(/viewBox="([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)"/);
-  const lead = s.svg.match(/M\s*([-\d.]+),\s*0\.0000/);
-  if (!vb || !lead) return null;
-  const [vx, vy, vw, vh] = vb.slice(1, 5).map(Number) as [number, number, number, number];
+  if (!s?.svg) throw new Error(`Нет библиотечной фигуры ${id}`);
+  // В импортированном SVG ввод находится на вертикальном проводнике.
+  // Visio-master хранит координаты до поворота: (X,Y) -> (-Y,X).
+  const lead = s.svg.match(/M\s*([-\d.]+),\s*0\.0000\s+L/);
+  if (!lead) throw new Error(`Нет входной точки фигуры ${id}`);
   const leadX = Number(lead[1]);
-  const bodyH = 42.5197 / PT_PER_MM; // высота фигуры между выводами, мм
+  const points = s.connection_points.map((p) => ({
+    id: p.id,
+    x: p.source === "visio-master" ? leadX - p.y_mm * PT_PER_MM : p.x_mm * PT_PER_MM,
+    y: p.source === "visio-master" ? p.x_mm * PT_PER_MM : p.y_mm * PT_PER_MM,
+  }));
+  const output = points.find((p) => p.id === "out") ??
+    points.filter((p) => Math.abs(p.x - leadX) < 0.05).sort((a, b) => b.y - a.y)[0];
+  if (!output || output.y <= 0) throw new Error(`Нет выходной точки фигуры ${id}`);
+  const scale = Math.min(1 / PT_PER_MM, SYM_H / output.y);
   const inner = s.svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
-  const w = vw / PT_PER_MM;
-  const h = vh / PT_PER_MM;
-  const sx = x - (leadX - vx) / PT_PER_MM;
-  const sy = y + vy / PT_PER_MM; // верхний вывод фигуры (y=0 в её координатах) = y
+  const connections = points.map((p) =>
+    `${p.id}:${x + (p.x - leadX) * scale},${y + p.y * scale}`,
+  ).join(";");
+  // Маркеры разных библиотечных фигур не должны ссылаться друг на друга.
+  const prefix = `${id}-${x}-${y}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const scopedInner = inner.replace(/\bid="([^"]+)"/g, `id="${prefix}-$1"`)
+    .replace(/url\(#([^)]+)\)/g, `url(#${prefix}-$1)`);
+  const outX = x + (output.x - leadX) * scale;
+  const outY = y + output.y * scale;
   return (
-    `<svg x="${sx.toFixed(3)}" y="${sy.toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" viewBox="${vx} ${vy} ${vw} ${vh}" overflow="visible">${inner}</svg>` +
-    `<line x1="${x}" y1="${y + bodyH}" x2="${x}" y2="${y + SYM_H}" stroke="#000" stroke-width="0.3"/>`
+    `<g data-library-symbol="${id}" data-vss-shape="${s.shape_id}" data-connections="${connections}" transform="translate(${x - leadX * scale} ${y}) scale(${scale})">${scopedInner}</g>` +
+    L(outX, outY, x, y + SYM_H)
   );
 }
 
@@ -82,58 +95,18 @@ export const SYM_H = 16;
 
 /** Автоматический выключатель (QF). */
 export function symBreaker(x: number, y: number, poles = 1): string {
-  const lib = libSym("qf", x, y);
-  if (lib && poles > 1) return lib + L(x - 3.2, y + 6.4, x + 1.6, y + 4.4, 0.3) + T(x - 4.2, y + 4.6, poles, { size: 2.2, anchor: "end" });
-  if (lib) return lib;
-
-  const p: string[] = [];
-  p.push(L(x, y, x, y + 3));
-  p.push(DOT(x, y + 3, 0.55));
-  p.push(L(x, y + 3, x + 4.5, y + 8.5));
-  p.push(L(x - 1.6, y + 9, x + 1.6, y + 9));
-  p.push(R(x - 1.6, y + 9.6, 3.2, 3.4, 0.3));
-  p.push(L(x, y + 13, x, y + SYM_H));
-  if (poles > 1) {
-    // многополюсность — косая черта с числом полюсов
-    p.push(L(x - 3.2, y + 6.4, x + 1.6, y + 4.4, 0.3));
-    p.push(T(x - 4.2, y + 4.6, poles, { size: 2.2, anchor: "end" }));
-  }
-  return p.join("");
+  const lib = libSym("qf-cable", x, y);
+  return lib + (poles > 1 ? T(x - 3, y + 6, `${poles}P`, { size: 2.2, anchor: "end" }) : "");
 }
 
 /** УЗО / ВДТ. */
 export function symRcd(x: number, y: number): string {
-  const lib = libSym("qd", x, y);
-  if (lib) return lib;
-
-  const p: string[] = [];
-  p.push(L(x, y, x, y + 2));
-  p.push(R(x - 5, y + 2, 10, 12));
-  p.push(CIRC(x - 1.6, y + 8, 2.6));
-  p.push(L(x, y + 2, x, y + 5.4));
-  p.push(DOT(x, y + 5.4, 0.5));
-  p.push(L(x, y + 5.4, x + 3.4, y + 10));
-  p.push(L(x - 1.6, y + 10.4, x + 1.6, y + 10.4));
-  p.push(L(x, y + 14, x, y + SYM_H));
-  return p.join("");
+  return libSym("qd", x, y);
 }
 
 /** Дифференциальный автомат (АВДТ). */
 export function symRcbo(x: number, y: number): string {
-  const lib = libSym("qfd", x, y);
-  if (lib) return lib;
-
-  const p: string[] = [];
-  p.push(L(x, y, x, y + 1.6));
-  p.push(R(x - 5, y + 1.6, 10, 12.8));
-  p.push(CIRC(x - 2.2, y + 8.4, 2.4));
-  p.push(L(x, y + 1.6, x, y + 4.4));
-  p.push(DOT(x, y + 4.4, 0.5));
-  p.push(L(x, y + 4.4, x + 3.6, y + 8.6));
-  p.push(L(x - 1.4, y + 9, x + 1.4, y + 9));
-  p.push(R(x - 1.4, y + 9.6, 2.8, 2.6, 0.3));
-  p.push(L(x, y + 14.4, x, y + SYM_H));
-  return p.join("");
+  return libSym("qfd", x, y);
 }
 
 /** Прибор учёта. */
@@ -171,31 +144,12 @@ export function symRelay(x: number, y: number): string {
 
 /** Контактор. */
 export function symContactor(x: number, y: number): string {
-  const lib = libSym("km", x, y);
-  if (lib) return lib;
-
-  return [
-    L(x, y, x, y + 4),
-    DOT(x, y + 4, 0.55),
-    L(x, y + 4, x + 4.5, y + 9.5),
-    `<path d="M ${x - 2.4} ${y + 10.6} A 2.4 2.4 0 0 1 ${x + 2.4} ${y + 10.6}" fill="none" stroke="#000" stroke-width="0.3"/>`,
-    L(x - 1.6, y + 10.6, x + 1.6, y + 10.6),
-    L(x, y + 12, x, y + SYM_H),
-  ].join("");
+  return libSym("km", x, y);
 }
 
 /** Рубильник / выключатель нагрузки (вводной разъединитель). */
 export function symSwitch(x: number, y: number): string {
-  const lib = libSym("qs", x, y);
-  if (lib) return lib;
-
-  return [
-    L(x, y, x, y + 4),
-    DOT(x, y + 4, 0.55),
-    L(x, y + 4, x + 4.5, y + 10),
-    L(x - 1.6, y + 10.6, x + 1.6, y + 10.6),
-    L(x, y + 10.6, x, y + SYM_H),
-  ].join("");
+  return libSym("qs", x, y);
 }
 
 function symbolFor(kind: ProjectDevice["kind"], x: number, y: number, poles: number, label = "") {
