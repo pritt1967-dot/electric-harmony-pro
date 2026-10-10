@@ -373,11 +373,13 @@ function sheetSvg(
       cy += SYM_H + 2;
       parts.push(L(x, cy - 2, x, cy));
     }
+    let cableSymbol = "";
     if (isRcbo) {
       parts.push(symRcbo(x, cy));
       parts.push(T(tx, cy + 7, c.rcd, { size: 2.2, anchor }));
     } else {
-      parts.push(symBreaker(x, cy, c.poles));
+      cableSymbol = symBreaker(x, cy, c.poles);
+      parts.push(cableSymbol);
     }
     parts.push(T(tx, cy + 13, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.3, anchor }));
     cy += SYM_H;
@@ -395,6 +397,12 @@ function sheetSvg(
     if (earthY !== undefined) {
       parts.push(DOT(x + 9, earthY, 0.5));
       parts.push(L(x + 9, earthY, x + 9, loadY));
+    }
+    // Подводим N/PE непосредственно к реальным кабельным выводам QF cable.
+    for (const [terminal, by, offset] of [["N", neutralY, 7], ["PE", earthY, 9]] as const) {
+      if (by === undefined || !cableSymbol) continue;
+      const connection = cableSymbol.match(new RegExp(`${terminal}:([-\\d.]+),([-\\d.]+)`));
+      if (connection) parts.push(L(x + offset, Number(connection[2]), Number(connection[1]), Number(connection[2])));
     }
     // стрелка нагрузки
     parts.push(L(x - 2, loadY, x + 11, loadY, 0.4));
