@@ -358,8 +358,8 @@ function sheetSvg(
   const loadY = tableTop - 5;
   circuits.forEach((c, i) => {
     const x = colX0 + colW * (i + 0.5);
-    const flip = x + 34 > b.x1;
-    const tx = flip ? x - 4 : x + 6;
+    const flip = x + 40 > b.x1;
+    const tx = flip ? x - 4 : x + 12;
     const anchor: "start" | "end" = flip ? "end" : "start";
     const py = busY[c.phase] ?? busTop;
     parts.push(DOT(x, py, 0.6));
