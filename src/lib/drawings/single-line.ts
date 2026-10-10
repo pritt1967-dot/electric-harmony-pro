@@ -20,17 +20,36 @@ function libSym(id: string, x: number, y: number): string {
   if (!s?.svg) throw new Error(`Нет библиотечной фигуры ${id}`);
   // В импортированном SVG ввод находится на вертикальном проводнике.
   // Visio-master хранит координаты до поворота: (X,Y) -> (-Y,X).
-  const lead = s.svg.match(/M\s*([-\d.]+),\s*0\.0000\s+L/);
+  const lead = s.svg.match(/M\s*([-\d.]+),\s*([-\d.]+)\s+L\s*([-\d.]+),\s*([-\d.]+)\s+M\s*([-\d.]+),\s*0\.0000\s+L/);
   if (!lead) throw new Error(`Нет входной точки фигуры ${id}`);
-  const leadX = Number(lead[1]);
+  const leadX = Number(lead[5]);
+  const leadBottom = Number(lead[2]);
   const points = s.connection_points.map((p) => ({
     id: p.id,
     x: p.source === "visio-master" ? leadX - p.y_mm * PT_PER_MM : p.x_mm * PT_PER_MM,
     y: p.source === "visio-master" ? p.x_mm * PT_PER_MM : p.y_mm * PT_PER_MM,
   }));
-  const output = points.find((p) => p.id === "out") ??
-    points.filter((p) => Math.abs(p.x - leadX) < 0.05).sort((a, b) => b.y - a.y)[0];
-  if (!output || output.y <= 0) throw new Error(`Нет выходной точки фигуры ${id}`);
+  // Геометрические p2/p1 описывают контакты внутри символа, а проводники
+  // подходят к концам библиотечных выводов. Используем их точные SVG-координаты.
+  const input = points.find((p) => p.id === "in") ?? points.find((p) => p.id === "p2");
+  const output = points.find((p) => p.id === "out") ?? points.find((p) => p.id === "p1");
+  if (!input || !output || leadBottom <= 0) throw new Error(`Нет выходной точки фигуры ${id}`);
+  input.x = output.x = leadX;
+  input.y = 0;
+  output.y = leadBottom;
+  if (input.id !== "in") points.push({ ...input, id: "in" });
+  if (output.id !== "out") points.push({ ...output, id: "out" });
+  // В QF cable координаты N/PE master относятся к неповернутой фигуре;
+  // реальные начала этих выводов берём из сохранённых библиотечных контуров.
+  if (id === "qf-cable") {
+    for (const point of points.filter((p) => p.id === "N" || p.id === "PE")) {
+      const starts = [...s.svg.matchAll(/M\s*([-\d.]+),\s*([-\d.]+)\s+L/g)]
+        .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }))
+        .filter((p) => Math.abs(p.x - point.x) < 0.05);
+      const terminal = starts.sort((a, b) => a.y - b.y)[0];
+      if (terminal) { point.x = terminal.x; point.y = terminal.y; }
+    }
+  }
   const scale = Math.min(1 / PT_PER_MM, SYM_H / output.y);
   const inner = s.svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
   const connections = points.map((p) =>
@@ -366,16 +385,19 @@ function sheetSvg(
     // N и PE к нагрузке
     parts.push(L(x, cy, x, loadY));
     parts.push(T(tx, (cy + loadY) / 2 + 1, c.cable, { size: 2.2, anchor }));
-    if (busY["N"] !== undefined) {
-      parts.push(DOT(x + 2, busY["N"]!, 0.5));
-      parts.push(L(x + 2, busY["N"]!, x + 2, loadY));
+    const neutralY = busY["N"];
+    const earthY = busY["PE"];
+    // Обход справа от реальных контуров QD/QFD и кабельных выводов QF.
+    if (neutralY !== undefined) {
+      parts.push(DOT(x + 7, neutralY, 0.5));
+      parts.push(L(x + 7, neutralY, x + 7, loadY));
     }
-    if (busY["PE"] !== undefined) {
-      parts.push(DOT(x + 4, busY["PE"]!, 0.5));
-      parts.push(L(x + 4, busY["PE"]!, x + 4, loadY));
+    if (earthY !== undefined) {
+      parts.push(DOT(x + 9, earthY, 0.5));
+      parts.push(L(x + 9, earthY, x + 9, loadY));
     }
     // стрелка нагрузки
-    parts.push(L(x - 2, loadY, x + 6, loadY, 0.4));
+    parts.push(L(x - 2, loadY, x + 11, loadY, 0.4));
   });
 
 
@@ -392,9 +414,10 @@ function sheetSvg(
     parts.push(L(x + colW, tableTop, x + colW, tableTop + tableH, 0.3));
     const cx = x + colW / 2;
     // мини-символ аппарата в первой строке
-    const g = `<g transform="translate(${cx - 1.6},${tableTop + 0.8}) scale(0.42)">${
+    const g = `<g transform="translate(${cx - 1.6},${tableTop + 0.8}) scale(0.38)">${
       /дифавтомат|авдт|rcbo/i.test(c.rcd) ? symRcbo(0, 0) : symBreaker(0, 0, c.poles)
-    }</g>`;
+    }</g>`.replace(/\bid="([^"]+)"/g, `id="table-${i}-$1"`)
+      .replace(/url\(#([^)]+)\)/g, `url(#table-${i}-$1)`);
     parts.push(g);
     const vals = [c.mark, c.phase, c.powerKw ? String(c.powerKw) : "—", c.ratedCurrent ? String(c.ratedCurrent) : "—"];
     vals.forEach((v, k) => parts.push(T(cx, tableTop + (k + 1) * 7 + 4.6, v, { size: 2.4, anchor: "middle" })));
