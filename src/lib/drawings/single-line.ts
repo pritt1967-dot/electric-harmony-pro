@@ -4,8 +4,9 @@
  * Всё содержимое строится из PanelProject: ни одного «зашитого» аппарата.
  */
 
-import type { Conductor, PanelProject, ProjectCircuit, ProjectDevice } from "./project-model";
+import type { PanelProject, ProjectCircuit, ProjectDevice } from "./project-model";
 import { getSchematicSymbol } from "@/lib/shape-library/schematic-library";
+import { DOC1_COLUMN_PITCH_MM } from "@/lib/shape-library/doc1-reference";
 
 /* ------------------------------------------------------------------ */
 /* Фигуры из «Библиотеки схемы» (VSS). Геометрия библиотеки не меняется: */
@@ -15,7 +16,7 @@ import { getSchematicSymbol } from "@/lib/shape-library/schematic-library";
 const PT_PER_MM = 72 / 25.4;
 
 /** Вставить полную библиотечную геометрию, масштабируя обе оси одинаково. */
-function libSym(id: string, x: number, y: number): string {
+function libSym(id: string, x: number, y: number, height = SYM_H, labels?: { mark: string; cable?: string }): string {
   const s = getSchematicSymbol(id);
   if (!s?.svg) throw new Error(`Нет библиотечной фигуры ${id}`);
   // В импортированном SVG ввод находится на вертикальном проводнике.
@@ -41,7 +42,7 @@ function libSym(id: string, x: number, y: number): string {
   if (output.id !== "out") points.push({ ...output, id: "out" });
   // В QF cable координаты N/PE master относятся к неповернутой фигуре;
   // реальные начала этих выводов берём из сохранённых библиотечных контуров.
-  if (id === "qf-cable") {
+  if (id.endsWith("-cable")) {
     for (const point of points.filter((p) => p.id === "N" || p.id === "PE")) {
       const starts = [...s.svg.matchAll(/M\s*([-\d.]+),\s*([-\d.]+)\s+L/g)]
         .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }))
@@ -50,8 +51,9 @@ function libSym(id: string, x: number, y: number): string {
       if (terminal) { point.x = terminal.x; point.y = terminal.y; }
     }
   }
-  const scale = Math.min(1 / PT_PER_MM, SYM_H / output.y);
-  const inner = s.svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  const scale = Math.min(1 / PT_PER_MM, height / output.y);
+  let inner = s.svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+  if (labels) inner = inner.replace(/<text\b[\s\S]*?<\/text>/g, "");
   const connections = points.map((p) =>
     `${p.id}:${x + (p.x - leadX) * scale},${y + p.y * scale}`,
   ).join(";");
@@ -63,7 +65,7 @@ function libSym(id: string, x: number, y: number): string {
   const outY = y + output.y * scale;
   return (
     `<g data-library-symbol="${id}" data-vss-shape="${s.shape_id}" data-connections="${connections}" transform="translate(${x - leadX * scale} ${y}) scale(${scale})">${scopedInner}</g>` +
-    L(outX, outY, x, y + SYM_H)
+    L(outX, outY, x, y + height)
   );
 }
 
@@ -274,140 +276,104 @@ function sheetSvg(
   const colArea = b.x1 - 4 - colX0;
   const colW = circuits.length ? Math.min(38, colArea / circuits.length) : colArea;
 
-  /* --- Ввод --- */
-  const inX = b.x0 + 12;
-  let y = b.y0 + 12;
-  parts.push(
-    T(b.x0 + 3, y, `Питающая сеть ${p.input.voltage} · ${p.input.phases === 3 ? "3Ф+N+PE" : "1Ф+N+PE"} · ${p.input.grounding}`, {
-      size: 3,
-      bold: true,
-    }),
-  );
-  y += 4;
-  parts.push(L(inX, y, inX, y + 8));
-  if (p.input.cable) parts.push(T(inX + 3, y + 5.5, `Вводной кабель ${p.input.cable}`, { size: 2.5 }));
-  y += 8;
-
-  /* --- Вводная цепочка (при необходимости — в несколько колонок) --- */
-  const circuitH = 46;
-  const busSpan = (p.busbars.length - 1) * 4;
-  const chainTop = y;
-  const chainBottomLimit = tableTop - 6 - circuitH - busSpan - 6;
-  const step = SYM_H + 3;
-  const perCol = Math.max(1, Math.floor((chainBottomLimit - chainTop) / step));
-  const chain: Pick<ProjectDevice, "kind" | "name" | "manufacturer" | "model" | "rating" | "ratedCurrent" | "leakage" | "poles">[] = p.mainDevices.length
-    ? p.mainDevices
-    : p.input.mainBreaker
-      ? [
-          {
-            kind: "input" as const,
-            name: "Вводной автомат",
-            manufacturer: "",
-            model: "",
-            rating: p.input.mainBreaker,
-            ratedCurrent: 0,
-            leakage: "",
-            poles: p.input.phases === 3 ? 4 : 2,
-          },
-        ]
-      : [];
-
-  const colGap = 92;
-  let lastX = inX;
-  let lastY = y;
-  let chainBottom = y;
+  /* Компоновка VSDX: источник справа, ввод справа налево, спуск к
+     горизонтальным шинам, отходящие колонки с шагом 30 мм. Состав и
+     порядок цепочек остаются из PanelProject; эталон не добавляет аппараты. */
+  const chain = p.mainDevices.length ? p.mainDevices : p.input.mainBreaker ? [{
+    kind: "input" as const, name: "Вводной автомат", manufacturer: "", model: "",
+    rating: p.input.mainBreaker, ratedCurrent: 0, leakage: "", poles: p.input.phases === 3 ? 4 : 2,
+  }] : [];
+  const pitch = DOC1_COLUMN_PITCH_MM;
+  const dw = Math.max(80 + circuits.length * pitch, 60 + chain.length * 42);
+  const busTop = 66;
+  const busGap = 5;
+  const hasSeriesRcd = circuits.some((c) => c.rcd.trim() && !/дифавтомат|авдт|rcbo/i.test(c.rcd));
+  const cableHeight = 75;
+  const loadY = busTop + (hasSeriesRcd ? 36 : 0) + cableHeight + 10;
+  const dh = loadY + 4;
+  const diagramScale = Math.min((b.x1 - b.x0 - 6) / dw, (tableTop - b.y0 - 9) / dh);
+  const diagramX = b.x0 + 3;
+  const diagramY = b.y0 + 7;
+  parts.push(`<g data-doc1-layout="true" transform="translate(${diagramX} ${diagramY}) scale(${diagramScale})">`);
+  const wrap = (text: string, max = 23) => {
+    const rows: string[] = [];
+    for (const word of text.split(/\s+/)) {
+      if (!word) continue;
+      const last = rows[rows.length - 1];
+      if (last && (last + " " + word).length <= max) rows[rows.length - 1] = last + " " + word;
+      else for (let at = 0; at < word.length; at += max) rows.push(word.slice(at, at + max));
+    }
+    return rows;
+  };
+  parts.push(T(2, 0, `Питающая сеть ${p.input.voltage} · ${p.input.grounding}`, { size: 3, bold: true }));
+  const inY = 29;
+  const sourceX = dw - 12;
+  const dropX = sourceX - chain.length * 42 - 8;
+  parts.push(T(sourceX, 7, p.input.phases === 3 ? "L1, L2, L3" : "L1", { anchor: "end", bold: true }));
+  parts.push(L(sourceX, 10, sourceX, inY), DOT(sourceX, inY));
+  let previousX = sourceX;
   chain.forEach((d, i) => {
-    const col = Math.floor(i / perCol);
-    const row = i % perCol;
-    const cx = inX + col * colGap;
-    const cyTop = chainTop + row * step;
-    if (row === 0 && col > 0) parts.push(L(lastX, lastY, cx, lastY), L(cx, lastY, cx, cyTop));
-    parts.push(symbolFor(d.kind as ProjectDevice["kind"], cx, cyTop, d.poles, `${d.name} ${d.model} ${d.rating}`));
-    const bits = [d.manufacturer, d.model, d.rating || (d.ratedCurrent ? `${d.ratedCurrent} А` : "")];
-    if (d.poles && !/\dP/i.test(d.rating)) bits.push(`${d.poles}P`);
-    if (d.leakage && !d.rating.includes(d.leakage.replace(" мА", ""))) bits.push(d.leakage);
-    const label = bits.filter(Boolean).join(" ");
-    parts.push(T(cx + 8, cyTop + 6, d.name || label, { size: 2.6, bold: true }));
-    parts.push(T(cx + 8, cyTop + 10, label, { size: 2.4 }));
-    lastX = cx;
-    lastY = cyTop + SYM_H;
-    chainBottom = Math.max(chainBottom, lastY);
-    if (row < perCol - 1 && i < chain.length - 1) parts.push(L(cx, lastY, cx, cyTop + step));
+    const x = sourceX - 10 - i * 42;
+    // rotate(90): верхний ввод (x,0) становится правым, выход — левым.
+    parts.push(L(previousX, inY, x, inY));
+    const symbol = symbolFor(d.kind, x, inY, d.poles, `${d.name} ${d.model} ${d.rating}`)
+      .replace(/<text\b[\s\S]*?<\/text>/g, "");
+    parts.push(`<g data-input-device="${i}" transform="rotate(90 ${x} ${inY})">${symbol}</g>`);
+    wrap(d.name || d.model, 21).slice(0, 3).forEach((row, ri) => parts.push(T(x - 8, 11 + ri * 3.3, row, { size: 2.6, anchor: "middle", bold: ri === 0 })));
+    wrap([d.manufacturer, d.model, d.rating, d.leakage].filter(Boolean).join(" "), 23).slice(0, 3)
+      .forEach((row, ri) => parts.push(T(x - 8, 40 + ri * 3.3, row, { size: 2.5, anchor: "middle" })));
+    previousX = x - SYM_H;
   });
-
-  /* --- Шины --- */
-  const busGap = 4;
-  const busTop = Math.max(chainBottom + 8, chainTop + 10);
-  const busX1 = b.x1 - 4;
+  parts.push(L(previousX, inY, dropX, inY), L(dropX, inY, dropX, busTop));
+  if (p.input.cable) parts.push(T(dropX - 3, 53, p.input.cable, { size: 2.5, anchor: "end" }));
   const busY: Record<string, number> = {};
   p.busbars.forEach((c, i) => {
     const by = busTop + i * busGap;
     busY[c] = by;
-    parts.push(L(b.x0 + 4, by, busX1, by, c === "PE" || c === "N" ? 0.4 : 0.6));
-    parts.push(T(b.x0 + 1.5, by - 0.8, c, { size: 2.6, bold: true }));
+    parts.push(`<g data-bus="${c}">${L(20, by, dw - 8, by, c === "PE" || c === "N" ? 0.4 : 0.6)}${T(17, by + 1, c, { anchor: "end", bold: true })}</g>`);
   });
-  const busBottom = busTop + (p.busbars.length - 1) * busGap;
-  // ввод на шины
-  parts.push(L(lastX, lastY, lastX, busTop));
-  p.busbars.forEach((c, i) => {
-    if (c !== "PE") parts.push(DOT(lastX, busTop + i * busGap, 0.6));
-  });
-
-  /* --- Отходящие группы --- */
-  const startY = busBottom + 6;
-  const loadY = tableTop - 5;
+  // Only the phase chain is joined to its bus; crossing N/PE is not a junction.
+  parts.push(DOT(dropX, busTop, 0.6));
+  const busBottom = busTop + Math.max(0, p.busbars.length - 1) * busGap;
+  parts.push(`<rect data-panel-boundary="true" x="2" y="3" width="${dw - 3}" height="${busBottom + 15}" fill="none" stroke="#000" stroke-width="0.3" stroke-dasharray="4 2"/>`);
   circuits.forEach((c, i) => {
-    const x = colX0 + colW * (i + 0.5);
-    const flip = x + 40 > b.x1;
-    const tx = flip ? x - 4 : x + 12;
-    const anchor: "start" | "end" = flip ? "end" : "start";
+    const x = 50 + pitch * i;
     const py = busY[c.phase] ?? busTop;
-    parts.push(DOT(x, py, 0.6));
-    parts.push(L(x, py, x, startY));
-    let cy = startY;
-    const hasRcd = !!c.rcd.trim();
     const isRcbo = /дифавтомат|авдт|rcbo/i.test(c.rcd);
-    if (hasRcd && !isRcbo) {
-      parts.push(symRcd(x, cy));
-      parts.push(T(tx, cy + 7, c.rcd, { size: 2.2, anchor }));
+    const seriesRcd = !!c.rcd.trim() && !isRcbo;
+    let cy = busBottom + 6;
+    // All cable figures have their original 75 mm extent and 5/10 mm N/PE offsets.
+    if (seriesRcd) {
+      parts.push(`<g data-series-rcd="${esc(c.id)}">${symRcd(x, cy).replace(/<text\b[\s\S]*?<\/text>/g, "")}</g>`);
+      parts.push(T(x - 6, cy + 8, c.rcd, { size: 2.8, anchor: "end", bold: true }));
+      parts.push(L(x, py, x, cy), DOT(x, py, 0.6));
       cy += SYM_H + 2;
       parts.push(L(x, cy - 2, x, cy));
-    }
-    let cableSymbol = "";
-    if (isRcbo) {
-      parts.push(symRcbo(x, cy));
-      parts.push(T(tx, cy + 7, c.rcd, { size: 2.2, anchor }));
     } else {
-      cableSymbol = symBreaker(x, cy, c.poles);
-      parts.push(cableSymbol);
+      cy = busTop;
+      parts.push(L(x, py, x, cy), DOT(x, py, 0.6));
     }
-    parts.push(T(tx, cy + 13, `${c.breaker}${c.poles ? ` ${c.poles}P` : ""}`, { size: 2.3, anchor }));
-    cy += SYM_H;
-
-    // N и PE к нагрузке
-    parts.push(L(x, cy, x, loadY));
-    parts.push(T(tx, (cy + loadY) / 2 + 1, c.cable, { size: 2.2, anchor }));
-    const neutralY = busY["N"];
-    const earthY = busY["PE"];
-    // Обход справа от реальных контуров QD/QFD и кабельных выводов QF.
-    if (neutralY !== undefined) {
-      parts.push(DOT(x + 7, neutralY, 0.5));
-      parts.push(L(x + 7, neutralY, x + 7, loadY));
-    }
-    if (earthY !== undefined) {
-      parts.push(DOT(x + 9, earthY, 0.5));
-      parts.push(L(x + 9, earthY, x + 9, loadY));
-    }
-    // Подводим N/PE непосредственно к реальным кабельным выводам QF cable.
-    for (const [terminal, by, offset] of [["N", neutralY, 7], ["PE", earthY, 9]] as const) {
-      if (by === undefined || !cableSymbol) continue;
+    const symbolId = isRcbo ? "qfd-cable" : "qf-cable";
+    const cableSymbol = libSym(symbolId, x, cy, cableHeight, { mark: c.mark, cable: c.cable });
+    parts.push(`<g data-circuit="${esc(c.id)}">${cableSymbol}</g>`);
+    const deviceY = cy + 27.5;
+    parts.push(T(x - 5, deviceY, c.mark, { size: 2.8, anchor: "end", bold: true }));
+    parts.push(T(x - 5, deviceY + 4, `${c.breaker} ${c.poles}P`, { size: 2.5, anchor: "end" }));
+    if (isRcbo) parts.push(T(x - 5, deviceY + 8, c.rcd, { size: 2.4, anchor: "end" }));
+    parts.push(L(x, cy + cableHeight, x, loadY));
+    wrap(c.cable, 32).forEach((row, ri) => parts.push(T(x - 4 - ri * 3.2, cy + 56, row, { size: 2.7, rotate: -90, anchor: "middle" })));
+    for (const terminal of ["N", "PE"] as const) {
+      const by = busY[terminal];
       const connection = cableSymbol.match(new RegExp(`${terminal}:([-\\d.]+),([-\\d.]+)`));
-      if (connection) parts.push(L(x + offset, Number(connection[2]), Number(connection[1]), Number(connection[2])));
+      if (by === undefined || !connection) continue;
+      const px = Number(connection[1]);
+      const ty = Number(connection[2]);
+      // Real library N/PE starts, not parallel wires extending to the load.
+      parts.push(`<g data-terminal-wire="${terminal}" data-for="${esc(c.id)}">${L(px, by, px, ty)}${DOT(px, by, 0.5)}</g>`);
     }
-    // стрелка нагрузки
-    parts.push(L(x - 2, loadY, x + 11, loadY, 0.4));
+    parts.push(L(x - 2, loadY, x + 2, loadY, 0.4));
   });
-
+  parts.push("</g>");
 
   /* --- Таблица групп --- */
   parts.push(R(b.x0, tableTop, b.x1 - b.x0, tableH, 0.5));
@@ -441,7 +407,7 @@ function sheetSvg(
 export function buildSingleLineSheets(p: PanelProject, format: SheetFormat = "A3"): string[] {
   const { w } = SHEET_MM[format];
   const usable = w - 5 - 20 - 46 - 4;
-  const perSheet = Math.max(1, Math.floor(usable / 24));
+  const perSheet = Math.max(1, Math.floor(usable / DOC1_COLUMN_PITCH_MM));
   const groups = chunk(p.circuits, perSheet);
   return groups.map((g, i) => sheetSvg(p, g, format, i + 1, groups.length));
 }
