@@ -38,7 +38,8 @@ describe("Компоновка по Документ1.vsdx", () => {
       assert.ok(symbol);
       for (const path of symbol.svg.matchAll(/<path\s+d="([^"]+)"/g)) assert.ok(svg.includes(`d="${path[1]}"`));
       const scales = [...svg.matchAll(new RegExp(`data-library-symbol="${id}"[^>]*scale\\(([\\d.]+)\\)`, "g"))].map((m) => Number(m[1]));
-      assert.ok(scales.some((scale) => Math.abs(scale - 25.4 / 72) < 1e-6));
+      // Imported SVG endpoints are rounded to four decimals; 75 mm is anchored exactly.
+      assert.ok(scales.some((scale) => Math.abs(scale - 25.4 / 72) < 1e-5));
     }
     assert.doesNotMatch(svg, /ВВГнг\(А\)-LS/); // Library placeholder text must not replace project cables.
   });
