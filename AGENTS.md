@@ -11,4 +11,4 @@
 
 Tuqo deployment test
 - GigaChat (src/lib/ai-check/providers/gigachat.server.ts) is an optional server-only advisor for panel-validator: its advice never changes validator status/checks or the project; missing GIGACHAT_AUTH_KEY means unavailable, not an error.
-- Single-line rendering embeds imported library SVG paths with a uniform transform, maps Visio coordinates to SVG orientation, and anchors external leads to exact SVG endpoints; scope marker IDs per sheet occurrence and route auxiliary wires outside contours to preserve library geometry without false intersections.
+- Single-line rendering embeds imported library SVG paths with uniform transforms and exact SVG endpoints; use the Doc1 column pitch, right-origin input layout, and shared column centers for the group table, without importing reference devices or changing project topology. Scope marker IDs per occurrence to preserve geometry and avoid false connections.
