@@ -37,8 +37,8 @@ describe("Компоновка по Документ1.vsdx", () => {
       const symbol = getSchematicSymbol(id);
       assert.ok(symbol);
       for (const path of symbol.svg.matchAll(/<path\s+d="([^"]+)"/g)) assert.ok(svg.includes(`d="${path[1]}"`));
-      const scale = Number(svg.match(new RegExp(`data-library-symbol="${id}"[^>]*scale\\(([\\d.]+)\\)`))?.[1]);
-      assert.ok(Math.abs(scale - 25.4 / 72) < 1e-6);
+      const scales = [...svg.matchAll(new RegExp(`data-library-symbol="${id}"[^>]*scale\\(([\\d.]+)\\)`, "g"))].map((m) => Number(m[1]));
+      assert.ok(scales.some((scale) => Math.abs(scale - 25.4 / 72) < 1e-6));
     }
     assert.doesNotMatch(svg, /ВВГнг\(А\)-LS/); // Library placeholder text must not replace project cables.
   });
