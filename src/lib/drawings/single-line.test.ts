@@ -4,6 +4,87 @@ import { getSchematicSymbol } from "../shape-library/schematic-library";
 import { SYM_H, symBreaker, symRcd, symRcbo, symSwitch, symContactor, buildSingleLineSheets } from "./single-line";
 import type { PanelProject } from "./project-model";
 
+const fixture = (count = 3): PanelProject => ({
+  title: "Геометрия VSDX", object: "", input: { voltage: "400", phases: 3, powerKw: 5, calculatedKw: 5, cable: "5×6", mainBreaker: "63A", grounding: "TN-S", ip: "IP31" },
+  busbars: ["L1", "L2", "L3", "N", "PE"], mainDevices: [], devices: [],
+  circuits: Array.from({ length: count }, (_, i) => ({ id: `line-${i}`, mark: `QF${i + 1}`, name: "Розетки", powerKw: 2, currentA: 9, breaker: "C16", characteristic: "C", ratedCurrent: 16, poles: 1, phase: (["L1", "L2", "L3"] as const)[i % 3] ?? "L1", cable: "ВВГнг-LS 3×2,5", rcd: i === 0 ? "QD1" : i === 1 ? "АВДТ" : "", modules: 1 })),
+  enclosure: { modules: 36, rowCapacity: 12, rows: 3, used: 12, reserve: 24, name: "Щит" },
+});
+
+describe("Компоновка по Документ1.vsdx", () => {
+  test("горизонтальные раздельные шины и точное подключение N/PE к SVG", () => {
+    const svg = buildSingleLineSheets(fixture())[0];
+    assert.ok(svg);
+    const rails = new Map([...svg.matchAll(/data-bus="([^"]+)"><line x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="([^"]+)"/g)].map((m) => {
+      assert.equal(m[3], m[5]);
+      return [m[1], Number(m[3])] as const;
+    }));
+    assert.equal(rails.size, 5);
+    assert.ok((rails.get("N") ?? 0) < (rails.get("PE") ?? 0));
+    const connections = [...svg.matchAll(/data-circuit="([^"]+)"><g[^>]*data-connections="([^"]+)"/g)];
+    assert.equal(connections.length, 3);
+    for (const m of connections) for (const terminal of ["N", "PE"]) {
+      const point = m[2].split(";").find((p) => p.startsWith(terminal + ":"))?.split(":")[1]?.split(",");
+      assert.ok(point);
+      assert.ok(svg.includes(`data-terminal-wire="${terminal}" data-for="${m[1]}"><line x1="${point[0]}" y1="${rails.get(terminal)}" x2="${point[0]}" y2="${point[1]}"`));
+    }
+  });
+
+  test("контуры кабельных QF/QFD неизменны, масштаб не сжимает символ до 16 мм", () => {
+    const svg = buildSingleLineSheets(fixture())[0];
+    assert.ok(svg);
+    for (const id of ["qf-cable", "qfd-cable"]) {
+      const symbol = getSchematicSymbol(id);
+      assert.ok(symbol);
+      for (const path of symbol.svg.matchAll(/<path\s+d="([^"]+)"/g)) assert.ok(svg.includes(`d="${path[1]}"`));
+      const scale = Number(svg.match(new RegExp(`data-library-symbol="${id}"[^>]*scale\\(([\\d.]+)\\)`))?.[1]);
+      assert.ok(Math.abs(scale - 25.4 / 72) < 1e-6);
+    }
+    assert.doesNotMatch(svg, /ВВГнг\(А\)-LS/); // Library placeholder text must not replace project cables.
+  });
+
+  test("30 мм шаг колонок; центры таблицы совпадают с линиями на всех форматах", () => {
+    for (const format of ["A4", "A3", "A2"] as const) {
+      const svg = buildSingleLineSheets(fixture(), format)[0];
+      assert.ok(svg);
+      const transform = svg.match(/data-doc1-layout="true" transform="translate\(([^ ]+) [^)]+\) scale\(([^)]+)\)/);
+      assert.ok(transform);
+      const centers = [...svg.matchAll(/data-table-group="[^"]+" data-center-x="([^"]+)"/g)].map((m) => Number(m[1]));
+      assert.equal(centers.length, 3);
+      centers.forEach((x, i) => assert.ok(Math.abs(x - (Number(transform[1]) + (50 + i * 30) * Number(transform[2]))) < 1e-8));
+      assert.match(svg, /data-panel-boundary="true"[^>]*stroke-dasharray="4 2"/);
+      assert.doesNotMatch(svg, /NaN|Infinity/);
+    }
+  });
+
+  test("количество групп сохраняется при разбивке; проект не изменяется", () => {
+    const p = fixture(28);
+    const before = JSON.stringify(p);
+    for (const format of ["A4", "A3", "A2"] as const) {
+      const sheets = buildSingleLineSheets(p, format);
+      const groups = sheets.flatMap((s) => [...s.matchAll(/data-circuit="([^"]+)"/g)].map((m) => m[1]));
+      assert.deepEqual(groups, p.circuits.map((c) => c.id));
+      for (const svg of sheets) {
+        const ids = [...svg.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
+        assert.equal(ids.length, new Set(ids).size);
+      }
+    }
+    assert.equal(JSON.stringify(p), before);
+  });
+
+  test("фазный ввод и отходящие линии не заканчиваются на шине N или PE", () => {
+    const svg = buildSingleLineSheets(fixture())[0];
+    assert.ok(svg);
+    const phaseRailY = [66, 71, 76];
+    for (const m of svg.matchAll(/data-circuit="([^"]+)"><g[^>]*data-connections="([^"]+)"/g)) {
+      const input = m[2].split(";").find((p) => p.startsWith("in:"))?.slice(3).split(",");
+      assert.ok(input);
+      const i = Number(m[1].split("-")[1]);
+      if (i !== 0) assert.ok(svg.includes(`x1="${input[0]}" y1="${phaseRailY[i]}" x2="${input[0]}" y2="${input[1]}"`));
+    }
+  });
+});
+
 describe("Библиотечные фигуры однолинейной схемы", () => {
   for (const [id, render] of [
     ["qf-cable", symBreaker], ["qd", symRcd], ["qfd", symRcbo],
