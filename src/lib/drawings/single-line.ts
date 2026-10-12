@@ -271,10 +271,6 @@ function sheetSvg(
 
   const tableH = TABLE_ROWS.length * 7;
   const tableTop = b.tbTop - 4 - tableH;
-  const headW = 46;
-  const colX0 = b.x0 + headW;
-  const colArea = b.x1 - 4 - colX0;
-  const colW = circuits.length ? Math.min(38, colArea / circuits.length) : colArea;
 
   /* Компоновка VSDX: источник справа, ввод справа налево, спуск к
      горизонтальным шинам, отходящие колонки с шагом 30 мм. Состав и
@@ -289,7 +285,8 @@ function sheetSvg(
   const busGap = 5;
   const hasSeriesRcd = circuits.some((c) => c.rcd.trim() && !/дифавтомат|авдт|rcbo/i.test(c.rcd));
   const cableHeight = 75;
-  const loadY = busTop + (hasSeriesRcd ? 36 : 0) + cableHeight + 10;
+  const busBottom = busTop + Math.max(0, p.busbars.length - 1) * busGap;
+  const loadY = busBottom + 6 + (hasSeriesRcd ? SYM_H + 2 : 0) + cableHeight + 5;
   const dh = loadY + 4;
   const diagramScale = Math.min((b.x1 - b.x0 - 6) / dw, (tableTop - b.y0 - 9) / dh);
   const diagramX = b.x0 + 3;
@@ -316,9 +313,12 @@ function sheetSvg(
     const x = sourceX - 10 - i * 42;
     // rotate(90): верхний ввод (x,0) становится правым, выход — левым.
     parts.push(L(previousX, inY, x, inY));
-    const symbol = symbolFor(d.kind, x, inY, d.poles, `${d.name} ${d.model} ${d.rating}`)
-      .replace(/<text\b[\s\S]*?<\/text>/g, "");
+    const original = symbolFor(d.kind, x, inY, d.poles, `${d.name} ${d.model} ${d.rating}`);
+    const symbol = original.includes("data-library-symbol") ? original.replace(/<text\b[\s\S]*?<\/text>/g, "") : original;
     parts.push(`<g data-input-device="${i}" transform="rotate(90 ${x} ${inY})">${symbol}</g>`);
+    const libraryId = original.match(/data-library-symbol="([^"]+)"/)?.[1];
+    const mark = `${d.name} ${d.model}`.match(/\b(?:QFD|QF|QD|QS|KM)\d*\b/i)?.[0] ?? ({ qs: "QS", km: "KM", qd: "QD", qfd: "QFD", "qf-cable": "QF" }[libraryId ?? ""] ?? "");
+    if (mark) parts.push(T(x - 8, 24, mark, { size: 2.8, bold: true, anchor: "middle" }));
     wrap(d.name || d.model, 21).slice(0, 3).forEach((row, ri) => parts.push(T(x - 8, 11 + ri * 3.3, row, { size: 2.6, anchor: "middle", bold: ri === 0 })));
     wrap([d.manufacturer, d.model, d.rating, d.leakage].filter(Boolean).join(" "), 23).slice(0, 3)
       .forEach((row, ri) => parts.push(T(x - 8, 40 + ri * 3.3, row, { size: 2.5, anchor: "middle" })));
@@ -334,8 +334,7 @@ function sheetSvg(
   });
   // Only the phase chain is joined to its bus; crossing N/PE is not a junction.
   parts.push(DOT(dropX, busTop, 0.6));
-  const busBottom = busTop + Math.max(0, p.busbars.length - 1) * busGap;
-  parts.push(`<rect data-panel-boundary="true" x="2" y="3" width="${dw - 3}" height="${busBottom + 15}" fill="none" stroke="#000" stroke-width="0.3" stroke-dasharray="4 2"/>`);
+  parts.push(`<rect data-panel-boundary="true" x="2" y="3" width="${dw - 3}" height="${busBottom + 2}" fill="none" stroke="#000" stroke-width="0.3" stroke-dasharray="4 2"/>`);
   circuits.forEach((c, i) => {
     const x = 50 + pitch * i;
     const py = busY[c.phase] ?? busTop;
@@ -350,7 +349,6 @@ function sheetSvg(
       cy += SYM_H + 2;
       parts.push(L(x, cy - 2, x, cy));
     } else {
-      cy = busTop;
       parts.push(L(x, py, x, cy), DOT(x, py, 0.6));
     }
     const symbolId = isRcbo ? "qfd-cable" : "qf-cable";
@@ -382,15 +380,17 @@ function sheetSvg(
     if (r) parts.push(L(b.x0, ry, b.x1, ry, 0.3));
     parts.push(T(b.x0 + 1.5, ry + 4.6, label, { size: 2.4 }));
   });
+  const colW = pitch * diagramScale;
+  const colX0 = diagramX + (50 - pitch / 2) * diagramScale;
   parts.push(L(colX0, tableTop, colX0, tableTop + tableH, 0.5));
   circuits.forEach((c, i) => {
     const x = colX0 + colW * i;
     parts.push(L(x + colW, tableTop, x + colW, tableTop + tableH, 0.3));
     const cx = x + colW / 2;
     // мини-символ аппарата в первой строке
-    const g = `<g transform="translate(${cx - 1.6},${tableTop + 0.8}) scale(0.38)">${
+    const g = `<g data-table-group="${esc(c.id)}" data-center-x="${cx}" transform="translate(${cx},${tableTop + 0.8}) scale(0.38)">${
       /дифавтомат|авдт|rcbo/i.test(c.rcd) ? symRcbo(0, 0) : symBreaker(0, 0, c.poles)
-    }</g>`.replace(/\bid="([^"]+)"/g, `id="table-${i}-$1"`)
+    }</g>`.replace(/<text\b[\s\S]*?<\/text>/g, "").replace(/\bid="([^"]+)"/g, `id="table-${i}-$1"`)
       .replace(/url\(#([^)]+)\)/g, `url(#table-${i}-$1)`);
     parts.push(g);
     const vals = [c.mark, c.phase, c.powerKw ? String(c.powerKw) : "—", c.ratedCurrent ? String(c.ratedCurrent) : "—"];
