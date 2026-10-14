@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown,
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { issueFinanceReportDocument } from "@/lib/finance-documents.functions";
+import { issueFinanceOperationDocument, issueFinanceReportDocument } from "@/lib/finance-documents.functions";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -116,6 +116,8 @@ export function MoneyManagerParticipants() {
   const [form, setForm] = useState({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" });
   const [pdfBusy, setPdfBusy] = useState(false);
   const issueDocFn = useServerFn(issueFinanceReportDocument);
+  const issueOpDocFn = useServerFn(issueFinanceOperationDocument);
+  const [opPdfBusy, setOpPdfBusy] = useState<string | null>(null);
   const [opDialog, setOpDialog] = useState(false);
   const [opForm, setOpForm] = useState<{ type: OperationKind; operation_date: string; participantId: string; counterpartyName: string; categoryId: string; amount: string; comment: string }>({ type: "expense", operation_date: todayMoscow(), participantId: "", counterpartyName: "", categoryId: "", amount: "", comment: "" });
   const [newCategory, setNewCategory] = useState("");
@@ -243,6 +245,23 @@ export function MoneyManagerParticipants() {
       toast.success(`Защищённый отчёт ${security.id} сформирован`);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF"); }
     finally { setPdfBusy(false); }
+  };
+
+  const downloadOperationPdf = async (o: (typeof operations)[number]) => {
+    setOpPdfBusy(o.id);
+    try {
+      const { buildFinanceOperationPdf } = await import("@/lib/finance-pdf");
+      const security = await issueOpDocFn({ data: { projectId, operationId: o.id } });
+      const doc = await buildFinanceOperationPdf({
+        security,
+        customer: project.customer_name || "—",
+        projectName: project.project_name || "Проект",
+        operation: { operation_date: o.operation_date, operation_type: o.operation_type, from_name: o.from_name, to_name: o.to_name, amount: Number(o.amount), categoryName: o.category?.name || "Без статьи", comment: o.comment },
+      });
+      doc.save(`${security.id}.pdf`);
+      toast.success(`Защищённый документ ${security.id} сформирован`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать документ"); }
+    finally { setOpPdfBusy(null); }
   };
 
   const createProject = useMutation({
@@ -563,7 +582,7 @@ export function MoneyManagerParticipants() {
               </div>
               <div className="mt-1 text-xs text-muted-foreground">{formatDate(o.operation_date)}{o.category ? ` · ${o.category.name}` : ""}{o.comment ? ` · ${o.comment}` : ""}</div>
             </div>
-            <div className="flex items-center gap-3"><span className="font-bold">{money(Number(o.amount))}</span><Button variant="ghost" size="icon" onClick={() => deleteOperation.mutate(o.id)} disabled={deleteOperation.isPending}><Trash2 className="size-4" /></Button></div>
+            <div className="flex items-center gap-3"><span className="font-bold">{money(Number(o.amount))}</span><Button variant="ghost" size="icon" aria-label="Защищённый PDF операции" title="Защищённый PDF операции" onClick={() => downloadOperationPdf(o)} disabled={opPdfBusy === o.id}>{opPdfBusy === o.id ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}</Button><Button variant="ghost" size="icon" onClick={() => deleteOperation.mutate(o.id)} disabled={deleteOperation.isPending}><Trash2 className="size-4" /></Button></div>
           </div>)}
           {visibleOperations.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">{operations.length ? "Операций по выбранным фильтрам нет" : "Операций пока нет"}</div>}
         </div>

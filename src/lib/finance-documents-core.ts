@@ -69,6 +69,18 @@ export function isDocumentId(v: string): boolean {
   return ID_RE.test(v);
 }
 
+/** Документ по одной операции: тип документа выводится сервером из типа операции в базе. */
+export const FIN_DOC_TYPE_BY_OPERATION: Record<string, string> = {
+  income: "finance_income",
+  expense: "finance_expense",
+  refund: "finance_refund",
+  transfer: "finance_transfer",
+};
+
 export const FIN_DOC_TYPE_LABEL: Record<string, string> = {
   [FIN_DOC_TYPE_REPORT]: "Финансовый отчёт по проекту",
+  finance_income: "Приходный документ",
+  finance_expense: "Расходный документ",
+  finance_refund: "Документ возврата",
+  finance_transfer: "Документ перевода между участниками",
 };
