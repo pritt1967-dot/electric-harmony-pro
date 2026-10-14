@@ -24,7 +24,16 @@ export type FinanceReportData = {
   balances: { name: string; received: number; spent: number; balance: number }[];
   transfers?: { operation_date: string; from_name: string | null; to_name: string | null; amount: number; comment: string | null }[];
   operations: FinanceReportOperation[];
+  security?: { id: string; verifyUrl: string; checkCode: string; issuedAt: string };
 };
+
+async function codeImages(id: string, url: string): Promise<{ qr: string; barcode: string }> {
+  const [{ default: QRCode }, { default: JsBarcode }] = await Promise.all([import("qrcode"), import("jsbarcode")]);
+  const qr = await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 1, width: 360 });
+  const canvas = document.createElement("canvas");
+  JsBarcode(canvas, id, { format: "CODE128", displayValue: false, margin: 0, height: 60, width: 2 });
+  return { qr, barcode: canvas.toDataURL("image/png") };
+}
 
 const TYPE_LABEL: Record<FinanceReportOperation["operation_type"], string> = {
   income: "Приход",
@@ -199,6 +208,26 @@ export async function buildFinancePdf(data: FinanceReportData): Promise<jsPDF> {
     margin: { left: M, right: M },
   });
 
+  if (data.security) {
+    const sec = data.security;
+    const { qr, barcode } = await codeImages(sec.id, sec.verifyUrl);
+    const pageH = doc.internal.pageSize.getHeight();
+    let by = ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 40) + 8;
+    if (by + 42 > pageH - 14) { doc.addPage(); by = 20; }
+    doc.setDrawColor(200, 204, 212);
+    doc.roundedRect(M, by, pageW - M * 2, 38, 2, 2);
+    doc.addImage(qr, "PNG", M + 3, by + 3, 32, 32);
+    doc.setFont("DejaVu", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(30, 34, 44);
+    doc.text(`Документ № ${sec.id}`, M + 40, by + 8);
+    doc.setFont("DejaVu", "normal");
+    doc.setFontSize(8);
+    doc.text(`Сформирован: ${new Date(sec.issuedAt).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })} МСК · контрольный код ${sec.checkCode}`, M + 40, by + 13);
+    doc.text("Проверка подлинности: отсканируйте QR-код. Любое изменение данных после формирования будет обнаружено.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
+    doc.addImage(barcode, "PNG", M + 40, by + 23, 90, 12);
+  }
+
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i += 1) {
     doc.setPage(i);
@@ -206,7 +235,7 @@ export async function buildFinancePdf(data: FinanceReportData): Promise<jsPDF> {
     doc.setFontSize(8);
     doc.setTextColor(130, 136, 148);
     doc.text(
-      `S&M Electric · стр. ${i} из ${pages}`,
+      `S&M Electric${data.security ? ` · ${data.security.id}` : ""} · стр. ${i} из ${pages}`,
       pageW - M,
       doc.internal.pageSize.getHeight() - 8,
       { align: "right" },

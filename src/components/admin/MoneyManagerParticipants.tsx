@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown, FileText, FolderPlus, Loader2, PieChart as PieChartIcon, Plus, Search, Trash2, TrendingUp, UserPlus, Users, Wallet } from "lucide-react";
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { issueFinanceReportDocument } from "@/lib/finance-documents.functions";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -113,6 +115,7 @@ export function MoneyManagerParticipants() {
   const [showTransfer, setShowTransfer] = useState(false);
   const [form, setForm] = useState({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" });
   const [pdfBusy, setPdfBusy] = useState(false);
+  const issueDocFn = useServerFn(issueFinanceReportDocument);
   const [opDialog, setOpDialog] = useState(false);
   const [opForm, setOpForm] = useState<{ type: OperationKind; operation_date: string; participantId: string; counterpartyName: string; categoryId: string; amount: string; comment: string }>({ type: "expense", operation_date: todayMoscow(), participantId: "", counterpartyName: "", categoryId: "", amount: "", comment: "" });
   const [newCategory, setNewCategory] = useState("");
@@ -215,7 +218,9 @@ export function MoneyManagerParticipants() {
     setPdfBusy(true);
     try {
       const { buildFinancePdf } = await import("@/lib/finance-pdf");
+      const security = await issueDocFn({ data: { projectId } });
       const doc = await buildFinancePdf({
+        security,
         customer: project.customer_name || "—",
         projectName: project.project_name || "Проект",
         income: stats.income,
@@ -234,7 +239,8 @@ export function MoneyManagerParticipants() {
           comment: o.comment,
         })),
       });
-      doc.save("finance-report.pdf");
+      doc.save(`${security.id}.pdf`);
+      toast.success(`Защищённый отчёт ${security.id} сформирован`);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF"); }
     finally { setPdfBusy(false); }
   };
