@@ -35,6 +35,65 @@ async function codeImages(id: string, url: string): Promise<{ qr: string; barcod
   return { qr, barcode: canvas.toDataURL("image/png") };
 }
 
+export type FinanceOperationDocData = {
+  customer: string;
+  projectName: string;
+  operation: FinanceReportOperation;
+  security: NonNullable<FinanceReportData["security"]> & { docType: string };
+};
+
+/** PDF по одной операции с тем же блоком защиты, что и у отчёта. */
+export async function buildFinanceOperationPdf(data: FinanceOperationDocData): Promise<jsPDF> {
+  const { fonts } = await loadAssets();
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  doc.addFileToVFS("DejaVuSans.ttf", fonts.regular);
+  doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", fonts.bold);
+  doc.addFont("DejaVuSans-Bold.ttf", "DejaVu", "bold");
+  const M = 15;
+  const pageW = doc.internal.pageSize.getWidth();
+  doc.setFont("DejaVu", "bold");
+  doc.setFontSize(16);
+  doc.text("S&M Electric", M, 20);
+  doc.setFontSize(12);
+  doc.text(data.security.docType, M, 28);
+  const o = data.operation;
+  autoTable(doc, {
+    startY: 36,
+    body: [
+      ["Заказчик", data.customer],
+      ["Проект", data.projectName],
+      ["Дата", formatDate(o.operation_date)],
+      ["Тип", TYPE_LABEL[o.operation_type]],
+      ["От кого", o.from_name || "—"],
+      ["Кому", o.to_name || "—"],
+      ["Статья", o.categoryName],
+      ["Комментарий", o.comment || ""],
+      ["Сумма", money(Number(o.amount))],
+    ],
+    styles: { font: "DejaVu", fontSize: 10, cellPadding: 2.5 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 40 } },
+    margin: { left: M, right: M },
+  });
+  const sec = data.security;
+  const { qr, barcode } = await codeImages(sec.id, sec.verifyUrl);
+  const by = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+  doc.setDrawColor(200, 204, 212);
+  doc.roundedRect(M, by, pageW - M * 2, 38, 2, 2);
+  doc.addImage(qr, "PNG", M + 3, by + 3, 32, 32);
+  doc.setFont("DejaVu", "bold");
+  doc.setFontSize(10);
+  doc.text(`Документ № ${sec.id}`, M + 40, by + 8);
+  doc.setFont("DejaVu", "normal");
+  doc.setFontSize(8);
+  doc.text(`Сформирован: ${new Date(sec.issuedAt).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })} МСК · контрольный код ${sec.checkCode}`, M + 40, by + 13);
+  doc.text("Проверка подлинности: отсканируйте QR-код. Любое изменение данных после формирования будет обнаружено.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
+  doc.addImage(barcode, "PNG", M + 40, by + 23, 90, 12);
+  doc.setFontSize(8);
+  doc.text(`S&M Electric · ${sec.id}`, pageW - M, doc.internal.pageSize.getHeight() - 8, { align: "right" });
+  return doc;
+}
+
 const TYPE_LABEL: Record<FinanceReportOperation["operation_type"], string> = {
   income: "Приход",
   expense: "Расход",
