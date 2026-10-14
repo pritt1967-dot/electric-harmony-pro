@@ -86,7 +86,7 @@ async function requestFinance(
   }
 }
 
-const ALLOWED_TABLES = /^(operations|participants|categories|projects|project_participants)(\?|$)/;
+const ALLOWED_TABLES = /^(operations|participants|categories|projects|project_participants|finance_documents)(\?|$)/;
 
 /** Запрос к PostgREST финансовой базы напрямую, без промежуточных сервисов. */
 export async function financeRest(

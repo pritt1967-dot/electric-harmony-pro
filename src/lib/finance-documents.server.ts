@@ -55,10 +55,10 @@ async function loadOperations(projectId: string): Promise<CanonicalOperationInpu
   return ((await financeRest(`operations?select=${OPS_SELECT}&project_id=eq.${encodeURIComponent(projectId)}`)) ?? []) as CanonicalOperationInput[];
 }
 
-async function loadOperationsByIds(ids: string[]): Promise<CanonicalOperationInput[]> {
+async function loadOperationsByIds(ids: string[]): Promise<Array<CanonicalOperationInput & { project_id?: string }>> {
   if (!ids.length) return [];
   const list = ids.map((id) => `"${id.replace(/"/g, "")}"`).join(",");
-  return ((await financeRest(`operations?select=${OPS_SELECT}&id=in.(${encodeURIComponent(list)})`)) ?? []) as CanonicalOperationInput[];
+  return ((await financeRest(`operations?select=${OPS_SELECT},project_id&id=in.(${encodeURIComponent(list)})`)) ?? []) as CanonicalOperationInput[];
 }
 
 export type IssuedDocument = { id: string; issuedAt: string; verifyUrl: string; checkCode: string };
@@ -131,10 +131,8 @@ export async function verifyDocument(id: string, token: string): Promise<VerifyR
   if (!safeEqual(signRecord(key, doc), doc.signature)) return { status: "invalid", ...meta };
   let current: CanonicalOperationInput[];
   try {
-    const [byIds, all] = await Promise.all([loadOperationsByIds(doc.operation_ids ?? []), loadOperations(doc.project_id)]);
-    // Учитываем изменённые, удалённые и перенесённые операции документа.
-    current = byIds;
-    void all;
+    // Изменённая, удалённая или перенесённая в другой проект операция меняет отпечаток.
+    current = (await loadOperationsByIds(doc.operation_ids ?? [])).filter((o) => String(o.project_id) === String(doc.project_id));
   } catch {
     return { status: "unavailable" };
   }
