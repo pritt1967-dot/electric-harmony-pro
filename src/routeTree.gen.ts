@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as RabotyIndexRouteImport } from './routes/raboty.index'
 import { Route as RabotySlugRouteImport } from './routes/raboty.$slug'
 import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
+import { Route as VerifyIdRouteImport } from './routes/verify.$id'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedEstimateIdRouteImport } from './routes/_authenticated/estimate.$id'
@@ -110,6 +111,11 @@ const SmetaTokenRoute = SmetaTokenRouteImport.update({
   path: '/smeta/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyIdRoute = VerifyIdRouteImport.update({
+  id: '/verify/$id',
+  path: '/verify/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/raboty/': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/raboty': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
+  '/verify/$id': typeof VerifyIdRoute
   '/raboty/': typeof RabotyIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/raboty/$slug'
     | '/smeta/$token'
+    | '/verify/$id'
     | '/raboty/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/raboty/$slug'
     | '/smeta/$token'
+    | '/verify/$id'
     | '/raboty'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/raboty/$slug'
     | '/smeta/$token'
+    | '/verify/$id'
     | '/raboty/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -329,6 +341,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   RabotySlugRoute: typeof RabotySlugRoute
   SmetaTokenRoute: typeof SmetaTokenRoute
+  VerifyIdRoute: typeof VerifyIdRoute
   RabotyIndexRoute: typeof RabotyIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -447,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SmetaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify/$id': {
+      id: '/verify/$id'
+      path: '/verify/$id'
+      fullPath: '/verify/$id'
+      preLoaderRoute: typeof VerifyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -541,6 +561,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   RabotySlugRoute: RabotySlugRoute,
   SmetaTokenRoute: SmetaTokenRoute,
+  VerifyIdRoute: VerifyIdRoute,
   RabotyIndexRoute: RabotyIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,

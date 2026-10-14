@@ -215,7 +215,9 @@ export function MoneyManagerParticipants() {
     setPdfBusy(true);
     try {
       const { buildFinancePdf } = await import("@/lib/finance-pdf");
+      const security = await issueDocFn({ data: { projectId } });
       const doc = await buildFinancePdf({
+        security,
         customer: project.customer_name || "—",
         projectName: project.project_name || "Проект",
         income: stats.income,
@@ -234,7 +236,8 @@ export function MoneyManagerParticipants() {
           comment: o.comment,
         })),
       });
-      doc.save("finance-report.pdf");
+      doc.save(`${security.id}.pdf`);
+      toast.success(`Защищённый отчёт ${security.id} сформирован`);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF"); }
     finally { setPdfBusy(false); }
   };
