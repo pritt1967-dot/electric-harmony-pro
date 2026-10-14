@@ -21,6 +21,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as KlientTokenRouteImport } from './routes/klient.$token'
 import { Route as RabotyIndexRouteImport } from './routes/raboty.index'
 import { Route as RabotySlugRouteImport } from './routes/raboty.$slug'
 import { Route as SmetaTokenRouteImport } from './routes/smeta.$token'
@@ -95,6 +96,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const KlientTokenRoute = KlientTokenRouteImport.update({
+  id: '/klient/$token',
+  path: '/klient/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RabotyIndexRoute = RabotyIndexRouteImport.update({
   id: '/raboty/',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/klient/$token': typeof KlientTokenRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/klient/$token': typeof KlientTokenRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/klient/$token': typeof KlientTokenRoute
   '/raboty/$slug': typeof RabotySlugRoute
   '/smeta/$token': typeof SmetaTokenRoute
   '/verify/$id': typeof VerifyIdRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/klient/$token'
     | '/raboty/$slug'
     | '/smeta/$token'
     | '/verify/$id'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/klient/$token'
     | '/raboty/$slug'
     | '/smeta/$token'
     | '/verify/$id'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/klient/$token'
     | '/raboty/$slug'
     | '/smeta/$token'
     | '/verify/$id'
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  KlientTokenRoute: typeof KlientTokenRoute
   RabotySlugRoute: typeof RabotySlugRoute
   SmetaTokenRoute: typeof SmetaTokenRoute
   VerifyIdRoute: typeof VerifyIdRoute
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/klient/$token': {
+      id: '/klient/$token'
+      path: '/klient/$token'
+      fullPath: '/klient/$token'
+      preLoaderRoute: typeof KlientTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/raboty/': {
       id: '/raboty/'
@@ -559,6 +579,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  KlientTokenRoute: KlientTokenRoute,
   RabotySlugRoute: RabotySlugRoute,
   SmetaTokenRoute: SmetaTokenRoute,
   VerifyIdRoute: VerifyIdRoute,
