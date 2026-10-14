@@ -140,6 +140,7 @@ export function MoneyManagerParticipants() {
       return {
         operations,
         participants: Array.isArray(result.participants) ? result.participants as Participant[] : [],
+        historicalParticipants: Array.isArray(result.historicalParticipants) ? result.historicalParticipants as Participant[] : [],
         categories,
         project: result.project ?? { customer_name: "", project_name: "Проект", status: "active" },
       };
@@ -148,6 +149,7 @@ export function MoneyManagerParticipants() {
 
   const projects: FinanceProjectRow[] = projectsQuery.data ?? [];
   const participants = data?.participants ?? [];
+  const balanceParticipants = useMemo(() => [...participants, ...(data?.historicalParticipants ?? [])], [participants, data?.historicalParticipants]);
   const operations = data?.operations ?? [];
   const project = data?.project ?? { customer_name: "", project_name: "Проект", status: "active" };
   const refresh = () => { qc.invalidateQueries({ queryKey: ["money-manager", projectId] }); qc.invalidateQueries({ queryKey: ["finance-all-participants"] }); };
@@ -196,7 +198,7 @@ export function MoneyManagerParticipants() {
     let ci = 0; let ce = 0;
     const timeline = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([d, v]) => { ci += v.income; ce += v.expense; return { date: formatDate(d), Поступления: ci, Расходы: ce, Остаток: ci - ce }; });
 
-    const balances = participants.map(p => {
+    const balances = balanceParticipants.map(p => {
       const received = sum(operations.filter(o => o.to_participant_id === p.id || (!o.to_participant_id && !o.from_participant_id && o.to_name === p.name)));
       const sent = sum(operations.filter(o => o.from_participant_id === p.id || (!o.from_participant_id && !o.to_participant_id && o.from_name === p.name)));
       return { ...p, received, sent, balance: received - sent };
@@ -204,7 +206,7 @@ export function MoneyManagerParticipants() {
     const balanceSum = balances.reduce((s, b) => s + b.balance, 0);
 
     return { income, expenses, refundsSum, transfersSum, remaining: income - expenses + refundsSum, byCategory, byParticipantExpense, timeline, balances, balanceSum, transfers };
-  }, [operations, participants, filters]);
+  }, [operations, participants, balanceParticipants, filters]);
 
   useEffect(() => { if (showTransfer) requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [showTransfer]);
   useEffect(() => { setShowTransfer(false); setForm({ operation_date: todayMoscow(), fromId: "", toId: "", amount: "", comment: "" }); }, [projectId]);
@@ -266,9 +268,13 @@ export function MoneyManagerParticipants() {
   });
 
   const removeParticipant = useMutation({
-    mutationFn: async (id: string) => { await detachParticipantClient(projectId, id); },
-    onSuccess: () => { toast.success("Участник исключён из проекта"); setRemoveTarget(null); refresh(); },
-    onError: (e: Error) => toast.error(e.message),
+    mutationFn: async (target: { projectId: string; id: string }) => { await withFinanceTimeout(detachParticipantClient(target.projectId, target.id)); },
+    onSuccess: async (_, target) => {
+      setRemoveTarget(null);
+      await qc.invalidateQueries({ queryKey: ["money-manager", target.projectId] });
+      toast.success("Участник исключён из проекта. История и суммы сохранены.");
+    },
+    onError: (e: Error) => toast.error(e.message || "Не удалось исключить участника. Обновите список и повторите попытку."),
   });
 
   const addTransfer = useMutation({
@@ -484,7 +490,7 @@ export function MoneyManagerParticipants() {
           <Button variant="outline" onClick={() => setParticipantDialog(true)}><UserPlus className="mr-2 size-4" /> Добавить участника</Button>
         </div>
         <div className="mt-4 grid gap-2">
-          {stats.balances.map(p => <div key={p.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
+          {stats.balances.filter(p => participants.some(active => active.id === p.id)).map(p => <div key={p.id} className="flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="font-medium">{p.name}</div>
               <div className="text-xs text-muted-foreground">получил {money(p.received)} · передал {money(p.sent)}</div>
@@ -496,7 +502,7 @@ export function MoneyManagerParticipants() {
               </Button>
             </div>
           </div>)}
-          {stats.balances.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">В проекте пока нет участников</div>}
+          {participants.length === 0 && <div className="py-6 text-center text-sm text-muted-foreground">В проекте пока нет участников</div>}
         </div>
       </div>
 
@@ -670,7 +676,7 @@ export function MoneyManagerParticipants() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemoveTarget(null)}>Отмена</Button>
-            <Button variant="destructive" onClick={() => removeTarget && removeParticipant.mutate(removeTarget.id)} disabled={removeParticipant.isPending}>Удалить из проекта</Button>
+            <Button variant="destructive" onClick={() => removeTarget && removeParticipant.mutate({ projectId, id: removeTarget.id })} disabled={removeParticipant.isPending}>{removeParticipant.isPending ? "Исключение…" : "Удалить из проекта"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

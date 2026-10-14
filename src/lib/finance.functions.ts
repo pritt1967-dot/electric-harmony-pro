@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requirePanelAuth } from "@/lib/panel-auth.middleware";
+import { membershipError, projectParticipants, removeProjectMembership } from "@/lib/finance-membership";
 
 /**
  * Финансовый модуль работает напрямую с финансовой базой (nppincxonqwajdoxqbla)
@@ -41,7 +42,7 @@ export type FinanceParticipant = { id: string; name: string };
 export type FinanceCategory = { id: string; name: string; affects_project_balance: boolean };
 export type FinanceProject = { customer_name: string | null; project_name: string | null; status: string | null };
 export type FinanceProjectRow = { id: string; project_name: string | null; customer_name: string | null; status: string | null };
-export type FinancePayload = { ok: boolean; error: string | null; source: "direct"; operations: FinanceOperation[]; participants: FinanceParticipant[]; categories: FinanceCategory[]; project: FinanceProject | null };
+export type FinancePayload = { ok: boolean; error: string | null; source: "direct"; operations: FinanceOperation[]; participants: FinanceParticipant[]; historicalParticipants: FinanceParticipant[]; categories: FinanceCategory[]; project: FinanceProject | null };
 
 export const loadFinanceData = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
@@ -56,14 +57,13 @@ export const loadFinanceData = createServerFn({ method: "POST" })
       financeRest(`projects?select=customer_name,project_name,status&id=eq.${pid}&limit=1`),
       financeRest(`project_participants?select=project_id,participant_id&project_id=eq.${pid}`),
     ]);
-    const ids = new Set(((links ?? []) as { participant_id: string }[]).map(x => x.participant_id));
     const all = (participants ?? []) as FinanceParticipant[];
     return {
       ok: true,
       error: null,
       source: "direct",
       operations: (operations ?? []) as FinanceOperation[],
-      participants: ids.size ? all.filter(x => ids.has(x.id)) : all,
+      ...projectParticipants(all, (links ?? []) as { participant_id: string }[], (operations ?? []) as FinanceOperation[]),
       categories: (categories ?? []) as FinanceCategory[],
       project: ((projects ?? []) as FinanceProject[])[0] ?? null,
     };
@@ -118,11 +118,13 @@ export const detachFinanceParticipant = createServerFn({ method: "POST" })
   .inputValidator((d: { projectId: string; participantId: string }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context as unknown as FinanceContext);
-    await financeRest(
-      `project_participants?project_id=eq.${encodeURIComponent(data.projectId)}&participant_id=eq.${encodeURIComponent(data.participantId)}`,
-      { method: "DELETE" },
-    );
-    return { ok: true };
+    try {
+      await removeProjectMembership(financeRest, data.projectId, data.participantId);
+      return { ok: true as const, error: null };
+    } catch (error) {
+      console.error("Finance membership removal failed:", error instanceof Error ? error.message : "Unknown error");
+      return { ok: false as const, error: membershipError(error) };
+    }
   });
 
 export const createFinanceOperation = createServerFn({ method: "POST" })
