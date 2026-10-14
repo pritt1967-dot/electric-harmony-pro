@@ -34,6 +34,7 @@ import {
   unpackItems,
 } from "@/lib/estimates";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
+import { customerPublicUrl } from "@/lib/customer-qr";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 import { SurchargeSettings } from "@/components/admin/SurchargeSettings";
 import { OfferDialog } from "@/components/admin/OfferDialog";
@@ -41,6 +42,7 @@ import { OfferDialog } from "@/components/admin/OfferDialog";
 type Row = Estimate & {
   id: string;
   public_token: string;
+  customer?: { public_token: string } | null;
   /** Исходные цены до внутреннего увеличения (не колонка БД). */
   baseItems?: EstimateItem[];
 };
@@ -48,7 +50,7 @@ type Row = Estimate & {
 export async function fetchEstimates(): Promise<Row[]> {
   const { data } = await supabase
     .from("estimates")
-    .select("*")
+    .select("*, customer:customers(public_token)")
     .order("created_at", { ascending: false });
   return (data ?? []).map((r) => ({
     ...r,
@@ -58,6 +60,13 @@ export async function fetchEstimates(): Promise<Row[]> {
     status: r.status as EstimateStatus,
     ...unpackItems(r.items),
   })) as Row[];
+}
+
+/** QR ведёт в постоянный кабинет заказчика; без заказчика — на саму смету. */
+function qrTarget(row: Row) {
+  return row.customer?.public_token
+    ? customerPublicUrl(row.customer.public_token)
+    : estimatePublicUrl(row.public_token);
 }
 
 export function EstimatesList() {
@@ -82,7 +91,7 @@ export function EstimatesList() {
           .filter((r) => r.public_token)
           .map(
             async (r) =>
-              [r.id, await qrDataUrl(estimatePublicUrl(r.public_token), 160)] as const,
+              [r.id, await qrDataUrl(qrTarget(r), 160)] as const,
           ),
       );
       if (active) setQr(Object.fromEntries(entries));
@@ -111,6 +120,7 @@ export function EstimatesList() {
       approved_at: _a,
       approved_by_name: _n,
       surcharges: _s,
+      customer: _c,
       markup: _m,
       baseItems: _b,
       ...rest
@@ -254,7 +264,7 @@ export function EstimatesList() {
                   downloadEstimatePdf(
                     row,
                     undefined,
-                    estimatePublicUrl(row.public_token),
+                    qrTarget(row),
                   ).catch(() => toast.error("Не удалось сформировать PDF"))
                 }
               >
@@ -282,8 +292,8 @@ export function EstimatesList() {
                 className="h-11"
                 onClick={() =>
                   downloadQrPng(
-                    estimatePublicUrl(row.public_token),
-                    `QR-smeta-${row.number || row.id}.png`,
+                    qrTarget(row),
+                    `QR-klient-${row.number || row.id}.png`,
                   )
                 }
               >

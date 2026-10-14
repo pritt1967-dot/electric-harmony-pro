@@ -23,6 +23,10 @@ export type PublicEstimate = {
   version: number;
   approved_at: string | null;
   approved_by_name: string;
+  /** Постоянный токен заказчика (QR кабинета), не зависит от номера заказа. */
+  customer_token?: string | null;
+  /** Код подписи этой версии сметы (HMAC на сервере); null, если ключ не задан. */
+  signature?: string | null;
   /** Linked order, present once the estimate is approved. */
   order: {
     number: string;
@@ -125,11 +129,54 @@ function fromRpc(payload: unknown): PublicEstimate | null {
   return toPublic(row, Boolean(row.approved_at), p.order ?? null);
 }
 
+async function enrich(est: PublicEstimate | null): Promise<PublicEstimate | null> {
+  if (!est) return est;
+  let customer_token: string | null = null;
+  try {
+    customer_token = ((await rpc("estimate_customer_token", { p_estimate_token: est.token })) as string | null) ?? null;
+  } catch {
+    customer_token = null;
+  }
+  let signature: string | null = null;
+  const key = process.env["ESTIMATE_SIGNING_KEY"]?.trim();
+  if (key && key.length >= 32) {
+    const { createHmac } = await import("node:crypto");
+    const { canonicalEstimate, formatSignatureCode } = await import("./estimate-signature");
+    signature = formatSignatureCode(
+      createHmac("sha256", key).update(canonicalEstimate(est), "utf8").digest("hex"),
+    );
+  }
+  return { ...est, customer_token, signature };
+}
+
 /** Public: read one estimate by its unguessable token. */
 export const getPublicEstimate = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => z.object({ token: tokenSchema }).parse(data))
   .handler(async ({ data }): Promise<PublicEstimate | null> =>
-    fromRpc(await rpc("public_estimate_by_token", { p_token: data.token })),
+    enrich(fromRpc(await rpc("public_estimate_by_token", { p_token: data.token }))),
+  );
+
+export type PublicCustomer = {
+  name: string;
+  estimates: Array<{
+    token: string;
+    number: string;
+    doc_date: string;
+    object_name: string;
+    address: string;
+    total: number;
+    status: string;
+    version: number;
+    approved_at: string | null;
+    order: { number: string; status: string; payment_status: string; paid_amount: number } | null;
+  }>;
+};
+
+/** Public: постоянный QR заказчика — только его сметы и заказы, без контактов. */
+export const getPublicCustomer = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ token: tokenSchema }).parse(data))
+  .handler(async ({ data }): Promise<PublicCustomer | null> =>
+    ((await rpc("public_customer_by_token", { p_token: data.token })) as PublicCustomer | null) ?? null,
   );
 
 /** Public: customer approves the estimate; freezes the approved version. */
@@ -151,14 +198,14 @@ export const approvePublicEstimate = createServerFn({ method: "POST" })
     const before = fromRpc(
       await rpc("public_estimate_by_token", { p_token: data.token }),
     );
-    const result = fromRpc(
+    const result = await enrich(fromRpc(
       await rpc("approve_public_estimate", {
         p_token: data.token,
         p_name: data.name ?? "",
         p_session: data.session ?? "",
         p_ip: ip,
       }),
-    );
+    ));
 
     if (result && !before?.approved_at) {
       try {
