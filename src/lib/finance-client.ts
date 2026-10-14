@@ -46,7 +46,8 @@ export async function attachParticipantClient(projectId: string, participantId: 
 
 /** Убирает участника только из текущего проекта; сам участник и его операции сохраняются. */
 export async function detachParticipantClient(projectId: string, participantId: string) {
-  await detachFinanceParticipant({ data: { projectId, participantId } });
+  const result = await detachFinanceParticipant({ data: { projectId, participantId } });
+  if (!result.ok) throw new Error(result.error || "Не удалось исключить участника из проекта");
 }
 
 export async function loadFinanceDataClient(projectId: string): Promise<FinancePayload> {
