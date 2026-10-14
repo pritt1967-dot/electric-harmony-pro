@@ -127,6 +127,36 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          created_at: string
+          email_norm: string
+          id: string
+          name: string
+          phone_norm: string
+          public_token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_norm?: string
+          id?: string
+          name?: string
+          phone_norm?: string
+          public_token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_norm?: string
+          id?: string
+          name?: string
+          phone_norm?: string
+          public_token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       estimate_versions: {
         Row: {
           created_at: string
@@ -171,6 +201,7 @@ export type Database = {
           approved_session: string
           approved_snapshot: Json | null
           created_at: string
+          customer_id: string | null
           customer_name: string
           discount_type: string
           discount_value: number
@@ -198,6 +229,7 @@ export type Database = {
           approved_session?: string
           approved_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           discount_type?: string
           discount_value?: number
@@ -225,6 +257,7 @@ export type Database = {
           approved_session?: string
           approved_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           discount_type?: string
           discount_value?: number
@@ -244,7 +277,15 @@ export type Database = {
           version?: number
           work_period?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "estimates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_events: {
         Row: {
@@ -306,6 +347,7 @@ export type Database = {
           approved_at: string | null
           approved_snapshot: Json | null
           created_at: string
+          customer_id: string | null
           customer_name: string
           email: string
           estimate_id: string | null
@@ -329,6 +371,7 @@ export type Database = {
           approved_at?: string | null
           approved_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           email?: string
           estimate_id?: string | null
@@ -352,6 +395,7 @@ export type Database = {
           approved_at?: string | null
           approved_snapshot?: Json | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           email?: string
           estimate_id?: string | null
@@ -371,6 +415,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_estimate_id_fkey"
             columns: ["estimate_id"]
@@ -799,6 +850,10 @@ export type Database = {
         Args: { _ip_hash: string }
         Returns: number
       }
+      estimate_customer_token: {
+        Args: { p_estimate_token: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -806,6 +861,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      normalize_phone: { Args: { p: string }; Returns: string }
+      public_customer_by_token: { Args: { p_token: string }; Returns: Json }
       public_estimate_by_token: { Args: { p_token: string }; Returns: Json }
       published_client_reviews: {
         Args: never
@@ -822,6 +879,15 @@ export type Database = {
       request_public_order_payment: {
         Args: { p_kind?: string; p_token: string }
         Returns: Json
+      }
+      resolve_customer: {
+        Args: {
+          p_address: string
+          p_email: string
+          p_name: string
+          p_phone: string
+        }
+        Returns: string
       }
     }
     Enums: {

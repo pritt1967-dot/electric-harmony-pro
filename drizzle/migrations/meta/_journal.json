@@ -29,6 +29,13 @@
       "when": 1790777980994,
       "tag": "0003_reviews_without_service_role",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792015280725,
+      "tag": "0004_customers_permanent_qr",
+      "breakpoints": true
     }
   ]
 }
