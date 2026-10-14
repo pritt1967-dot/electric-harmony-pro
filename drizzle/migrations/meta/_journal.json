@@ -36,6 +36,13 @@
       "when": 1792015280725,
       "tag": "0004_customers_permanent_qr",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792015323151,
+      "tag": "0005_customers_revoke_anon",
+      "breakpoints": true
     }
   ]
 }
