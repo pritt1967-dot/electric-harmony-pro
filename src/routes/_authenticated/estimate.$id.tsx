@@ -58,6 +58,7 @@ import {
 import { fetchSurchargePercents } from "@/lib/surcharge-settings";
 import { downloadEstimatePdf, printEstimatePdf } from "@/lib/estimate-pdf";
 import { downloadQrPng, estimatePublicUrl, qrDataUrl } from "@/lib/estimate-qr";
+import { customerPublicUrl } from "@/lib/customer-qr";
 import { downloadEstimateDocx } from "@/lib/estimate-docx";
 import { OfferDialog } from "@/components/admin/OfferDialog";
 
@@ -156,9 +157,17 @@ function EstimateEditor() {
     const token = estimate?.public_token;
     if (!token) return;
     let active = true;
-    const url = estimatePublicUrl(token);
-    setPublicUrl(url);
-    qrDataUrl(url, 220)
+    const customerId = (estimate as { customer_id?: string | null }).customer_id;
+    // QR ведёт в постоянный кабинет заказчика; ссылка на смету — запасной вариант.
+    (customerId
+      ? supabase.from("customers").select("public_token").eq("id", customerId).maybeSingle()
+      : Promise.resolve({ data: null })
+    )
+      .then(({ data }) => {
+        const url = data?.public_token ? customerPublicUrl(data.public_token) : estimatePublicUrl(token);
+        if (active) setPublicUrl(url);
+        return qrDataUrl(url, 220);
+      })
       .then((value) => {
         if (active) setQr(value);
       })
@@ -168,7 +177,7 @@ function EstimateEditor() {
     return () => {
       active = false;
     };
-  }, [estimate?.public_token]);
+  }, [estimate?.public_token, (estimate as { customer_id?: string | null } | null)?.customer_id]);
 
   const categories = useMemo(
     () => Array.from(new Set(price.map((p) => p.category))).sort(),
