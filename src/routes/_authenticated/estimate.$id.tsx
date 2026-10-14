@@ -159,10 +159,9 @@ function EstimateEditor() {
     let active = true;
     const customerId = (estimate as { customer_id?: string | null }).customer_id;
     // QR ведёт в постоянный кабинет заказчика; ссылка на смету — запасной вариант.
-    (customerId
+    Promise.resolve(customerId
       ? supabase.from("customers").select("public_token").eq("id", customerId).maybeSingle()
-      : Promise.resolve({ data: null })
-    )
+      : { data: null as { public_token: string } | null })
       .then(({ data }) => {
         const url = data?.public_token ? customerPublicUrl(data.public_token) : estimatePublicUrl(token);
         if (active) setPublicUrl(url);
