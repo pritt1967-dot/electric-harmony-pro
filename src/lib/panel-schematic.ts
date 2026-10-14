@@ -1,11 +1,49 @@
 import type { PanelDesign } from "@/lib/panel";
+import { buildProject, validateProject } from "@/lib/drawings/project-model";
+import { buildSingleLineSheets } from "@/lib/drawings/single-line";
+
+/** Объединяет листы общего генератора в один SVG (листы друг под другом), без перерисовки. */
+export function combineSheets(sheets: string[]): string {
+  if (sheets.length === 1) return sheets[0];
+  let y = 0;
+  let maxW = 0;
+  const parts: string[] = [];
+  for (const s of sheets) {
+    const m = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(s);
+    const w = m ? Number(m[1]) : 420;
+    const h = m ? Number(m[2]) : 297;
+    parts.push(s.replace("<svg ", `<svg x="0" y="${y}" `).replace(/ width="[^"]*mm" height="[^"]*mm"/, ` width="${w}" height="${h}"`));
+    y += h;
+    maxW = Math.max(maxW, w);
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${maxW}mm" height="${y}mm" viewBox="0 0 ${maxW} ${y}">${parts.join("")}</svg>`;
+}
+
+/**
+ * Однолинейная схема щита для предпросмотра и SVG-экспорта конструктора.
+ * Использует общий генератор «Чертежей щита» (библиотечные фигуры, шины N/PE, таблица групп).
+ * Если данные проекта не проходят проверку модели — прежняя упрощённая схема, чтобы экран не ломался.
+ */
+export function buildSchematicSvg(design: PanelDesign): string {
+  try {
+    const project = buildProject(design, design.summary?.enclosure ?? "");
+    const errors = validateProject(project).filter((i) => i.level === "error");
+    if (!errors.length) {
+      const sheets = buildSingleLineSheets(project, "A3");
+      if (sheets.length) return combineSheets(sheets);
+    }
+  } catch (error) {
+    console.error("buildSchematicSvg shared generator failed", error);
+  }
+  return buildLegacySchematicSvg(design);
+}
 
 /**
  * Однолинейная схема щита в виде SVG.
  * Возвращает готовую строку SVG — её же используем для экспорта в CAD.
  * Любые некорректные данные проекта не должны ломать отображение страницы.
  */
-export function buildSchematicSvg(design: PanelDesign): string {
+export function buildLegacySchematicSvg(design: PanelDesign): string {
   try {
     const lines = Array.isArray(design.lines) ? design.lines : [];
     const chain = Array.isArray(design.protection_chain) ? design.protection_chain : [];
