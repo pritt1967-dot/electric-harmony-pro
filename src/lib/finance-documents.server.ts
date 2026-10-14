@@ -78,7 +78,10 @@ async function loadOperations(projectId: string): Promise<CanonicalOperationInpu
 async function loadOperationsByIds(ids: string[]): Promise<Array<CanonicalOperationInput & { project_id?: string }>> {
   if (!ids.length) return [];
   const list = ids.map((id) => `"${id.replace(/"/g, "")}"`).join(",");
-  return ((await financeRest(`operations?select=${OPS_SELECT},project_id&id=in.(${encodeURIComponent(list)})` IssuedDocument = { id: string; issuedAt: string; verifyUrl: string; checkCode: string; docType: string };
+  return ((await financeRest(`operations?select=${OPS_SELECT},project_id&id=in.(${encodeURIComponent(list)})`)) ?? []) as Array<CanonicalOperationInput & { project_id?: string }>;
+}
+
+export type IssuedDocument = { id: string; issuedAt: string; verifyUrl: string; checkCode: string; docType: string };
 
 async function issueDocument(docType: string, projectId: string, operations: CanonicalOperationInput[]): Promise<IssuedDocument> {
   const key = signingKey();
