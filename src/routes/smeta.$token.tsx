@@ -315,6 +315,22 @@ function PublicEstimatePage() {
           </section>
         )}
 
+        {(est.signature || est.customer_token) && (
+          <section className="rounded-2xl border border-border bg-card p-5 text-sm">
+            {est.signature && (
+              <p>
+                Подпись версии {est.version}:{" "}
+                <span className="font-mono font-semibold">{est.signature}</span>
+              </p>
+            )}
+            {est.customer_token && (
+              <a className="mt-2 inline-block text-brand underline" href={`/klient/${est.customer_token}`}>
+                Все мои заказы
+              </a>
+            )}
+          </section>
+        )}
+
         <section className="rounded-2xl border border-border bg-card p-5">
           {approved ? (
             <div className="flex items-start gap-3 rounded-xl bg-secondary/50 p-4">
