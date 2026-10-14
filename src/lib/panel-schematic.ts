@@ -1,5 +1,5 @@
 import type { PanelDesign } from "@/lib/panel";
-import { buildProject, validateProject } from "@/lib/drawings/project-model";
+import { buildProject } from "@/lib/drawings/project-model";
 import { buildSingleLineSheets } from "@/lib/drawings/single-line";
 
 /** Объединяет листы общего генератора в один SVG (листы друг под другом), без перерисовки. */
@@ -22,20 +22,19 @@ export function combineSheets(sheets: string[]): string {
 /**
  * Однолинейная схема щита для предпросмотра и SVG-экспорта конструктора.
  * Использует общий генератор «Чертежей щита» (библиотечные фигуры, шины N/PE, таблица групп).
- * Если данные проекта не проходят проверку модели — прежняя упрощённая схема, чтобы экран не ломался.
+ * Неполные электрические данные не подменяют библиотечные контуры.
+ * Проверка проекта остаётся отдельной задачей; при невозможности отрисовки схема не показывается.
  */
 export function buildSchematicSvg(design: PanelDesign): string {
   try {
     const project = buildProject(design, design.summary?.enclosure ?? "");
-    const errors = validateProject(project).filter((i) => i.level === "error");
-    if (!errors.length) {
-      const sheets = buildSingleLineSheets(project, "A3");
-      if (sheets.length) return combineSheets(sheets);
-    }
+    if (!project.circuits.length) return "";
+    const sheets = buildSingleLineSheets(project, "A3");
+    if (sheets.length) return combineSheets(sheets);
   } catch (error) {
     console.error("buildSchematicSvg shared generator failed", error);
   }
-  return buildLegacySchematicSvg(design);
+  return "";
 }
 
 /**
