@@ -4,7 +4,8 @@ import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, CalendarDays, ChevronDown,
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { issueFinanceOperationDocument, issueFinanceReportDocument } from "@/lib/finance-documents.functions";
+import { issueFinanceOperationDocument, issueFinanceReportDocument, registerFinanceDocumentPdf } from "@/lib/finance-documents.functions";
+import { saveSealedPdf } from "@/lib/finance-pdf-seal";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -117,6 +118,7 @@ export function MoneyManagerParticipants() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const issueDocFn = useServerFn(issueFinanceReportDocument);
   const issueOpDocFn = useServerFn(issueFinanceOperationDocument);
+  const registerPdfFn = useServerFn(registerFinanceDocumentPdf);
   const [opPdfBusy, setOpPdfBusy] = useState<string | null>(null);
   const [opDialog, setOpDialog] = useState(false);
   const [opForm, setOpForm] = useState<{ type: OperationKind; operation_date: string; participantId: string; counterpartyName: string; categoryId: string; amount: string; comment: string }>({ type: "expense", operation_date: todayMoscow(), participantId: "", counterpartyName: "", categoryId: "", amount: "", comment: "" });
@@ -241,7 +243,7 @@ export function MoneyManagerParticipants() {
           comment: o.comment,
         })),
       });
-      doc.save(`${security.id}.pdf`);
+      await saveSealedPdf(doc, security.id, (id, sha256) => registerPdfFn({ data: { id, sha256 } }));
       toast.success(`Защищённый отчёт ${security.id} сформирован`);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать PDF"); }
     finally { setPdfBusy(false); }
@@ -258,7 +260,7 @@ export function MoneyManagerParticipants() {
         projectName: project.project_name || "Проект",
         operation: { operation_date: o.operation_date, operation_type: o.operation_type, from_name: o.from_name, to_name: o.to_name, amount: Number(o.amount), categoryName: o.category?.name || "Без статьи", comment: o.comment },
       });
-      doc.save(`${security.id}.pdf`);
+      await saveSealedPdf(doc, security.id, (id, sha256) => registerPdfFn({ data: { id, sha256 } }));
       toast.success(`Защищённый документ ${security.id} сформирован`);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Не удалось сформировать документ"); }
     finally { setOpPdfBusy(null); }

@@ -62,3 +62,28 @@ describe("finance documents", () => {
     assert.equal((await verifyDocument(rec.id, "")).status, "not_found");
   });
 });
+
+import { verdictOf } from "./finance-documents-core";
+import { signPdf } from "./finance-documents.server";
+import { createHash } from "node:crypto";
+describe("проверка PDF и исходных данных", () => {
+  const ok = { tokenOk: true, recordSigOk: true, pdfSigOk: true, pdfMatches: true, dataMatches: true };
+  const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+  test("неизменённый документ — подлинный", () => assert.equal(verdictOf(ok), "valid"));
+  test("изменение суммы в PDF — изменение документа", () => {
+    assert.notEqual(sha("PDF сумма 1000,00"), sha("PDF сумма 9000,00"));
+    assert.equal(verdictOf({ ...ok, pdfMatches: false }), "pdf_modified");
+  });
+  test("изменение состава операций — данные изменились", () => {
+    assert.notEqual(fp([op("a", 1)]), fp([op("a", 1), op("c", 1)]));
+    assert.equal(verdictOf({ ...ok, dataMatches: false }), "data_changed");
+  });
+  test("поддельный QR — не найден", () => assert.equal(verdictOf({ ...ok, tokenOk: false }), "not_found"));
+  test("настоящий QR на другом PDF — изменение документа", () => assert.equal(verdictOf({ ...ok, pdfMatches: false, dataMatches: true }), "pdf_modified"));
+  test("изменение исходных данных без проверки файла", () => assert.equal(verdictOf({ ...ok, pdfSigOk: null, pdfMatches: null, dataMatches: false }), "data_changed"));
+  test("подмена отпечатка PDF в базе — подпись недействительна", () => {
+    assert.notEqual(signPdf("k".repeat(40), "SME-FIN-2026-000001-ABCD", sha("a")), signPdf("k".repeat(40), "SME-FIN-2026-000001-ABCD", sha("b")));
+    assert.equal(verdictOf({ ...ok, pdfSigOk: false }), "invalid");
+    assert.equal(verdictOf({ ...ok, recordSigOk: false }), "invalid");
+  });
+});

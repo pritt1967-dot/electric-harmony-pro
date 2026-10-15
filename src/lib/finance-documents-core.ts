@@ -84,3 +84,17 @@ export const FIN_DOC_TYPE_LABEL: Record<string, string> = {
   finance_refund: "Документ возврата",
   finance_transfer: "Документ перевода между участниками",
 };
+
+/** Итог проверки. Порядок важен: сначала подпись, затем файл PDF, затем исходные данные. */
+export type DocVerdict = "valid" | "pdf_modified" | "data_changed" | "invalid" | "not_found";
+export function verdictOf(v: { tokenOk: boolean; recordSigOk: boolean; pdfSigOk: boolean | null; pdfMatches: boolean | null; dataMatches: boolean }): DocVerdict {
+  if (!v.tokenOk) return "not_found";
+  if (!v.recordSigOk || v.pdfSigOk === false) return "invalid";
+  if (v.pdfMatches === false) return "pdf_modified";
+  if (!v.dataMatches) return "data_changed";
+  return "valid";
+}
+
+export function isSha256Hex(v: string): boolean {
+  return /^[0-9a-f]{64}$/.test(v);
+}
