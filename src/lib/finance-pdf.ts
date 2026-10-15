@@ -87,7 +87,7 @@ export async function buildFinanceOperationPdf(data: FinanceOperationDocData): P
   doc.setFont("DejaVu", "normal");
   doc.setFontSize(8);
   doc.text(`Сформирован: ${new Date(sec.issuedAt).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })} МСК · контрольный код ${sec.checkCode}`, M + 40, by + 13);
-  doc.text("Проверка подлинности: отсканируйте QR-код. Любое изменение данных после формирования будет обнаружено.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
+  doc.text("Проверка: отсканируйте QR-код и загрузите этот PDF на странице проверки — сверяется сам файл и исходные данные.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
   doc.addImage(barcode, "PNG", M + 40, by + 23, 90, 12);
   doc.setFontSize(8);
   doc.text(`S&M Electric · ${sec.id}`, pageW - M, doc.internal.pageSize.getHeight() - 8, { align: "right" });
@@ -283,7 +283,7 @@ export async function buildFinancePdf(data: FinanceReportData): Promise<jsPDF> {
     doc.setFont("DejaVu", "normal");
     doc.setFontSize(8);
     doc.text(`Сформирован: ${new Date(sec.issuedAt).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })} МСК · контрольный код ${sec.checkCode}`, M + 40, by + 13);
-    doc.text("Проверка подлинности: отсканируйте QR-код. Любое изменение данных после формирования будет обнаружено.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
+    doc.text("Проверка: отсканируйте QR-код и загрузите этот PDF на странице проверки — сверяется сам файл и исходные данные.", M + 40, by + 17, { maxWidth: pageW - M * 2 - 44 });
     doc.addImage(barcode, "PNG", M + 40, by + 23, 90, 12);
   }
 
