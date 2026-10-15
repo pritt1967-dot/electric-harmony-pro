@@ -8,6 +8,8 @@ import {
   FIN_DOC_TYPE_BY_OPERATION,
   FIN_DOC_TYPE_REPORT,
   isDocumentId,
+  isSha256Hex,
+  verdictOf,
   type CanonicalOperationInput,
 } from "@/lib/finance-documents-core";
 
@@ -133,8 +135,33 @@ export async function issueOperationDocument(projectId: string, operationId: str
   return issueDocument(docType, projectId, [clean]);
 }
 
-export type VerifyStatus = "valid" | "modified" | "invalid" | "not_found" | "rate_limited" | "unavailable";
-export type VerifyResult = { status: VerifyStatus; docType?: string; issuedAt?: string; checkCode?: string };
+/** Подпись файла PDF: связывает SHA-256 итогового файла с номером документа. */
+export function signPdf(key: string, id: string, pdfSha256: string): string {
+  return hmac(key, `pdf|${id}|${pdfSha256}`);
+}
+
+/** Фиксирует SHA-256 сформированного PDF один раз; повторная запись отклоняется. */
+export async function registerDocumentPdf(id: string, pdfSha256: string): Promise<{ ok: true }> {
+  if (!isDocumentId(id) || !isSha256Hex(pdfSha256)) throw new Error("Некорректные данные документа");
+  const key = signingKey();
+  let rows: unknown[];
+  try {
+    rows = ((await financeRest(`finance_documents?id=eq.${encodeURIComponent(id)}&pdf_sha256=is.null&key_version=eq.${CURRENT_KEY_VERSION}`, {
+      method: "PATCH",
+      prefer: "return=representation",
+      body: { pdf_sha256: pdfSha256, pdf_signature: signPdf(key, id, pdfSha256), pdf_registered_at: new Date().toISOString() },
+    })) ?? []) as unknown[];
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/pdf_sha256|pdf_signature|PGRST204/.test(msg)) throw new Error("В таблице finance_documents нет полей PDF. Выполните SQL из docs/finance-documents-v3.sql.");
+    throw e;
+  }
+  if (rows.length !== 1) throw new Error("Файл этого документа уже зафиксирован и не может быть перезаписан");
+  return { ok: true };
+}
+
+export type VerifyStatus = "valid" | "pdf_modified" | "data_changed" | "invalid" | "not_found" | "rate_limited" | "unavailable";
+export type VerifyResult = { status: VerifyStatus; docType?: string; issuedAt?: string; checkCode?: string; pdfChecked?: boolean; pdfRegistered?: boolean };
 
 const hits = new Map<string, number[]>();
 export function rateLimited(ip: string, limit = 20, windowMs = 10 * 60_000): boolean {
@@ -146,10 +173,10 @@ export function rateLimited(ip: string, limit = 20, windowMs = 10 * 60_000): boo
   return list.length > limit;
 }
 
-type DocRow = SignedRecordV2 & { signature: string; key_version: string | null; qr_fingerprint: string | null };
+type DocRow = SignedRecordV2 & { signature: string; key_version: string | null; qr_fingerprint: string | null; pdf_sha256?: string | null; pdf_signature?: string | null };
 
 /** Проверка без раскрытия данных; действителен только при совпадении QR-метки, подписи записи и отпечатка операций. */
-export async function verifyDocument(id: string, token: string): Promise<VerifyResult> {
+export async function verifyDocument(id: string, token: string, pdfSha256?: string): Promise<VerifyResult> {
   if (!keyFor("v1") && !keyFor("v2")) return { status: "unavailable" };
   if (!isDocumentId(id) || !token) return { status: "not_found" };
   let rows: DocRow[];
@@ -168,9 +195,15 @@ export async function verifyDocument(id: string, token: string): Promise<VerifyR
     : safeEqual(qrTokenV2(key, id), String(token)) && !!doc.qr_fingerprint && safeEqual(fingerprintOf(String(token)), doc.qr_fingerprint);
   // Неверная метка ссылки и отсутствующий документ неразличимы снаружи.
   if (!tokenOk) return { status: "not_found" };
-  const meta = { docType: FIN_DOC_TYPE_LABEL[doc.doc_type] ?? "Финансовый документ", issuedAt: doc.issued_at, checkCode: doc.fingerprint.slice(0, 8).toUpperCase() };
+  const pdfRegistered = !!doc.pdf_sha256;
+  const meta = { docType: FIN_DOC_TYPE_LABEL[doc.doc_type] ?? "Финансовый документ", issuedAt: doc.issued_at, checkCode: doc.fingerprint.slice(0, 8).toUpperCase(), pdfRegistered };
   const expected = version === "v1" ? signRecord(key, doc) : signRecordV2(key, { ...doc, key_version: version, qr_fingerprint: doc.qr_fingerprint ?? "", operation_ids: doc.operation_ids ?? [] });
-  if (!safeEqual(expected, doc.signature)) return { status: "invalid", ...meta };
+  const recordSigOk = safeEqual(expected, doc.signature);
+  const pdfSigOk = pdfRegistered ? !!doc.pdf_signature && safeEqual(signPdf(key, id, String(doc.pdf_sha256)), doc.pdf_signature) : null;
+  const sha = pdfSha256 && isSha256Hex(pdfSha256) ? pdfSha256 : null;
+  // Файл без зафиксированного отпечатка подтвердить нельзя — считаем несовпадением.
+  const pdfMatches = sha ? (pdfRegistered ? safeEqual(sha, String(doc.pdf_sha256)) : false) : null;
+  if (!recordSigOk || pdfSigOk === false) return { status: "invalid", ...meta, pdfChecked: !!sha };
   let current: CanonicalOperationInput[];
   try {
     // Изменённая, удалённая или перенесённая в другой проект операция меняет отпечаток.
@@ -179,5 +212,6 @@ export async function verifyDocument(id: string, token: string): Promise<VerifyR
     return { status: "unavailable" };
   }
   const fp = fingerprintOf(canonicalDocument({ docType: doc.doc_type, projectId: doc.project_id, operations: current, formatVersion: doc.format_version }));
-  return { status: safeEqual(fp, doc.fingerprint) ? "valid" : "modified", ...meta };
+  const status = verdictOf({ tokenOk, recordSigOk, pdfSigOk, pdfMatches, dataMatches: safeEqual(fp, doc.fingerprint) });
+  return { status, ...meta, pdfChecked: !!sha };
 }
