@@ -32,8 +32,8 @@ Bun.serve({
       return new Response(null, { status: 201 });
     }
     if (req.method === "PATCH") {
-      // Как триггер из v3: зафиксированный PDF не перезаписывается.
-      if (table === "finance_documents" && hit.some((r) => r.pdf_sha256) && "pdf_sha256" in body) return Response.json({ message: "Отпечаток PDF уже зафиксирован" }, { status: 400 });
+      // Как триггер из v3 (заголовок x-e2e-raw имитирует злоумышленника с прямым доступом к базе): зафиксированный PDF не перезаписывается.
+      if (!req.headers.get("x-e2e-raw") && table === "finance_documents" && hit.some((r) => r.pdf_sha256) && "pdf_sha256" in body) return Response.json({ message: "Отпечаток PDF уже зафиксирован" }, { status: 400 });
       hit.forEach((r) => Object.assign(r, body));
       return Response.json(hit);
     }
