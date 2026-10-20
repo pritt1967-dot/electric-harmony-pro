@@ -15,7 +15,7 @@ import { About } from "@/components/site/About";
 import { Contact } from "@/components/site/Contact";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
-import { siteDataQuery } from "@/lib/site-data";
+import { siteDataQuery, homeReviewsQuery } from "@/lib/site-data";
 import { canonical } from "@/lib/seo";
 import { SERVICE_PAGES } from "@/lib/services-seo";
 
@@ -55,7 +55,13 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(siteDataQuery),
+  loader: async ({ context }) => {
+    // prefetchQuery не бросает ошибку: сбой отзывов не блокирует страницу.
+    await Promise.all([
+      context.queryClient.ensureQueryData(siteDataQuery),
+      context.queryClient.prefetchQuery(homeReviewsQuery),
+    ]);
+  },
   component: Index,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-center text-muted-foreground">
@@ -93,7 +99,7 @@ function Index() {
           title={c.works_title ?? "Наши работы"}
           subtitle={c.works_subtitle ?? ""}
         />
-        <Reviews reviews={data.clientReviews} />
+        <Reviews />
         <Process />
         <Advantages />
         <Prices items={data.priceHighlights ?? []} />
