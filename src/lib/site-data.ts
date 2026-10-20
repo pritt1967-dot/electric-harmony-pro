@@ -5,12 +5,17 @@ import { listPublishedReviews } from "./client-reviews.functions";
 
 export const siteDataQuery = queryOptions({
   queryKey: ["site-data"],
-  queryFn: async () => {
-    const [siteData, clientReviews] = await Promise.all([
-      getSiteData(),
-      listPublishedReviews(),
-    ]);
-    return { ...siteData, clientReviews };
-  },
+  queryFn: () => getSiteData(),
   staleTime: 60_000,
+});
+
+/**
+ * Отзывы загружаются отдельно: их недоступность не должна блокировать
+ * главную страницу. Ошибка показывается внутри блока отзывов.
+ */
+export const homeReviewsQuery = queryOptions({
+  queryKey: ["home-published-reviews"],
+  queryFn: () => listPublishedReviews(),
+  staleTime: 60_000,
+  retry: false,
 });

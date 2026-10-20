@@ -1,10 +1,11 @@
-import { ArrowRight, PenLine } from "lucide-react";
+import { ArrowRight, PenLine, RotateCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Reveal } from "./Reveal";
 import { ReviewStars } from "./ReviewStars";
 import { Eyebrow } from "./SectionHeading";
-import type { PublicReview } from "@/lib/client-reviews.functions";
+import { homeReviewsQuery } from "@/lib/site-data";
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("ru-RU", {
@@ -14,8 +15,9 @@ function formatDate(value: string) {
   });
 }
 
-export function Reviews({ reviews }: { reviews: PublicReview[] }) {
-  const latest = reviews.slice(0, 3);
+export function Reviews() {
+  const { data, error, refetch, isFetching } = useQuery(homeReviewsQuery);
+  const latest = (data ?? []).slice(0, 3);
 
   return (
     <section
@@ -41,6 +43,28 @@ export function Reviews({ reviews }: { reviews: PublicReview[] }) {
             </Button>
           </div>
         </Reveal>
+
+        {error && !data && (
+          <div
+            role="alert"
+            className="card-ink mt-10 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="font-bold">Не удалось загрузить отзывы</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                {error instanceof Error ? error.message : String(error)}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="shrink-0 border-ink-border bg-transparent font-bold text-ink-foreground hover:border-brand hover:bg-ink-elevated hover:text-brand"
+            >
+              <RotateCw className={isFetching ? "animate-spin" : ""} /> Повторить
+            </Button>
+          </div>
+        )}
 
         {latest.length > 0 && (
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
