@@ -1,18 +1,38 @@
 name: Supabase keepalive (read-only)
 
-# Один лёгкий read-only запрос в сутки, чтобы Free-проект Supabase не уходил в паузу.
+# Лёгкие read-only запросы к ОБЕИМ базам (основной и финансовой), чтобы
+# бесплатные проекты реже уходили в паузу. Два запуска в сутки — запас на
+# случай задержки или пропуска расписания GitHub. Гарантии нет.
 on:
   schedule:
-    - cron: "17 6 * * *" # ежедневно 06:17 UTC
+    - cron: "17 6 * * *"  # 06:17 UTC
+    - cron: "43 18 * * *" # 18:43 UTC
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Health-check (GET, без изменения данных)
+      - name: Health-check обеих баз (GET, без изменения данных)
+        env:
+          URL: ${{ vars.KEEPALIVE_URL || 'https://sm-electric.ru/api/public/supabase-keepalive' }}
         run: |
-          URL="${{ vars.KEEPALIVE_URL || 'https://electric-9117335567.lovable.app/api/public/supabase-keepalive' }}"
+          set -u
           echo "Ping $URL"
-          curl -fsS --max-time 30 "$URL" | tee /tmp/keepalive.json
-          grep -q '"ok":true' /tmp/keepalive.json
+          for attempt in 1 2 3 4; do
+            code=$(curl -sS --max-time 60 -o /tmp/k.json -w '%{http_code}' "$URL" || echo 000)
+            body=$(cat /tmp/k.json 2>/dev/null || true)
+            echo "Попытка $attempt: HTTP $code"
+            main_ok=$(echo "$body" | jq -r '.main_ok // .ok // false' 2>/dev/null || echo false)
+            fin_ok=$(echo "$body" | jq -r '.finance.ok // false' 2>/dev/null || echo false)
+            echo "Основная база: ok=$main_ok ($(echo "$body" | jq -r '.main.error // .ms // "-"' 2>/dev/null))"
+            echo "Финансовая база: ok=$fin_ok ($(echo "$body" | jq -r '.finance.error // .finance.ms // "-"' 2>/dev/null))"
+            if [ "$main_ok" = "true" ] && [ "$fin_ok" = "true" ]; then
+              echo "Обе базы ответили."; exit 0
+            fi
+            # Первый запрос будит спящую базу — ждём и повторяем.
+            sleep $((attempt * 30))
+          done
+          echo "::error::Keepalive: как минимум одна база не ответила после 4 попыток"
+          exit 1
