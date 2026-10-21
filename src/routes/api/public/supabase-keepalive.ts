@@ -54,14 +54,22 @@ export const Route = createFileRoute("/api/public/supabase-keepalive")({
           };
         }
 
-        return Response.json({
-          ok: main.ok,
-          table: "site_content",
-          mode: "read-only",
-          ms: main.ms,
-          finance,
-          at: new Date().toISOString(),
-        });
+        // ok = true только если ответили ОБЕ базы: сбой одной не маскируется.
+        const ok = main.ok && finance.ok;
+        return Response.json(
+          {
+            ok,
+            main_ok: main.ok,
+            finance_ok: finance.ok,
+            table: "site_content",
+            mode: "read-only",
+            ms: main.ms,
+            main,
+            finance,
+            at: new Date().toISOString(),
+          },
+          { status: ok ? 200 : 503, headers: { "cache-control": "no-store" } },
+        );
       },
     },
   },
