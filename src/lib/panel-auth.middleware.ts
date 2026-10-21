@@ -10,6 +10,8 @@ function isOpaqueApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
 
+const AUTH_FETCH_TIMEOUT_MS = 10_000;
+
 function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -23,7 +25,16 @@ function createBackendFetch(apiKey: string, accessToken?: string): typeof fetch 
     }
     headers.set("apikey", apiKey);
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-    return fetch(input, { ...init, headers });
+    // Без тайм-аута проверка токена могла зависнуть бессрочно, и вкладка
+    // «Деньги» падала по клиентскому тайм-ауту без понятной причины.
+    const timeout = AbortSignal.timeout(AUTH_FETCH_TIMEOUT_MS);
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+    return fetch(input, { ...init, headers, signal }).catch((error: unknown) => {
+      if (timeout.aborted) {
+        throw new Error("Сервер авторизации не ответил за 10 секунд");
+      }
+      throw error;
+    });
   };
 }
 
