@@ -6,15 +6,7 @@ import { Reveal } from "./Reveal";
 import { ReviewStars } from "./ReviewStars";
 import { Eyebrow } from "./SectionHeading";
 import { homeReviewsQuery } from "@/lib/site-data";
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Moscow",
-  });
-}
+import { formatReviewDate } from "@/lib/client-review-date";
 
 export function Reviews() {
   const { data, refetch, isFetching } = useSuspenseQuery(homeReviewsQuery);
@@ -79,7 +71,7 @@ export function Reviews() {
                   <div className="mt-auto border-t border-ink-border pt-5 text-sm">
                     <p className="font-bold">{review.name}</p>
                     <p className="mt-1 text-xs text-ink-muted">
-                      {review.location} · {formatDate(review.published_at)}
+                      {review.location} · {formatReviewDate(review.published_at)}
                     </p>
                   </div>
                 </div>
