@@ -108,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         // Загрузочная анимация: мигающая молния на графитовом фоне.
         // Инлайн-CSS, чтобы работала до загрузки основного styles.css и JS.
-        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:72px;height:72px;filter:drop-shadow(0 0 16px oklch(0.86 0.185 95 / .5)) drop-shadow(0 0 42px oklch(0.86 0.185 95 / .25));animation:splash-bolt 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}}`,
+        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:54px;height:162px;filter:drop-shadow(0 0 8px oklch(0.92 0.15 95 / .9)) drop-shadow(0 0 28px oklch(0.86 0.185 95 / .7)) drop-shadow(0 0 70px oklch(0.86 0.185 95 / .4));animation:splash-bolt 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}}`,
       },
     ],
     links: [
@@ -189,10 +189,24 @@ function RootShell({ children }: { children: ReactNode }) {
             aria-hidden="true"
             className={splashHiding ? "splash-hide" : undefined}
           >
-            <svg viewBox="0 0 24 24" fill="none" role="presentation">
+            <svg viewBox="4 0 32 96" fill="none" role="presentation">
+              <defs>
+                <linearGradient
+                  id="smSplashBolt"
+                  x1="19"
+                  y1="4"
+                  x2="19"
+                  y2="92"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0" stopColor="#FFF3B0" />
+                  <stop offset="0.45" stopColor="#F7CF00" />
+                  <stop offset="1" stopColor="#E0A400" />
+                </linearGradient>
+              </defs>
               <path
-                d="M13 2 4.5 13.5h6L10.5 22 19 10.5h-6L13 2Z"
-                fill="oklch(0.86 0.185 95)"
+                d="M24 4 8 44h10l-6 22h9L10 92l20-31h-9l6-22h-10z"
+                fill="url(#smSplashBolt)"
               />
             </svg>
           </div>
