@@ -108,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         // Загрузочная анимация: мигающая молния на графитовом фоне.
         // Инлайн-CSS, чтобы работала до загрузки основного styles.css и JS.
-        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:70px;height:153px;filter:drop-shadow(0 0 6px rgba(255,240,160,.95)) drop-shadow(0 0 20px rgba(247,207,0,.8)) drop-shadow(0 0 55px rgba(247,207,0,.45)) drop-shadow(0 0 110px rgba(247,207,0,.25));animation:splash-bolt 2.2s ease-in-out infinite}#app-splash .halo{animation:splash-halo 2.2s ease-in-out infinite;transform-origin:19px 48px}#app-splash .spark{animation:splash-spark 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@keyframes splash-halo{0%,100%{opacity:.45}6%{opacity:1;transform:scale(1.08)}14%{opacity:.6}50%{opacity:1;transform:scale(1.12)}58%{opacity:.55}}@keyframes splash-spark{0%,4%{opacity:0}6%{opacity:1}11%{opacity:0}13%{opacity:.8}17%{opacity:0}46%,48%{opacity:0}50%{opacity:1}56%{opacity:0}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}#app-splash .halo{animation:none;opacity:.7}#app-splash .spark{animation:none;opacity:.5}}`,
+        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:112px;height:112px;filter:drop-shadow(0 0 6px rgba(255,240,160,.95)) drop-shadow(0 0 20px rgba(247,207,0,.8)) drop-shadow(0 0 55px rgba(247,207,0,.45)) drop-shadow(0 0 110px rgba(247,207,0,.25));animation:splash-bolt 2.2s ease-in-out infinite}#app-splash .spark{animation:splash-spark 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@keyframes splash-spark{0%,4%{opacity:0}6%{opacity:1}11%{opacity:0}13%{opacity:.8}17%{opacity:0}46%,48%{opacity:0}50%{opacity:1}56%{opacity:0}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}#app-splash .spark{animation:none;opacity:.5}}`,
       },
     ],
     links: [
@@ -189,14 +189,14 @@ function RootShell({ children }: { children: ReactNode }) {
             aria-hidden="true"
             className={splashHiding ? "splash-hide" : undefined}
           >
-            <svg viewBox="-4 0 44 96" fill="none" role="presentation">
+            <svg viewBox="0 0 100 100" fill="none" role="presentation">
               <defs>
                 <linearGradient
                   id="smSplashBolt"
-                  x1="19"
-                  y1="4"
-                  x2="19"
-                  y2="92"
+                  x1="84"
+                  y1="16"
+                  x2="16"
+                  y2="84"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFBEB" />
@@ -206,53 +206,38 @@ function RootShell({ children }: { children: ReactNode }) {
                 </linearGradient>
                 <linearGradient
                   id="smSplashShine"
-                  x1="12"
-                  y1="10"
-                  x2="26"
-                  y2="80"
+                  x1="80"
+                  y1="20"
+                  x2="24"
+                  y2="76"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
                   <stop offset="0.45" stopColor="#FFFFFF" stopOpacity="0.25" />
                   <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
                 </linearGradient>
-                <radialGradient id="smSplashHalo" cx="0.5" cy="0.5" r="0.5">
-                  <stop offset="0" stopColor="#FFEFA0" stopOpacity="0.5" />
-                  <stop offset="0.55" stopColor="#F7CF00" stopOpacity="0.16" />
-                  <stop offset="1" stopColor="#F7CF00" stopOpacity="0" />
-                </radialGradient>
               </defs>
-              <ellipse
-                className="halo"
-                cx="19"
-                cy="48"
-                rx="22"
-                ry="45"
-                fill="url(#smSplashHalo)"
-              />
+              {/* Молния направлена под 45°: верхний срез справа вверху, остриё слева внизу. */}
               <path
-                d="M29 3 C25 15 17 32 12 43 L25 39 C20 57 12 79 7 93 C10 76 13 62 16 51 L4 56 C10 39 21 15 29 3 Z"
+                d="M83.9 16.1 27.4 30.2 44.3 47.2 16.1 83.9 78.3 69.8 58.5 50Z"
                 fill="url(#smSplashBolt)"
                 stroke="#8A5C00"
                 strokeOpacity="0.45"
                 strokeWidth="0.5"
                 strokeLinejoin="round"
               />
+              <path d="M81.1 19 36.4 30.2 36 28.7 80.7 17.5Z" fill="url(#smSplashShine)" />
               <path
-                d="M27 7 C23 19 16 34 10 46 L22 42 L20 45 L8 49 C13 34 22 16 27 7 Z"
+                d="M43.3 52.2 21 81 19.8 80 42 51.2Z"
                 fill="url(#smSplashShine)"
-              />
-              <path
-                d="M22 45 C17 62 11 79 8 88 C11 74 15 59 18 48 Z"
-                fill="url(#smSplashShine)"
-                opacity="0.45"
+                opacity="0.5"
               />
 
               <g className="spark-group">
                 <path
                   className="spark"
                   style={{ animationDelay: "0s" }}
-                  d="M1.5 25 5.5 21.5"
+                  d="M92 26 86.5 21.5"
                   stroke="#FFF3B0"
                   strokeWidth="1.1"
                   strokeLinecap="round"
@@ -260,7 +245,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.15s" }}
-                  d="M34.5 33 30.5 36.5"
+                  d="M14 22 19.5 26"
                   stroke="#FFE566"
                   strokeWidth="1.1"
                   strokeLinecap="round"
@@ -268,23 +253,23 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.3s" }}
-                  d="M2.5 53 6.5 55"
-                  stroke="#FFE566"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
-                <path
-                  className="spark"
-                  style={{ animationDelay: "0.45s" }}
-                  d="M35 62 31 60"
+                  d="M60 58 66 54"
                   stroke="#FFF3B0"
                   strokeWidth="1"
                   strokeLinecap="round"
                 />
                 <path
                   className="spark"
+                  style={{ animationDelay: "0.45s" }}
+                  d="M8 66 13.5 70"
+                  stroke="#FFE566"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
                   style={{ animationDelay: "0.6s" }}
-                  d="M8 87 5 90"
+                  d="M30 90 25 85"
                   stroke="#FFE566"
                   strokeWidth="0.9"
                   strokeLinecap="round"
@@ -292,7 +277,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.75s" }}
-                  d="M30.5 79 34 81.5"
+                  d="M86 74 80.5 70"
                   stroke="#FFF3B0"
                   strokeWidth="0.9"
                   strokeLinecap="round"
@@ -300,33 +285,49 @@ function RootShell({ children }: { children: ReactNode }) {
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.22s" }}
-                  cx="4.5"
-                  cy="13"
+                  cx="90"
+                  cy="38"
                   r="0.8"
                   fill="#FFF3B0"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.38s" }}
-                  cx="33.5"
-                  cy="21"
+                  cx="10"
+                  cy="34"
                   r="0.8"
                   fill="#FFE566"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.55s" }}
-                  cx="4"
-                  cy="70"
+                  cx="84"
+                  cy="58"
                   r="0.7"
                   fill="#FFE566"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.68s" }}
-                  cx="30"
+                  cx="12"
                   cy="90"
                   r="0.7"
+                  fill="#FFF3B0"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.5s" }}
+                  cx="22"
+                  cy="10"
+                  r="0.7"
+                  fill="#FFE566"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.28s" }}
+                  cx="88"
+                  cy="86"
+                  r="0.8"
                   fill="#FFF3B0"
                 />
               </g>
