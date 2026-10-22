@@ -104,6 +104,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт." },
       { property: "og:url", content: "https://sm-electric.ru/" },
     ],
+    styles: [
+      {
+        // Загрузочная анимация: мигающая молния на графитовом фоне.
+        // Инлайн-CSS, чтобы работала до загрузки основного styles.css и JS.
+        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:72px;height:72px;filter:drop-shadow(0 0 16px oklch(0.86 0.185 95 / .5)) drop-shadow(0 0 42px oklch(0.86 0.185 95 / .25));animation:splash-bolt 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}}`,
+      },
+    ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
