@@ -231,7 +231,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 fill="url(#smSplashHalo)"
               />
               <path
-                d="M24.25 3.09 29.75 4.91 15.69 48.23 20.5 93 9.31 47.77z"
+                d="M29 3 C25 15 17 32 12 43 L25 39 C20 57 12 79 7 93 C10 76 13 62 16 51 L4 56 C10 39 21 15 29 3 Z"
                 fill="url(#smSplashBolt)"
                 stroke="#8A5C00"
                 strokeOpacity="0.45"
@@ -239,11 +239,11 @@ function RootShell({ children }: { children: ReactNode }) {
                 strokeLinejoin="round"
               />
               <path
-                d="M24.43 4.14 11.93 41.2 13.07 41.57 26.04 4.67z"
+                d="M27 7 C23 19 16 34 10 46 L22 42 L20 45 L8 49 C13 34 22 16 27 7 Z"
                 fill="url(#smSplashShine)"
               />
               <path
-                d="M10.46 49.93 15.95 72.56 16.74 72.42 11.35 49.77z"
+                d="M22 45 C17 62 11 79 8 88 C11 74 15 59 18 48 Z"
                 fill="url(#smSplashShine)"
                 opacity="0.45"
               />
