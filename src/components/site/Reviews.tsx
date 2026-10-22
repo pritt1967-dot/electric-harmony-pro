@@ -1,5 +1,5 @@
 import { ArrowRight, PenLine, RotateCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Reveal } from "./Reveal";
@@ -12,12 +12,13 @@ function formatDate(value: string) {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Moscow",
   });
 }
 
 export function Reviews() {
-  const { data, error, refetch, isFetching } = useQuery(homeReviewsQuery);
-  const latest = (data ?? []).slice(0, 3);
+  const { data, refetch, isFetching } = useSuspenseQuery(homeReviewsQuery);
+  const latest = data.reviews.slice(0, 3);
 
   return (
     <section
@@ -44,7 +45,7 @@ export function Reviews() {
           </div>
         </Reveal>
 
-        {error && !data && (
+        {data.error && (
           <div
             role="alert"
             className="card-ink mt-10 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between"
@@ -52,7 +53,7 @@ export function Reviews() {
             <div>
               <p className="font-bold">Не удалось загрузить отзывы</p>
               <p className="mt-1 text-sm text-ink-muted">
-                {error instanceof Error ? error.message : String(error)}
+                {data.error}
               </p>
             </div>
             <Button
