@@ -193,10 +193,10 @@ function RootShell({ children }: { children: ReactNode }) {
               <defs>
                 <linearGradient
                   id="smSplashBolt"
-                  x1="84"
-                  y1="16"
-                  x2="16"
-                  y2="84"
+                  x1="85"
+                  y1="17"
+                  x2="15"
+                  y2="83"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFBEB" />
@@ -206,10 +206,10 @@ function RootShell({ children }: { children: ReactNode }) {
                 </linearGradient>
                 <linearGradient
                   id="smSplashShine"
-                  x1="80"
+                  x1="82"
                   y1="20"
-                  x2="24"
-                  y2="76"
+                  x2="18"
+                  y2="80"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
@@ -217,18 +217,18 @@ function RootShell({ children }: { children: ReactNode }) {
                   <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              {/* Молния направлена под 45°: верхний срез справа вверху, остриё слева внизу. */}
+              {/* Молния направлена под 45°: срез справа вверху, остриё слева внизу. */}
               <path
-                d="M83.9 16.1 27.4 30.2 44.3 47.2 16.1 83.9 78.3 69.8 58.5 50Z"
+                d="M85.2 17.3 34.7 43.8 40.1 49.6 14.8 82.7 66.8 54.9 61.4 49Z"
                 fill="url(#smSplashBolt)"
                 stroke="#8A5C00"
                 strokeOpacity="0.45"
                 strokeWidth="0.5"
                 strokeLinejoin="round"
               />
-              <path d="M81.1 19 36.4 30.2 36 28.7 80.7 17.5Z" fill="url(#smSplashShine)" />
+              <path d="M82.2 21.6 42.8 42.2 42.1 40.7 81.5 20.1Z" fill="url(#smSplashShine)" />
               <path
-                d="M43.3 52.2 21 81 19.8 80 42 51.2Z"
+                d="M19.1 80.7 38.8 54.9 37.5 54 17.8 79.7Z"
                 fill="url(#smSplashShine)"
                 opacity="0.5"
               />
@@ -237,7 +237,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0s" }}
-                  d="M92 26 86.5 21.5"
+                  d="M92 26 87 21.5"
                   stroke="#FFF3B0"
                   strokeWidth="1.1"
                   strokeLinecap="round"
@@ -245,7 +245,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.15s" }}
-                  d="M14 22 19.5 26"
+                  d="M22 26 27.5 29.5"
                   stroke="#FFE566"
                   strokeWidth="1.1"
                   strokeLinecap="round"
@@ -253,7 +253,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.3s" }}
-                  d="M60 58 66 54"
+                  d="M62 62 68 58"
                   stroke="#FFF3B0"
                   strokeWidth="1"
                   strokeLinecap="round"
@@ -261,7 +261,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.45s" }}
-                  d="M8 66 13.5 70"
+                  d="M8 62 13 66"
                   stroke="#FFE566"
                   strokeWidth="1"
                   strokeLinecap="round"
@@ -269,7 +269,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.6s" }}
-                  d="M30 90 25 85"
+                  d="M26 92 21 87"
                   stroke="#FFE566"
                   strokeWidth="0.9"
                   strokeLinecap="round"
@@ -277,7 +277,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <path
                   className="spark"
                   style={{ animationDelay: "0.75s" }}
-                  d="M86 74 80.5 70"
+                  d="M88 72 82.5 68"
                   stroke="#FFF3B0"
                   strokeWidth="0.9"
                   strokeLinecap="round"
@@ -286,30 +286,30 @@ function RootShell({ children }: { children: ReactNode }) {
                   className="spark"
                   style={{ animationDelay: "0.22s" }}
                   cx="90"
-                  cy="38"
+                  cy="34"
                   r="0.8"
                   fill="#FFF3B0"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.38s" }}
-                  cx="10"
-                  cy="34"
+                  cx="12"
+                  cy="30"
                   r="0.8"
                   fill="#FFE566"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.55s" }}
-                  cx="84"
-                  cy="58"
+                  cx="78"
+                  cy="56"
                   r="0.7"
                   fill="#FFE566"
                 />
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.68s" }}
-                  cx="12"
+                  cx="14"
                   cy="90"
                   r="0.7"
                   fill="#FFF3B0"
@@ -317,7 +317,7 @@ function RootShell({ children }: { children: ReactNode }) {
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.5s" }}
-                  cx="22"
+                  cx="30"
                   cy="10"
                   r="0.7"
                   fill="#FFE566"
@@ -325,8 +325,8 @@ function RootShell({ children }: { children: ReactNode }) {
                 <circle
                   className="spark"
                   style={{ animationDelay: "0.28s" }}
-                  cx="88"
-                  cy="86"
+                  cx="84"
+                  cy="84"
                   r="0.8"
                   fill="#FFF3B0"
                 />
