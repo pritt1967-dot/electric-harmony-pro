@@ -193,10 +193,10 @@ function RootShell({ children }: { children: ReactNode }) {
               <defs>
                 <linearGradient
                   id="smSplashBolt"
-                  x1="85"
-                  y1="17"
-                  x2="15"
-                  y2="83"
+                  x1="92"
+                  y1="21"
+                  x2="8"
+                  y2="79"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFBEB" />
@@ -206,10 +206,10 @@ function RootShell({ children }: { children: ReactNode }) {
                 </linearGradient>
                 <linearGradient
                   id="smSplashShine"
-                  x1="82"
-                  y1="20"
-                  x2="18"
-                  y2="80"
+                  x1="87"
+                  y1="24"
+                  x2="13"
+                  y2="76"
                   gradientUnits="userSpaceOnUse"
                 >
                   <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
@@ -217,18 +217,18 @@ function RootShell({ children }: { children: ReactNode }) {
                   <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              {/* Молния направлена под 45°: срез справа вверху, остриё слева внизу. */}
+              {/* Молния тонкая, направлена под 55°: срез справа вверху, остриё слева внизу. */}
               <path
-                d="M85.2 17.3 34.7 43.8 40.1 49.6 14.8 82.7 66.8 54.9 61.4 49Z"
+                d="M91.7 20.8 41.5 50.8 42.8 52.6 8.3 79.2 60.2 48 59 46.1Z"
                 fill="url(#smSplashBolt)"
                 stroke="#8A5C00"
                 strokeOpacity="0.45"
                 strokeWidth="0.5"
                 strokeLinejoin="round"
               />
-              <path d="M82.2 21.6 42.8 42.2 42.1 40.7 81.5 20.1Z" fill="url(#smSplashShine)" />
+              <path d="M87.4 24.2 48.3 47.5 48.5 46.9 87.6 23.5Z" fill="url(#smSplashShine)" />
               <path
-                d="M19.1 80.7 38.8 54.9 37.5 54 17.8 79.7Z"
+                d="M12.4 76.8 39.3 56.1 38.8 55.9 11.9 76.6Z"
                 fill="url(#smSplashShine)"
                 opacity="0.5"
               />
