@@ -193,9 +193,9 @@ function RootShell({ children }: { children: ReactNode }) {
               <defs>
                 <linearGradient
                   id="smSplashBolt"
-                  x1="91"
+                  x1="92"
                   y1="21"
-                  x2="9"
+                  x2="8"
                   y2="79"
                   gradientUnits="userSpaceOnUse"
                 >
@@ -219,16 +219,16 @@ function RootShell({ children }: { children: ReactNode }) {
               </defs>
               {/* Молния тонкая, направлена под 55°: срез справа вверху, остриё слева внизу. */}
               <path
-                d="M90.9 21.3 39.1 47.1 41.7 50.8 9.1 78.7 62.6 51.8 60 48Z"
+                d="M91.7 20.8 41.5 50.8 42.8 52.6 8.3 79.2 60.2 48 59 46.1Z"
                 fill="url(#smSplashBolt)"
                 stroke="#8A5C00"
                 strokeOpacity="0.45"
                 strokeWidth="0.5"
                 strokeLinejoin="round"
               />
-              <path d="M86.9 24.9 46.5 44.9 46.4 43.9 86.8 23.9Z" fill="url(#smSplashShine)" />
+              <path d="M87.4 24.2 48.3 47.5 48.5 46.9 87.6 23.5Z" fill="url(#smSplashShine)" />
               <path
-                d="M13.4 76.7 38.8 55 38 54.4 12.6 76.1Z"
+                d="M12.4 76.8 39.3 56.1 38.8 55.9 11.9 76.6Z"
                 fill="url(#smSplashShine)"
                 opacity="0.5"
               />
