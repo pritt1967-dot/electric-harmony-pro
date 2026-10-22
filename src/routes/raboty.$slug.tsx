@@ -14,6 +14,7 @@ import { worksQuery } from "@/lib/public-queries";
 import { getServicePage } from "@/lib/services-seo";
 import type { WorkProject } from "@/lib/works.functions";
 import { beforeAfterLabel, detectBeforeAfter } from "@/lib/before-after";
+import { WORK_REVIEWS, WORK_CTA } from "@/lib/work-reviews";
 
 export const Route = createFileRoute("/raboty/$slug")({
   loader: async ({ params, context }) => {
@@ -92,6 +93,9 @@ function WorkPage() {
   const others = works.filter((w) => w.slug !== project.slug).slice(0, 3);
   const place = project.city || project.location;
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [shot, setShot] = useState(false);
+  const review = WORK_REVIEWS[project.slug];
+  const cta = WORK_CTA[project.slug];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -297,8 +301,40 @@ function WorkPage() {
           </DialogContent>
         </Dialog>
 
+        {review && (
+          <section className="py-10 lg:py-14">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <h2 className="text-2xl font-extrabold text-foreground">Отзыв заказчика</h2>
+              <div className="mt-7 grid gap-6 rounded-xl border border-border bg-card p-6 md:grid-cols-[1fr_220px]">
+                <blockquote>
+                  <div className="text-brand" aria-label={`Оценка ${review.rating} из 5`}>
+                    {"★".repeat(review.rating)}
+                  </div>
+                  <p className="mt-3 text-base leading-relaxed text-foreground">«{review.text}»</p>
+                  <footer className="mt-4 text-sm text-muted-foreground">
+                    {review.author} · источник:{" "}
+                    <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-bold text-brand underline-offset-4 hover:underline">
+                      {review.source}
+                    </a>
+                  </footer>
+                </blockquote>
+                <button type="button" onClick={() => setShot(true)} className="cursor-zoom-in overflow-hidden rounded-lg border border-border" aria-label="Открыть скриншот отзыва">
+                  <img src={review.screenshotUrl} alt={`Скриншот отзыва ${review.author} на ${review.source}`} loading="lazy" className="h-64 w-full object-cover object-top" />
+                </button>
+              </div>
+            </div>
+            <Dialog open={shot} onOpenChange={setShot}>
+              <DialogContent className="max-w-[95vw] border-border bg-background p-2 sm:max-w-md">
+                <img src={review.screenshotUrl} alt={`Скриншот отзыва ${review.author} на ${review.source}`} className="max-h-[85vh] w-full rounded-lg object-contain" />
+              </DialogContent>
+            </Dialog>
+          </section>
+        )}
 
         <section className="py-10 lg:py-14">
+          {cta && (
+            <p className="mx-auto mb-5 max-w-7xl px-4 text-xl font-extrabold text-foreground sm:px-6">{cta}</p>
+          )}
           <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 sm:px-6">
             <a
               href="/#contacts"
