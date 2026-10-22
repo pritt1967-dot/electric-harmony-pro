@@ -189,7 +189,7 @@ function RootShell({ children }: { children: ReactNode }) {
             aria-hidden="true"
             className={splashHiding ? "splash-hide" : undefined}
           >
-            <svg viewBox="4 0 32 96" fill="none" role="presentation">
+            <svg viewBox="-4 0 44 96" fill="none" role="presentation">
               <defs>
                 <linearGradient
                   id="smSplashBolt"
@@ -199,15 +199,131 @@ function RootShell({ children }: { children: ReactNode }) {
                   y2="92"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop offset="0" stopColor="#FFF3B0" />
-                  <stop offset="0.45" stopColor="#F7CF00" />
-                  <stop offset="1" stopColor="#E0A400" />
+                  <stop offset="0" stopColor="#FFFBEB" />
+                  <stop offset="0.28" stopColor="#FFE566" />
+                  <stop offset="0.55" stopColor="#F7CF00" />
+                  <stop offset="1" stopColor="#B87E00" />
                 </linearGradient>
+                <linearGradient
+                  id="smSplashShine"
+                  x1="12"
+                  y1="10"
+                  x2="26"
+                  y2="80"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
+                  <stop offset="0.45" stopColor="#FFFFFF" stopOpacity="0.25" />
+                  <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="smSplashHalo" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0" stopColor="#FFEFA0" stopOpacity="0.5" />
+                  <stop offset="0.55" stopColor="#F7CF00" stopOpacity="0.16" />
+                  <stop offset="1" stopColor="#F7CF00" stopOpacity="0" />
+                </radialGradient>
               </defs>
+              <ellipse
+                className="halo"
+                cx="19"
+                cy="48"
+                rx="22"
+                ry="45"
+                fill="url(#smSplashHalo)"
+              />
               <path
                 d="M24 4 8 44h10l-6 22h9L10 92l20-31h-9l6-22h-10z"
                 fill="url(#smSplashBolt)"
+                stroke="#8A5C00"
+                strokeOpacity="0.45"
+                strokeWidth="0.5"
+                strokeLinejoin="round"
               />
+              <path
+                d="M22.8 7 10.4 41.5h6.2l-3.8 13.5 5-13h-5.6z"
+                fill="url(#smSplashShine)"
+              />
+              <g className="spark-group">
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0s" }}
+                  d="M1.5 25 5.5 21.5"
+                  stroke="#FFF3B0"
+                  strokeWidth="1.1"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0.15s" }}
+                  d="M34.5 33 30.5 36.5"
+                  stroke="#FFE566"
+                  strokeWidth="1.1"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0.3s" }}
+                  d="M2.5 53 6.5 55"
+                  stroke="#FFE566"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0.45s" }}
+                  d="M35 62 31 60"
+                  stroke="#FFF3B0"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0.6s" }}
+                  d="M8 87 5 90"
+                  stroke="#FFE566"
+                  strokeWidth="0.9"
+                  strokeLinecap="round"
+                />
+                <path
+                  className="spark"
+                  style={{ animationDelay: "0.75s" }}
+                  d="M30.5 79 34 81.5"
+                  stroke="#FFF3B0"
+                  strokeWidth="0.9"
+                  strokeLinecap="round"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.22s" }}
+                  cx="4.5"
+                  cy="13"
+                  r="0.8"
+                  fill="#FFF3B0"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.38s" }}
+                  cx="33.5"
+                  cy="21"
+                  r="0.8"
+                  fill="#FFE566"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.55s" }}
+                  cx="4"
+                  cy="70"
+                  r="0.7"
+                  fill="#FFE566"
+                />
+                <circle
+                  className="spark"
+                  style={{ animationDelay: "0.68s" }}
+                  cx="30"
+                  cy="90"
+                  r="0.7"
+                  fill="#FFF3B0"
+                />
+              </g>
             </svg>
           </div>
         )}
