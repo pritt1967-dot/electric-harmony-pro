@@ -56,16 +56,21 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: async ({ context }) => {
-    // prefetchQuery не бросает ошибку: сбой отзывов не блокирует страницу.
+    // Both renderers receive the same snapshot; a review outage is a local DTO.
     await Promise.all([
       context.queryClient.ensureQueryData(siteDataQuery),
-      context.queryClient.prefetchQuery(homeReviewsQuery),
+      context.queryClient.ensureQueryData(homeReviewsQuery),
     ]);
   },
   component: Index,
   errorComponent: ({ error }) => (
     <div role="alert" className="p-8 text-center text-muted-foreground">
       Не удалось загрузить контент. {error instanceof Error ? error.message : String(error)}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div role="alert" className="p-8 text-center text-muted-foreground">
+      Страница не найдена.
     </div>
   ),
 });

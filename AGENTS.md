@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 Tuqo deployment test
+- Homepage reviews use a serializable success/error snapshot transferred through router dehydration before hydration; keep failures local and retries available so SSR and the first browser render agree without changing other queries.
 - Finance membership removal deletes only the project_participants link through the existing authenticated server transport and verifies it reads back absent; keep historical participants separate from active membership so balances and reports retain all operations.
 - GigaChat (src/lib/ai-check/providers/gigachat.server.ts) is an optional server-only advisor for panel-validator: its advice never changes validator status/checks or the project; missing GIGACHAT_AUTH_KEY means unavailable, not an error.
 - Single-line rendering embeds imported library SVG paths with uniform transforms and exact SVG endpoints; use the Doc1 column pitch, right-origin input layout, and shared column centers for the group table, without importing reference devices or changing project topology. Scope marker IDs per occurrence to preserve geometry and avoid false connections.
