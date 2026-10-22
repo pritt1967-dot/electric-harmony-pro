@@ -10,6 +10,7 @@ import { ReviewStars } from "@/components/site/ReviewStars";
 import { ReviewForm } from "@/components/site/ReviewForm";
 import { canonical } from "@/lib/seo";
 import { listPublishedReviews } from "@/lib/client-reviews.functions";
+import { formatReviewDate, reviewDateDay } from "@/lib/client-review-date";
 
 const TITLE = "Отзывы клиентов о работе S&M Electric — электромонтаж в СПб и Ленобласти";
 const DESCRIPTION =
@@ -48,14 +49,6 @@ export const Route = createFileRoute("/otzyvy")({
   ),
 });
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
 function ReviewsPage() {
   const { data: reviews } = useSuspenseQuery(reviewsQuery);
   const { form } = Route.useSearch();
@@ -83,7 +76,7 @@ function ReviewsPage() {
           review: reviews.slice(0, 20).map((r) => ({
             "@type": "Review",
             author: { "@type": "Person", name: r.name },
-            datePublished: r.published_at.slice(0, 10),
+            datePublished: reviewDateDay(r.published_at),
             reviewRating: {
               "@type": "Rating",
               ratingValue: r.rating,
@@ -168,7 +161,7 @@ function ReviewsPage() {
                   <div className="mt-auto pt-5 text-sm">
                     <p className="font-bold">{r.name}</p>
                     <p className="text-muted-foreground">
-                      {r.location} · {formatDate(r.published_at)}
+                      {r.location} · {formatReviewDate(r.published_at)}
                     </p>
                   </div>
                 </article>
