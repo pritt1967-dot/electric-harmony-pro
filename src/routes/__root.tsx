@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -104,6 +104,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Электромонтаж в Санкт-Петербурге: монтаж электропроводки, сборка электрощитов, услуги электрика. Гарантия, договор, выезд по СПб и области. Бесплатный расчёт." },
       { property: "og:url", content: "https://sm-electric.ru/" },
     ],
+    styles: [
+      {
+        // Загрузочная анимация: мигающая молния на графитовом фоне.
+        // Инлайн-CSS, чтобы работала до загрузки основного styles.css и JS.
+        children: `#app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:oklch(0.175 0.006 265);opacity:1;transition:opacity .45s ease}#app-splash.splash-hide{opacity:0;pointer-events:none}#app-splash svg{width:72px;height:72px;filter:drop-shadow(0 0 16px oklch(0.86 0.185 95 / .5)) drop-shadow(0 0 42px oklch(0.86 0.185 95 / .25));animation:splash-bolt 2.2s ease-in-out infinite}@keyframes splash-bolt{0%,100%{opacity:.45;transform:scale(1)}6%{opacity:1;transform:scale(1.05)}10%{opacity:.65}14%{opacity:1}44%{opacity:.5}50%{opacity:1;transform:scale(1.07)}54%{opacity:.7}58%{opacity:1;transform:scale(1)}}@media (prefers-reduced-motion:reduce){#app-splash svg{animation:none;opacity:1}}`,
+      },
+    ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
@@ -158,12 +165,38 @@ window.addEventListener('load',function(){setTimeout(function(){try{sessionStora
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Сплэш рендерится на сервере и виден до гидратации; после монтирования
+  // React плавно гаснет и убирается из DOM. Начальное состояние одинаково
+  // на сервере и клиенте, поэтому несоответствия гидратации нет.
+  const [splashHiding, setSplashHiding] = useState(false);
+  const [splashGone, setSplashGone] = useState(false);
+
+  useEffect(() => {
+    setSplashHiding(true);
+    const timer = window.setTimeout(() => setSplashGone(true), 500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <html lang="ru" translate="no" className="notranslate">
       <head>
         <HeadContent />
       </head>
       <body>
+        {!splashGone && (
+          <div
+            id="app-splash"
+            aria-hidden="true"
+            className={splashHiding ? "splash-hide" : undefined}
+          >
+            <svg viewBox="0 0 24 24" fill="none" role="presentation">
+              <path
+                d="M13 2 4.5 13.5h6L10.5 22 19 10.5h-6L13 2Z"
+                fill="oklch(0.86 0.185 95)"
+              />
+            </svg>
+          </div>
+        )}
         {children}
         <Scripts />
       </body>
