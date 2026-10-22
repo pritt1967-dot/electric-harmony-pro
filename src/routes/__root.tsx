@@ -165,12 +165,38 @@ window.addEventListener('load',function(){setTimeout(function(){try{sessionStora
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Сплэш рендерится на сервере и виден до гидратации; после монтирования
+  // React плавно гаснет и убирается из DOM. Начальное состояние одинаково
+  // на сервере и клиенте, поэтому несоответствия гидратации нет.
+  const [splashHiding, setSplashHiding] = useState(false);
+  const [splashGone, setSplashGone] = useState(false);
+
+  useEffect(() => {
+    setSplashHiding(true);
+    const timer = window.setTimeout(() => setSplashGone(true), 500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <html lang="ru" translate="no" className="notranslate">
       <head>
         <HeadContent />
       </head>
       <body>
+        {!splashGone && (
+          <div
+            id="app-splash"
+            aria-hidden="true"
+            className={splashHiding ? "splash-hide" : undefined}
+          >
+            <svg viewBox="0 0 24 24" fill="none" role="presentation">
+              <path
+                d="M13 2 4.5 13.5h6L10.5 22 19 10.5h-6L13 2Z"
+                fill="oklch(0.86 0.185 95)"
+              />
+            </svg>
+          </div>
+        )}
         {children}
         <Scripts />
       </body>
