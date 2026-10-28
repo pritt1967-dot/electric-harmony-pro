@@ -1,6 +1,16 @@
-import { describe, expect, it } from "bun:test";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import { summarizeObject, validateObjectLedger, workCost } from "./finance-objects-core";
 import type { ObjectAllocation, ObjectOperation, ObjectReversal, ObjectWork } from "./finance-objects-core";
+
+function expect(actual: unknown) {
+  return {
+    toBe: (expected: unknown) => assert.equal(actual, expected),
+    toEqual: (expected: unknown) => assert.deepEqual(actual, expected),
+    toHaveLength: (length: number) => { assert.ok(Array.isArray(actual)); assert.equal(actual.length, length); },
+    toThrow: () => { assert.equal(typeof actual, "function"); assert.throws(actual as () => unknown); },
+  };
+}
 
 const work: ObjectWork = { id: "w", objectId: "a", date: "2026-10-10", quantity: 2, unitPrice: 500, status: "active" };
 const payment: ObjectOperation = { id: "p", type: "income", date: "2026-10-11", amount: 400 };
