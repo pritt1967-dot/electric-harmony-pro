@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { calculateShield, type ShieldDevice } from './core';
 import { createTestShield48 } from './test-project';
+import { placeItems } from '../shape-library/panel-logic';
 
 const device = (patch: Partial<ShieldDevice> = {}): ShieldDevice => ({
   key: 'QF1', deviceId: 'breaker', rail: 0, startModule: 1, modules: 1,
@@ -12,6 +13,20 @@ const run = (...devices: ShieldDevice[]) => calculateShield({ ...createTestShiel
 const has = (result: ReturnType<typeof run>, code: string) => result.issues.some(i => i.code === code);
 
 describe('Shield Designer: первый этап', () => {
+  it('координаты совместимы с существующей DIN-раскладкой без её изменения', () => {
+    const p = createTestShield48();
+    const existing = placeItems([...p.devices], p.rails, p.railModules);
+    assert.deepEqual(existing.railUsed, [10, 6, 6]);
+    assert.deepEqual(existing.placed.map(d => [d.key, d.rail, d.startModule]),
+      p.devices.map(d => [d.key, d.rail, d.startModule]));
+    const result = calculateShield({ ...p, devices: existing.placed.map(d => {
+      const source = p.devices.find(item => item.key === d.key);
+      assert.ok(source);
+      return { ...source, rail: d.rail, startModule: d.startModule };
+    }) });
+    assert.equal(result.usedModules, 22);
+    assert.equal(result.placementValid, true);
+  });
   it('щит 48 модулей содержит ровно три ряда по 16', () => {
     const result = calculateShield(createTestShield48());
     assert.equal(result.capacity, 48);
