@@ -65,6 +65,12 @@ export function calculateShield(project: ShieldProject) {
     ids.add(device.key);
     categoryCounts[device.category] += 1;
     if (positiveInteger(device.modules)) requestedModules += device.modules;
+    // Invalid physical width must never create a purchasable specification row.
+    if (!positiveInteger(device.modules)) {
+      add('placement', device.key);
+      costComplete = false;
+      continue;
+    }
     const price = device.unitPriceKopecks;
     const priced = price !== null && Number.isSafeInteger(price) && price >= 0;
     if (!priced) {
@@ -78,7 +84,12 @@ export function calculateShield(project: ShieldProject) {
     const row = spec.get(specKey);
     if (row) {
       row.qty += 1;
-      row.totalPriceKopecks = row.unitPriceKopecks === null ? null : row.qty * row.unitPriceKopecks;
+      const rowCost = row.unitPriceKopecks === null ? null : row.qty * row.unitPriceKopecks;
+      row.totalPriceKopecks = rowCost !== null && Number.isSafeInteger(rowCost) ? rowCost : null;
+      if (rowCost !== null && !Number.isSafeInteger(rowCost)) {
+        add('price', device.key);
+        costComplete = false;
+      }
     } else {
       spec.set(specKey, { pos: spec.size + 1, deviceId: device.deviceId, category: device.category,
         name: device.name, manufacturer: device.manufacturer, model: device.model,
