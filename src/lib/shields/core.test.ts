@@ -15,7 +15,7 @@ const has = (result: ReturnType<typeof run>, code: string) => result.issues.some
 describe('Shield Designer: первый этап', () => {
   it('координаты совместимы с существующей DIN-раскладкой без её изменения', () => {
     const p = createTestShield48();
-    const existing = placeItems([...p.devices], p.rails, p.railModules);
+    const existing = placeItems(p.devices.map(d => ({ ...d, ratedCurrent: null })), p.rails, p.railModules);
     assert.deepEqual(existing.railUsed, [10, 6, 6]);
     assert.deepEqual(existing.placed.map(d => [d.key, d.rail, d.startModule]),
       p.devices.map(d => [d.key, d.rail, d.startModule]));
