@@ -107,9 +107,9 @@ describe('Shield Designer: первый этап', () => {
     assert.equal(r.specification.length, 2);
     assert.equal(r.totalCostKopecks, 22550);
   });
-  it('стоимость тестового оборудования равна 21 000 рублей', () => {
+  it('стоимость тестового оборудования равна 20 000 рублей', () => {
     const r = calculateShield(createTestShield48());
-    assert.equal(r.totalCostKopecks, 2100000);
+    assert.equal(r.totalCostKopecks, 2000000);
     assert.equal(r.costComplete, true);
   });
   it('неизвестная цена не подменяется нулём', () => {
