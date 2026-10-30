@@ -605,6 +605,7 @@ export type Database = {
           is_published: boolean
           lights_text: string
           location: string
+          notes_text: string
           result_text: string
           seo_description: string
           seo_title: string
@@ -631,6 +632,7 @@ export type Database = {
           is_published?: boolean
           lights_text?: string
           location?: string
+          notes_text?: string
           result_text?: string
           seo_description?: string
           seo_title?: string
@@ -657,6 +659,7 @@ export type Database = {
           is_published?: boolean
           lights_text?: string
           location?: string
+          notes_text?: string
           result_text?: string
           seo_description?: string
           seo_title?: string

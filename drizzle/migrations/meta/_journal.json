@@ -43,6 +43,13 @@
       "when": 1792015323151,
       "tag": "0005_customers_revoke_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793376630987,
+      "tag": "0006_add_project_notes_text",
+      "breakpoints": true
     }
   ]
 }

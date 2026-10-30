@@ -21,6 +21,7 @@ export type WorkProject = {
   customer_name: string;
   task: string;
   works_done: string;
+  notes_text: string;
   equipment: string;
   lights_text: string;
   result_text: string;
@@ -36,7 +37,7 @@ export type WorkProject = {
 };
 
 const SELECT =
-  "id, slug, title, description, location, city, category, customer_name, task, works_done, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)";
+  "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)";
 
 export const getWorks = createServerFn({ method: "GET" }).handler(
   async (): Promise<WorkProject[]> => {
