@@ -166,6 +166,12 @@ function WorkPage() {
                     </li>
                   ))}
                 </ul>
+                {project.notes_text && (
+                  <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+                    <span className="font-bold text-foreground">Примечание.</span>{" "}
+                    {project.notes_text}
+                  </p>
+                )}
               </div>
             )}
             {project.equipment && (
