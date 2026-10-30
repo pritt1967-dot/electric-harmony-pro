@@ -40,6 +40,7 @@ type Project = {
   customer_name: string;
   task: string;
   works_done: string;
+  notes_text: string;
   equipment: string;
   lights_text: string;
   result_text: string;
@@ -107,7 +108,7 @@ export function ProjectsEditor() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, slug, title, description, location, city, category, customer_name, task, works_done, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
+          "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
         )
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -265,6 +266,7 @@ function ProjectCard({
     customer_name: project.customer_name ?? "",
     task: project.task ?? "",
     works_done: project.works_done ?? "",
+    notes_text: project.notes_text ?? "",
     equipment: project.equipment ?? "",
     lights_text: project.lights_text ?? "",
     result_text: project.result_text ?? "",
@@ -296,6 +298,7 @@ function ProjectCard({
         customer_name: form.customer_name,
         task: form.task,
         works_done: form.works_done,
+        notes_text: form.notes_text,
         equipment: form.equipment,
         lights_text: form.lights_text,
         result_text: form.result_text,
@@ -504,6 +507,14 @@ function ProjectCard({
             rows={3}
             value={form.works_done}
             onChange={(e) => setForm({ ...form, works_done: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Примечание (после перечня работ)</Label>
+          <Textarea
+            rows={2}
+            value={form.notes_text}
+            onChange={(e) => setForm({ ...form, notes_text: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
