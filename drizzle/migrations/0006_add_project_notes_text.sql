@@ -1,0 +1,2 @@
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS notes_text text NOT NULL DEFAULT '';
+COMMENT ON COLUMN public.projects.notes_text IS 'Примечание к объекту: отображается после перечня выполненных работ';
