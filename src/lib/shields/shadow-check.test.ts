@@ -8,7 +8,7 @@ const spec = (name: string, qty: number, modules: number) =>
 const it = (mark: string, label: string, modules: number) => ({ mark, label, modules });
 
 const design = (over: Partial<PanelDesign> = {}) => ({
-  summary: { enclosure_modules: 24, enclosure: 'Щит' },
+  summary: { enclosure_modules: 24, enclosure: 'Щит (1 рейка по 24 мод.)' },
   rails: [{ index: 1, title: '', items: [
     it('QF1', 'Ввод', 3), it('QF2', 'Свет', 1), it('QF3', 'Розетки', 1), it('R', 'Резерв', 2),
   ] }],

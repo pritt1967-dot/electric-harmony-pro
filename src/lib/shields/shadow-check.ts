@@ -159,6 +159,16 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
     r.rails += 1;
     r.railMarks.push(`${i.mark}@R${i.rail + 1}`);
   }
+  // Insufficient data: when a breaker rating is unknown on either side for some poles+width,
+  // compare that whole poles+width group by count only instead of reporting false rating mismatches.
+  for (const r of [...rows.values()]) {
+    const m = /^breaker (\d|\?)P \?\? (\d+)m$/.exec(r.key);
+    if (!m) continue;
+    const group = [...rows.values()].filter(x => x.category === 'breaker' && x.modules === r.modules && x.key.startsWith(`breaker ${m[1]}P `));
+    const merged: DeviceRow = { key: `breaker ${m[1]}P (номинал не указан) ${r.modules}m`, category: 'breaker', modules: r.modules, spec: 0, rails: 0, diff: 0, railMarks: [] };
+    for (const g of group) { merged.spec += g.spec; merged.rails += g.rails; merged.railMarks.push(...g.railMarks); rows.delete(g.key); }
+    rows.set(merged.key, merged);
+  }
   const deviceRows = [...rows.values()].map(r => ({ ...r, diff: r.rails - r.spec }))
     .sort((a, b) => a.key.localeCompare(b.key));
 
