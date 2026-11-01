@@ -29,6 +29,7 @@ import {
 import { supabase } from "@/integrations/supabase/browser-client";
 import { designPanel, renderPanelImage } from "@/lib/panel.functions";
 import { DEFAULT_PANEL_INPUT, railTotal } from "@/lib/panel";
+import { shadowCheckDesign } from "@/lib/shields/shadow-check";
 import { PanelSpecVisual } from "@/components/admin/PanelSpecVisual";
 import { PanelDrawings } from "@/components/admin/PanelDrawings";
 import { ResultErrorBoundary } from "@/components/admin/ResultErrorBoundary";
@@ -230,6 +231,16 @@ export function PanelDesigner({
   useEffect(() => {
     onDesignChange?.({ design, title });
   }, [design, title, onDesignChange]);
+
+  // Stage 2 shadow check: equipment composition/qty/width/placement only; never shown, never changes the design.
+  useEffect(() => {
+    if (!design || !import.meta.env.DEV) return;
+    try {
+      console.debug("[shield-shadow]", shadowCheckDesign(design));
+    } catch (e) {
+      console.debug("[shield-shadow] failed", e);
+    }
+  }, [design]);
 
   useEffect(() => {
     if (openRequest?.id) void openSession(openRequest.id);
