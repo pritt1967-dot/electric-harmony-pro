@@ -8,7 +8,7 @@ const spec = (name: string, qty: number, modules: number) =>
 const it = (mark: string, label: string, modules: number) => ({ mark, label, modules });
 
 const design = (over: Partial<PanelDesign> = {}) => ({
-  summary: { enclosure_modules: 24, enclosure: 'Щит' },
+  summary: { enclosure_modules: 24, enclosure: 'Щит (1 рейка по 24 мод.)' },
   rails: [{ index: 1, title: '', items: [
     it('QF1', 'Ввод', 3), it('QF2', 'Свет', 1), it('QF3', 'Розетки', 1), it('R', 'Резерв', 2),
   ] }],
@@ -57,19 +57,44 @@ test('rail width from "4 рейки по 24 мод." and 29 modules gives +5 ove
   assert.equal(railWidthFor(d).modules, 24);
   const r = shadowCheckDesign(d);
   assert.equal(r.rails[0].overflow, 5);
+  assert.equal(r.railWidth.source, 'enclosure-text');
 });
 
-test('rail width falls back to enclosure modules / rail count', () => {
+test('rail width without explicit configuration is unknown, no overflow verdict', () => {
   const d = design({ summary: { enclosure_modules: 72, enclosure: 'Корпус 72' } as PanelDesign['summary'],
     rails: [1, 2, 3, 4].map(i => ({ index: i, title: '', items: [] })) });
-  assert.deepEqual(railWidthFor(d), { modules: 18, source: 'enclosure-split' });
+  assert.deepEqual(railWidthFor(d), { modules: null, source: 'unknown' });
+  assert.equal(shadowCheckDesign(d).rails[0].overflow, null);
 });
 
-test('device width mismatch per category is reported without fixing data', () => {
-  const d = design({ rails: [{ index: 1, title: '', items: [it('QF1', 'Ввод', 1), it('QF2', 'Свет', 1), it('QF3', 'Розетки', 1)] }] });
+test('reserve-only rail 29 modules on 24-wide rail is +5 overflow', () => {
+  const d = design({
+    summary: { enclosure_modules: 96, enclosure: '96 модулей (4 рейки по 24 мод.)' } as PanelDesign['summary'],
+    rails: [{ index: 1, title: '', items: [it('RESERVE', 'Свободный резерв на DIN-рейке (29 модулей)', 29)] }],
+    spec: [],
+  });
+  assert.equal(shadowCheckDesign(d).rails[0].overflow, 5);
+});
+
+test('rated breaker labelled reserve counts as a device', () => {
+  const d = design({ rails: [{ index: 1, title: '', items: [it('QF1', 'Ввод 3P C25', 3), it('QF2', 'Свет C16', 1), it('QF3', 'Розетки C16', 1), it('QF32', 'Резерв C16', 1)] }],
+    spec: [spec('Автомат 3P 25A (C)', 1, 3), spec('Автомат 1P 16A (C)', 3, 1)] });
   const r = shadowCheckDesign(d);
-  assert.ok(r.widthMismatches.some(w => w.category === 'breaker'));
-  assert.equal(d.rails[0].items[0].modules, 1);
+  assert.equal(r.railDevices, 4);
+  assert.deepEqual(r.mismatches, []);
+});
+
+test('rail item "Духовой шкаф" is a device, not an enclosure', () => {
+  assert.equal(itemKind('QF9 Духовой шкаф C16', true), 'device');
+  assert.equal(itemKind('Корпус настенный'), 'enclosure');
+});
+
+test('breaker rating mismatch is reported per row', () => {
+  const d = design({ rails: [{ index: 1, title: '', items: [it('QF1', 'Ввод 3P C25', 3), it('QF2', 'Свет B10', 1), it('QF3', 'Розетки C16', 1)] }],
+    spec: [spec('Автомат 3P 25A (C)', 1, 3), spec('Автомат 1P 16A (C)', 2, 1)] });
+  const r = shadowCheckDesign(d);
+  assert.equal(r.deviceRows.find(x => x.key === 'breaker 1P C16 1m')?.diff, -1);
+  assert.equal(r.deviceRows.find(x => x.key === 'breaker 1P B10 1m')?.diff, 1);
 });
 
 test('PE/N buses are auxiliary, not devices; missing in spec reported separately', () => {
