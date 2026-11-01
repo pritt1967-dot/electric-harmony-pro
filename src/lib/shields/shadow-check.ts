@@ -15,7 +15,7 @@ export type DeviceCategory =
   'breaker' | 'rcd' | 'rcbo' | 'ats' | 'relay' | 'contactor' | 'meter' | 'spd' | 'other';
 
 const ENCLOSURE_RE = /корпус|бокс|шкаф|щит\s+(навесн|встраив|настенн|пластик|металл)/i;
-const AUX_RE = /шин[аы]|клемм|кросс-?модул|гребенк|гребёнк|din-?рейк|заглушк|маркиров|\bpe\b|\bn\b|^xt|^хт/i;
+const AUX_RE = /(^|[\s_(-])(шин[аыуе]?|n-шин|pe-шин)(?=$|[\s_,.)])|(^|[\s_-])(pe|n)-шин|клемм|кросс-?модул|гребенк|гребёнк|din-?рейк|заглушк|маркиров|^xt|^хт/i;
 
 export function itemKind(text: string): ItemKind {
   const t = text.trim();
@@ -54,7 +54,7 @@ export type RailWidth = { modules: number; source: 'enclosure-text' | 'enclosure
 
 export function railWidthFor(design: PanelDesign): RailWidth {
   const text = design.summary?.enclosure ?? '';
-  const m = /(\d+)\s*рейк\w*\s*по\s*(\d+)/i.exec(text);
+  const m = /(\d+)\s*рейк[а-яё]*\s*по\s*(\d+)/i.exec(text);
   if (m && Number(m[2]) > 0) return { modules: Number(m[2]), source: 'enclosure-text' };
   const em = design.summary?.enclosure_modules ?? 0;
   const n = (design.rails ?? []).length;
@@ -139,7 +139,7 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
 
   const auxSpec = equipment.filter(e => e.kind === 'auxiliary').map(e => ({ name: e.name, qty: e.qty }));
   const auxSpecText = auxSpec.map(a => a.name.toLowerCase()).join(' | ');
-  const busKey = (t: string) => (/\bpe\b/i.test(t) ? 'pe' : /\bn\b/i.test(t) ? 'n' : null);
+  const busKey = (t: string) => (/(^|[^a-z])pe([^a-z]|$)|защитн|заземл/i.test(t) ? 'pe' : /(^|[^a-z])n([^a-z]|$)|нулев|нейтрал/i.test(t) ? 'n' : null);
   const missingInSpec = auxPlaced
     .filter(a => {
       const k = busKey(`${a.mark.replace(/_/g, ' ')} ${a.label}`);
