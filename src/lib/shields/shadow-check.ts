@@ -67,7 +67,7 @@ export type ShadowEquipmentRow = { name: string; qty: number; modulesEach: numbe
 export type ShadowCheck = {
   equipment: ShadowEquipmentRow[];
   railWidth: RailWidth;
-  rails: { rail: number; usedModules: number; capacity: number; overflow: number }[];
+  rails: { rail: number; usedModules: number; reserveModules: number; capacity: number; overflow: number }[];
   railDevices: number;
   railModules: number;
   specDevices: number;
@@ -95,7 +95,10 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
 
   const rails = railsIn.map((r, rail) => {
     const used = (r.items ?? []).filter(i => !isReserveItem(i)).reduce((s, i) => s + pos(i.modules), 0);
-    return { rail: rail + 1, usedModules: used, capacity: width.modules, overflow: Math.max(0, used - width.modules) };
+    const reserve = (r.items ?? []).filter(i => isReserveItem(i)).reduce((s, i) => s + pos(i.modules), 0);
+    // Declared reserve is physical rail length too: used + reserve must fit the rail.
+    return { rail: rail + 1, usedModules: used, reserveModules: reserve, capacity: width.modules,
+      overflow: Math.max(0, used + reserve - width.modules) };
   });
 
   const map = new Map<string, ShadowEquipmentRow>();
@@ -156,7 +159,7 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
   const mismatches: string[] = [];
   if (specDevices !== devicesPlaced.length) mismatches.push(`qty: spec ${specDevices}, rails ${devicesPlaced.length}`);
   if (specModules !== railModules) mismatches.push(`width: spec ${specModules}, rails ${railModules}`);
-  for (const r of rails) if (r.overflow > 0) mismatches.push(`rail ${r.rail}: ${r.usedModules} > ${r.capacity} (+${r.overflow})`);
+  for (const r of rails) if (r.overflow > 0) mismatches.push(`rail ${r.rail}: ${r.usedModules}+${r.reserveModules} reserve > ${r.capacity} (+${r.overflow})`);
   for (const w of widthMismatches) mismatches.push(`width ${w.category}: spec [${w.spec.join(',')}], rails [${w.rails.join(',')}]`);
   for (const d of duplicateMarks) mismatches.push(`duplicate mark ${d.mark}`);
   for (const a of missingInSpec) mismatches.push(`auxiliary not in spec: ${a}`);
