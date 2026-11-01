@@ -87,6 +87,8 @@ export type ShadowCheck = {
   deviceRows: DeviceRow[];
   duplicateMarks: { mark: string; items: { label: string; modules: number; rail: number }[] }[];
   reserveDevices: { mark: string; label: string; rail: number }[];
+  /** Rated reserve devices placed on rails whose type/rating row has more on rails than in the spec. */
+  reserveNotInSpec: { mark: string; label: string; rail: number; key: string }[];
   auxiliary: { spec: { name: string; qty: number }[]; rails: { mark: string; label: string }[]; missingInSpec: string[] };
   placementIssues: { code: string; deviceKeys: string[] }[];
   mismatches: string[];
@@ -202,6 +204,11 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
   if (width.modules === null) mismatches.push('rail width unknown: enclosure has no rail configuration');
   for (const r of rails) if (r.overflow) mismatches.push(`rail ${r.rail}: ${r.usedModules}+${r.reserveModules} reserve > ${r.capacity} (+${r.overflow})`);
   for (const r of deviceRows) if (r.diff !== 0) mismatches.push(`device ${r.key}: spec ${r.spec}, rails ${r.rails}`);
+  const reserveNotInSpec = reserveDevices.flatMap(rd => {
+    const r = deviceRows.find(x => x.railMarks.includes(`${rd.mark}@R${rd.rail}`));
+    return r && r.diff > 0 ? [{ ...rd, key: r.key }] : [];
+  });
+  for (const rd of reserveNotInSpec) mismatches.push(`reserve device not in spec: ${rd.mark} (${rd.key})`);
   for (const d of duplicateMarks) mismatches.push(`duplicate mark ${d.mark}`);
   for (const a of missingInSpec) mismatches.push(`auxiliary not in spec: ${a}`);
   for (const i of placed) if (!pos(i.modules)) mismatches.push(`bad width: ${i.mark}`);
@@ -210,7 +217,7 @@ export function shadowCheckDesign(design: PanelDesign): ShadowCheck {
     equipment, railWidth: width, rails,
     railDevices: devicesPlaced.length, railModules, specDevices, specModules, enclosureModules,
     freeModules: Math.max(0, enclosureModules - railModules - auxPlaced.reduce((s, a) => s + pos(a.modules), 0)),
-    deviceRows, duplicateMarks, reserveDevices,
+    deviceRows, duplicateMarks, reserveDevices, reserveNotInSpec,
     auxiliary: { spec: auxSpec, rails: auxPlaced.map(a => ({ mark: a.mark, label: a.label })), missingInSpec },
     placementIssues, mismatches, equipmentCost: { status: 'not-calculated' },
   };
