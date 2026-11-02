@@ -2,6 +2,7 @@ import asyncio,json,os,uuid
 from pathlib import Path
 from playwright.async_api import async_playwright
 OUT=Path('/tmp/browser/bulk-prices')
+OUT.mkdir(parents=True, exist_ok=True)
 async def main():
  async with async_playwright() as pw:
   browser=await pw.chromium.launch(headless=True)
@@ -56,7 +57,8 @@ async def main():
    public=await ctx.new_page(); await public.goto('http://localhost:8080/prices')
    article=public.get_by_role('article').filter(has=public.get_by_role('heading',name=item['name'],exact=True))
    await article.wait_for()
-   await public.locator('[data-site-loading-splash]').wait_for(state='hidden') if await public.locator('[data-site-loading-splash]').count() else asyncio.sleep(0)
+   if await public.locator('[data-site-loading-splash]').count():
+    await public.locator('[data-site-loading-splash]').wait_for(state='hidden')
    await public.wait_for_timeout(1800)
    text=await article.inner_text()
    assert str(new) in text.replace('\u00a0','').replace('\u202f','').replace(' ','')
