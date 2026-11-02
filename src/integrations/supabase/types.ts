@@ -499,6 +499,51 @@ export type Database = {
           },
         ]
       }
+      price_change_batches: {
+        Row: {
+          applied_at: string | null
+          backup: Json
+          category: string
+          created_at: string
+          created_by: string
+          direction: string
+          id: string
+          items: Json
+          percent: number
+          restored_at: string | null
+          scope: string
+          status: string
+        }
+        Insert: {
+          applied_at?: string | null
+          backup: Json
+          category?: string
+          created_at?: string
+          created_by: string
+          direction: string
+          id: string
+          items: Json
+          percent: number
+          restored_at?: string | null
+          scope: string
+          status?: string
+        }
+        Update: {
+          applied_at?: string | null
+          backup?: Json
+          category?: string
+          created_at?: string
+          created_by?: string
+          direction?: string
+          id?: string
+          items?: Json
+          percent?: number
+          restored_at?: string | null
+          scope?: string
+          status?: string
+        }
+        Relationships: []
+      }
       price_items: {
         Row: {
           category: string
@@ -839,6 +884,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_price_change: {
+        Args: { p_id: string; p_restore?: boolean }
+        Returns: Json
+      }
       approve_public_estimate: {
         Args: {
           p_ip?: string
@@ -865,6 +914,17 @@ export type Database = {
         Returns: boolean
       }
       normalize_phone: { Args: { p: string }; Returns: string }
+      preview_price_change: {
+        Args: {
+          p_category?: string
+          p_direction: string
+          p_id: string
+          p_ids?: string[]
+          p_percent: number
+          p_scope: string
+        }
+        Returns: Json
+      }
       public_customer_by_token: { Args: { p_token: string }; Returns: Json }
       public_estimate_by_token: { Args: { p_token: string }; Returns: Json }
       published_client_reviews: {
