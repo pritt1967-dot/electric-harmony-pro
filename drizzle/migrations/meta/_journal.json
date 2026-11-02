@@ -50,6 +50,13 @@
       "when": 1793376630987,
       "tag": "0006_add_project_notes_text",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793588767291,
+      "tag": "0007_price_bulk_changes",
+      "breakpoints": true
     }
   ]
 }

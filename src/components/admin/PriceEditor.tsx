@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { downloadPricePdf } from "@/lib/price-pdf";
 import { UNITS, money } from "@/lib/estimates";
+import { BulkPriceControls } from "@/components/admin/BulkPriceControls";
 
 export type PriceRow = {
   id: string;
@@ -69,6 +70,8 @@ export async function fetchPriceItems(): Promise<PriceRow[]> {
 
 export function PriceEditor() {
   const [rows, setRows] = useState<PriceRow[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [dirty, setDirty] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -147,6 +150,7 @@ export function PriceEditor() {
     field: keyof PriceRow,
     value: string | number | boolean,
   ) {
+    setDirty(ids => ids.includes(id) ? ids : [...ids, id]);
     setRows((r) => r.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   }
 
@@ -170,7 +174,7 @@ export function PriceEditor() {
       .eq("id", row.id);
     setBusyId(null);
     if (error) toast.error("Ошибка: " + error.message);
-    else toast.success("Позиция сохранена");
+    else { setDirty(ids => ids.filter(id => id !== row.id)); toast.success("Позиция сохранена"); }
   }
 
   async function addRow() {
@@ -196,6 +200,8 @@ export function PriceEditor() {
     if (error) toast.error("Ошибка: " + error.message);
     else {
       setRows((r) => r.filter((row) => row.id !== id));
+      setDirty(ids => ids.filter(value => value !== id));
+      setSelected(ids => ids.filter(value => value !== id));
       toast.success("Позиция удалена");
     }
   }
@@ -331,9 +337,18 @@ export function PriceEditor() {
         Позиций: {filtered.length} из {rows.length}
       </p>
 
+      <BulkPriceControls categories={categories} selected={selected} disabled={dirty.length > 0 || busyId !== null}
+        onApplied={async () => { setRows(await fetchPriceItems()); setSelected([]); }} />
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox aria-label="Выбрать все видимые позиции" checked={filtered.length > 0 && filtered.every(row => selected.includes(row.id))}
+          onCheckedChange={checked => setSelected(ids => checked === true ? Array.from(new Set([...ids, ...filtered.map(row => row.id)])) : ids.filter(id => !filtered.some(row => row.id === id)))} />
+        Выбрать все видимые позиции · выбрано {selected.length}
+      </label>
+
       <div className="space-y-3">
         {filtered.map((row) => (
           <div key={row.id} className="rounded-xl border border-border bg-background p-4">
+            <label className="mb-3 flex items-center gap-2 text-sm"><Checkbox aria-label={`Выбрать: ${row.name}`} checked={selected.includes(row.id)} onCheckedChange={checked => setSelected(ids => checked === true ? [...ids, row.id] : ids.filter(id => id !== row.id))} />Выбрать позицию</label>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5 lg:col-span-2">
                 <Label>Наименование работы</Label>

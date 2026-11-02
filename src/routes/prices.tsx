@@ -34,7 +34,7 @@ const DESCRIPTION =
 const pricesQuery = queryOptions({
   queryKey: ["public-prices"],
   queryFn: () => getPublicPrices(),
-  staleTime: 60_000,
+  staleTime: 0,
 });
 
 export const Route = createFileRoute("/prices")({
