@@ -56,6 +56,8 @@ async def main():
    public=await ctx.new_page(); await public.goto('http://localhost:8080/prices')
    article=public.get_by_role('article').filter(has=public.get_by_role('heading',name=item['name'],exact=True))
    await article.wait_for()
+   await public.locator('[data-site-loading-splash]').wait_for(state='hidden') if await public.locator('[data-site-loading-splash]').count() else asyncio.sleep(0)
+   await public.wait_for_timeout(1800)
    text=await article.inner_text()
    assert str(new) in text.replace('\u00a0','').replace('\u202f','').replace(' ','')
    await article.screenshot(path=str(OUT/'public-new-price.png'))
