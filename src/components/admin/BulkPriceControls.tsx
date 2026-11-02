@@ -11,6 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { priceChangeSchema, readPriceBatch, type PriceChangeBatch } from "@/lib/bulk-prices";
 import { money } from "@/lib/estimates";
 
+function errorMessage(error: unknown, fallback: string) {
+  return error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : fallback;
+}
+
 export function BulkPriceControls({ categories, selected, onApplied, disabled }: {
   categories: string[]; selected: string[]; onApplied: () => Promise<void>; disabled: boolean;
 }) {
@@ -45,7 +49,7 @@ export function BulkPriceControls({ categories, selected, onApplied, disabled }:
       });
       if (error) throw error;
       setRestoring(false); setPreview(readPriceBatch(data));
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Не удалось подготовить изменение цен"); }
+    } catch (error) { toast.error(errorMessage(error, "Не удалось подготовить изменение цен")); }
     finally { lock.current = false; setBusy(false); }
   }
 
@@ -63,10 +67,10 @@ export function BulkPriceControls({ categories, selected, onApplied, disabled }:
         throw new Error("Операция выполнена, но цены уже изменились. Обновите прайс");
       setPreview(null);
       await onApplied();
-      await queryClient.invalidateQueries({ predicate: q => q.queryKey[0] === "public-prices" || q.queryKey[0] === "public-work-prices" || q.queryKey[0] === "public-price-minimums" });
+      await queryClient.invalidateQueries({ predicate: q => q.queryKey[0] === "public-prices" || q.queryKey[0] === "category-min-prices" });
       await loadHistory();
       toast.success(restoring ? "Исходные цены восстановлены" : `Цены сохранены: ${result.items.length} позиций`);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Не удалось применить цены"); }
+    } catch (error) { toast.error(errorMessage(error, "Не удалось применить цены")); }
     finally { lock.current = false; setBusy(false); }
   }
 
