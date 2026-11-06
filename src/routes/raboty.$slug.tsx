@@ -423,3 +423,22 @@ function WorkPage() {
     </div>
   );
 }
+
+function WorkVideo({ src, type, poster, title }: { src: string; type: string; poster: string; title: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const probe = document.createElement("video");
+    if (type && !probe.canPlayType(type)) setFailed(true);
+  }, [type]);
+  if (failed && poster) {
+    return <img src={poster} alt={title} loading="lazy" className="block aspect-video h-auto w-full object-cover" />;
+  }
+  return (
+    <video controls playsInline preload="none" poster={poster || undefined}
+      onError={() => setFailed(true)}
+      className="block aspect-video h-auto w-full max-w-full bg-background object-contain">
+      <source src={src} type={type} onError={() => setFailed(true)} />
+      Ваш браузер не поддерживает воспроизведение видео.
+    </video>
+  );
+}
