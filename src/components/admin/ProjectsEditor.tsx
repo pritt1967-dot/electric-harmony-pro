@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/browser-client";
+import { ProjectVideos, removeProjectVideoFiles } from "./ProjectVideos";
 
 type ProjectImage = {
   id: string;
@@ -323,6 +324,7 @@ function ProjectCard({
     if (!confirm(`Удалить объект «${project.title}» вместе с фото?`)) return;
     const paths = images.map((im) => im.storage_path).filter(Boolean);
     if (paths.length) await supabase.storage.from("projects").remove(paths);
+    await removeProjectVideoFiles(project.id);
     const { error } = await supabase.from("projects").delete().eq("id", project.id);
     if (error) toast.error(error.message);
     else {
@@ -699,6 +701,8 @@ function ProjectCard({
           ))}
         </div>
       </div>
+
+      <ProjectVideos projectId={project.id} onChanged={onChanged} />
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={save} disabled={saving}>
