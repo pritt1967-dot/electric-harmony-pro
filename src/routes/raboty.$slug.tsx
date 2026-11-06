@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, CalendarDays, MapPin, Phone } from "lucide-react";
@@ -280,16 +280,12 @@ function WorkPage() {
               <div className={`mt-7 grid grid-cols-1 gap-5 ${project.videos.length > 1 ? "lg:grid-cols-2" : ""}`}>
                 {project.videos.map((v) => (
                   <figure key={v.id} className={`overflow-hidden rounded-xl border border-border bg-background ${project.videos.length === 1 ? "mx-auto w-full max-w-5xl" : ""}`}>
-                    <video
-                      controls
-                      playsInline
-                      preload="none"
-                      poster={v.poster_url || project.cover_image || undefined}
-                      className="block aspect-video h-auto w-full max-w-full bg-background object-contain"
-                    >
-                      <source src={`/api/public/video/${v.storage_path}`} type={v.mime_type === "video/quicktime" ? "video/mp4" : v.mime_type} />
-                      Ваш браузер не поддерживает воспроизведение видео.
-                    </video>
+                    <WorkVideo
+                      src={`/api/public/video/${v.storage_path}`}
+                      type={v.mime_type === "video/quicktime" ? "video/mp4" : v.mime_type}
+                      poster={v.poster_url || project.cover_image || ""}
+                      title={project.title}
+                    />
                     {v.caption && <figcaption className="p-3 text-sm text-muted-foreground">{v.caption}</figcaption>}
                   </figure>
                 ))}
@@ -425,5 +421,24 @@ function WorkPage() {
       <FloatingActions />
       <MobileCtaBar />
     </div>
+  );
+}
+
+function WorkVideo({ src, type, poster, title }: { src: string; type: string; poster: string; title: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const probe = document.createElement("video");
+    if (type && !probe.canPlayType(type)) setFailed(true);
+  }, [type]);
+  if (failed && poster) {
+    return <img src={poster} alt={title} loading="lazy" className="block aspect-video h-auto w-full object-cover" />;
+  }
+  return (
+    <video controls playsInline preload="none" poster={poster || undefined}
+      onError={() => setFailed(true)}
+      className="block aspect-video h-auto w-full max-w-full bg-background object-contain">
+      <source src={src} type={type} onError={() => setFailed(true)} />
+      Ваш браузер не поддерживает воспроизведение видео.
+    </video>
   );
 }
