@@ -34,10 +34,20 @@ export type WorkProject = {
   cover_image: string;
   sort_order: number;
   images: WorkImage[];
+  videos: WorkVideo[];
+};
+
+export type WorkVideo = {
+  id: string;
+  storage_path: string;
+  mime_type: string;
+  poster_url: string;
+  caption: string;
+  sort_order: number;
 };
 
 const SELECT =
-  "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order)";
+  "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order), project_videos(id, storage_path, mime_type, poster_url, caption, sort_order)";
 
 export const getWorks = createServerFn({ method: "GET" }).handler(
   async (): Promise<WorkProject[]> => {
@@ -53,11 +63,12 @@ export const getWorks = createServerFn({ method: "GET" }).handler(
     }
 
 
-    type Raw = Omit<WorkProject, "images"> & { project_images: WorkImage[] };
-    return ((data ?? []) as unknown as Raw[]).map(({ project_images, ...p }) => ({
+    type Raw = Omit<WorkProject, "images" | "videos"> & { project_images: WorkImage[]; project_videos?: WorkVideo[] };
+    return ((data ?? []) as unknown as Raw[]).map(({ project_images, project_videos, ...p }) => ({
       ...p,
       slug: p.slug ?? "",
       images: [...(project_images ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+      videos: [...(project_videos ?? [])].sort((a, b) => a.sort_order - b.sort_order),
     }));
   },
 );
