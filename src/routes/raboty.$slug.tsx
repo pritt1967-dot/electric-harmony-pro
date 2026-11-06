@@ -280,16 +280,12 @@ function WorkPage() {
               <div className={`mt-7 grid grid-cols-1 gap-5 ${project.videos.length > 1 ? "lg:grid-cols-2" : ""}`}>
                 {project.videos.map((v) => (
                   <figure key={v.id} className={`overflow-hidden rounded-xl border border-border bg-background ${project.videos.length === 1 ? "mx-auto w-full max-w-5xl" : ""}`}>
-                    <video
-                      controls
-                      playsInline
-                      preload="none"
-                      poster={v.poster_url || project.cover_image || undefined}
-                      className="block aspect-video h-auto w-full max-w-full bg-background object-contain"
-                    >
-                      <source src={`/api/public/video/${v.storage_path}`} type={v.mime_type === "video/quicktime" ? "video/mp4" : v.mime_type} />
-                      Ваш браузер не поддерживает воспроизведение видео.
-                    </video>
+                    <WorkVideo
+                      src={`/api/public/video/${v.storage_path}`}
+                      type={v.mime_type === "video/quicktime" ? "video/mp4" : v.mime_type}
+                      poster={v.poster_url || project.cover_image || ""}
+                      title={project.title}
+                    />
                     {v.caption && <figcaption className="p-3 text-sm text-muted-foreground">{v.caption}</figcaption>}
                   </figure>
                 ))}
