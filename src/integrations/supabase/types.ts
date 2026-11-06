@@ -636,6 +636,56 @@ export type Database = {
           },
         ]
       }
+      project_videos: {
+        Row: {
+          caption: string
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string
+          poster_path: string
+          poster_url: string
+          project_id: string
+          size_bytes: number
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string
+          poster_path?: string
+          poster_url?: string
+          project_id: string
+          size_bytes?: number
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string
+          poster_path?: string
+          poster_url?: string
+          project_id?: string
+          size_bytes?: number
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_videos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           category: string

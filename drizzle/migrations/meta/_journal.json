@@ -57,6 +57,13 @@
       "when": 1793588767291,
       "tag": "0007_price_bulk_changes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793958511331,
+      "tag": "0008_project_videos",
+      "breakpoints": true
     }
   ]
 }

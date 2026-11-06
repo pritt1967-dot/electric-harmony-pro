@@ -35,6 +35,7 @@ import { Route as ApiPublicSupabaseKeepaliveRouteImport } from './routes/api/pub
 import { Route as ApiPublicTelegramHealthRouteImport } from './routes/api/public/telegram-health'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo/$'
 import { Route as ApiPublicSbSplatRouteImport } from './routes/api/public/sb/$'
+import { Route as ApiPublicVideoSplatRouteImport } from './routes/api/public/video/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -170,6 +171,11 @@ const ApiPublicSbSplatRoute = ApiPublicSbSplatRouteImport.update({
   path: '/api/public/sb/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicVideoSplatRoute = ApiPublicVideoSplatRouteImport.update({
+  id: '/api/public/video/$',
+  path: '/api/public/video/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/sb/$': typeof ApiPublicSbSplatRoute
+  '/api/public/video/$': typeof ApiPublicVideoSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/sb/$': typeof ApiPublicSbSplatRoute
+  '/api/public/video/$': typeof ApiPublicVideoSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/api/public/telegram-health': typeof ApiPublicTelegramHealthRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/sb/$': typeof ApiPublicSbSplatRoute
+  '/api/public/video/$': typeof ApiPublicVideoSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
     | '/api/public/sb/$'
+    | '/api/public/video/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
     | '/api/public/sb/$'
+    | '/api/public/video/$'
   id:
     | '__root__'
     | '/'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/api/public/telegram-health'
     | '/api/public/photo/$'
     | '/api/public/sb/$'
+    | '/api/public/video/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   ApiPublicTelegramHealthRoute: typeof ApiPublicTelegramHealthRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicSbSplatRoute: typeof ApiPublicSbSplatRoute
+  ApiPublicVideoSplatRoute: typeof ApiPublicVideoSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -550,6 +563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSbSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/video/$': {
+      id: '/api/public/video/$'
+      path: '/api/public/video/$'
+      fullPath: '/api/public/video/$'
+      preLoaderRoute: typeof ApiPublicVideoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -592,6 +612,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTelegramHealthRoute: ApiPublicTelegramHealthRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicSbSplatRoute: ApiPublicSbSplatRoute,
+  ApiPublicVideoSplatRoute: ApiPublicVideoSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
