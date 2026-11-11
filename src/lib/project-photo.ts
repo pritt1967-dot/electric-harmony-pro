@@ -29,10 +29,17 @@ export async function prepareProjectPhoto(file: File) {
   return { blob: file, ...originalFormat };
 }
 
-export function photoUploadError(error: unknown, stage: string) {
+export type PhotoUploadInfo = { sizeBytes?: number; mime?: string; elapsedMs?: number };
+
+export function photoUploadError(error: unknown, stage: string, info: PhotoUploadInfo = {}) {
   const value = error && typeof error === "object" ? error as Record<string, unknown> : {};
   const message = typeof value.message === "string" && value.message ? value.message : typeof value.error === "string" ? value.error : "Не удалось загрузить фотографию";
   const status = value.statusCode ?? value.status ?? "unknown";
-  console.error("[project-photo-upload]", { stage, status, message });
+  // Diagnostic fields only: no tokens, file names or object paths.
+  console.error("[project-photo-upload]", {
+    stage, method: stage === "storage-upload" ? "POST" : undefined,
+    endpoint: stage === "storage-upload" ? "/api/public/sb/storage/v1/object/projects/<object>" : undefined,
+    bucket: "projects", ...info, status, message,
+  });
   return `Фотография не добавлена: ${message}${status === "unknown" ? "" : ` (HTTP ${status})`}`;
 }
