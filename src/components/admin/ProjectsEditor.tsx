@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/browser-client";
 import { ProjectVideos, removeProjectVideoFiles } from "./ProjectVideos";
+import { projectRequestError } from "@/lib/project-request-error";
 
 type ProjectImage = {
   id: string;
@@ -144,7 +145,7 @@ export function ProjectsEditor() {
       toast.success("Объект создан");
       refresh();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(projectRequestError(e)),
   });
 
   const reorder = useMutation({
@@ -286,7 +287,9 @@ function ProjectCard({
   const images = useMemo(() => project.project_images, [project.project_images]);
 
   const save = async () => {
+    if (saving) return;
     setSaving(true);
+    try {
     const { error } = await supabase
       .from("projects")
       .update({
@@ -311,12 +314,16 @@ function ProjectCard({
         work_date: form.work_date || null,
         is_published: form.is_published,
       })
-      .eq("id", project.id);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else {
+      .eq("id", project.id)
+      .select("id")
+      .single();
+    if (error) throw error;
       toast.success("Сохранено");
       onChanged();
+    } catch (error) {
+      toast.error(projectRequestError(error));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -357,16 +364,17 @@ function ProjectCard({
         });
         if (ins.error) throw ins.error;
         if (!project.cover_image && order === 1) {
-          await supabase
+          const cover = await supabase
             .from("projects")
             .update({ cover_image: url })
             .eq("id", project.id);
+          if (cover.error) throw cover.error;
         }
       }
       toast.success("Фото загружены");
       onChanged();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось загрузить фото");
+      toast.error(projectRequestError(e));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
