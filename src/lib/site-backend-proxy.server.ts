@@ -28,6 +28,14 @@ export async function proxySiteBackend(request: Request, splat: string, config: 
     phase = "upstream-headers";
     const upstream = await fetch(target, { method, headers, body, redirect: "manual", signal: controller.signal });
     phase = "upstream-body";
+    if (!upstream.ok && method === "POST" && path.startsWith("storage/v1/object/projects/")) {
+      const raw = await upstream.clone().text();
+      // Storage error payload only: redact paths, credentials and URLs, cap log size.
+      const response = raw.replace(/Bearer\s+\S+|sb_(?:secret|publishable)_[\w-]+|eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
+        .split(path.slice("storage/v1/object/".length)).join("[object]")
+        .replace(/https?:\/\/[^\s"<>]+/g, "[url]").slice(0, 2000);
+      console.error("[project-photo-storage-response]", JSON.stringify({ requestId, status: upstream.status, phase, response }));
+    }
     const responseHeaders = new Headers();
     upstream.headers.forEach((value, name) => {
       if (!SKIP_HEADERS.has(name.toLowerCase())) responseHeaders.set(name, value);

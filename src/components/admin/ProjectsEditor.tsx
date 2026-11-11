@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/browser-client";
 import { ProjectVideos, removeProjectVideoFiles } from "./ProjectVideos";
 import { projectRequestError } from "@/lib/project-request-error";
+import { prepareProjectPhoto, photoUploadError } from "@/lib/project-photo";
 
 type ProjectImage = {
   id: string;
@@ -60,8 +61,6 @@ type Project = {
   project_images: ProjectImage[];
 };
 
-const MAX_SIDE = 1600;
-
 const TRANSLIT: Record<string, string> = {
   а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i",
   й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t",
@@ -78,26 +77,6 @@ export function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-}
-
-async function compressImage(file: File): Promise<Blob> {
-  if (!file.type.startsWith("image/")) return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", 0.85),
-    );
-    return blob && blob.size < file.size ? blob : file;
-  } catch {
-    return file;
-  }
 }
 
 export function ProjectsEditor() {
@@ -343,19 +322,23 @@ function ProjectCard({
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploading(true);
+    let stage = "prepare";
     try {
       let order = images.reduce((m, im) => Math.max(m, im.sort_order), 0);
       for (const file of Array.from(files)) {
-        const blob = await compressImage(file);
+        stage = "prepare";
+        const { blob, mime, ext } = await prepareProjectPhoto(file);
         const path = `${project.id}/${Date.now()}-${Math.random()
           .toString(36)
-          .slice(2, 8)}.jpg`;
+          .slice(2, 8)}.${ext}`;
+        stage = "storage-upload";
         const up = await supabase.storage
           .from("projects")
-          .upload(path, blob, { contentType: "image/jpeg", upsert: false });
+          .upload(path, blob, { contentType: mime, upsert: false });
         if (up.error) throw up.error;
         order += 1;
         const url = `/api/public/photo/${path}`;
+        stage = "photo-metadata";
         const ins = await supabase.from("project_images").insert({
           project_id: project.id,
           image_url: url,
@@ -364,6 +347,7 @@ function ProjectCard({
         });
         if (ins.error) throw ins.error;
         if (!project.cover_image && order === 1) {
+          stage = "cover";
           const cover = await supabase
             .from("projects")
             .update({ cover_image: url })
@@ -374,7 +358,8 @@ function ProjectCard({
       toast.success("Фото загружены");
       onChanged();
     } catch (e) {
-      toast.error(projectRequestError(e));
+      toast.error(photoUploadError(e, stage));
+      onChanged();
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
