@@ -21,20 +21,29 @@ export async function proxySiteBackend(request: Request, splat: string, config: 
   const started = Date.now();
   let phase = "request-body";
   const controller = new AbortController();
-  // Preserve the existing limit; increasing it would hide connection failures.
-  const timer = setTimeout(() => controller.abort(), 15_000);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const isPhotoUpload = method === "POST" && path.startsWith("storage/v1/object/projects/");
+  let bodyBytes = 0;
+  let bodyMs = 0;
   try {
     const body = method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
+    bodyBytes = body?.byteLength ?? 0;
+    bodyMs = Date.now() - started;
+    // The existing 15-second limit covers the backend only: browser-to-site upload
+    // time of a photo on a slow connection must not be reported as a backend TIMEOUT.
+    timer = setTimeout(() => controller.abort(), 15_000);
     phase = "upstream-headers";
     const upstream = await fetch(target, { method, headers, body, redirect: "manual", signal: controller.signal });
     phase = "upstream-body";
-    if (!upstream.ok && method === "POST" && path.startsWith("storage/v1/object/projects/")) {
-      const raw = await upstream.clone().text();
+    if (isPhotoUpload) {
+      const raw = upstream.ok ? "" : await upstream.clone().text();
       // Storage error payload only: redact paths, credentials and URLs, cap log size.
       const response = raw.replace(/Bearer\s+\S+|sb_(?:secret|publishable)_[\w-]+|eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[redacted]")
         .split(path.slice("storage/v1/object/".length)).join("[object]")
         .replace(/https?:\/\/[^\s"<>]+/g, "[url]").slice(0, 2000);
-      console.error("[project-photo-storage-response]", JSON.stringify({ requestId, status: upstream.status, phase, response }));
+      const log = { requestId, method, endpoint: "storage/v1/object/projects", bucket: "projects", sizeBytes: bodyBytes, mime: headers.get("content-type") ?? "", status: upstream.status, phase, bodyMs, upstreamMs: Date.now() - started - bodyMs, response };
+      if (upstream.ok) console.info("[project-photo-storage-response]", JSON.stringify(log));
+      else console.error("[project-photo-storage-response]", JSON.stringify(log));
     }
     const responseHeaders = new Headers();
     upstream.headers.forEach((value, name) => {
@@ -50,12 +59,13 @@ export async function proxySiteBackend(request: Request, splat: string, config: 
     const cause = error && typeof error === "object" && "cause" in error ? error.cause : undefined;
     const code = cause && typeof cause === "object" && "code" in cause && typeof cause.code === "string" ? cause.code : "UNKNOWN";
     // No tokens, query filters, object filenames, bodies or raw errors in logs.
-    console.error("[site-backend-proxy]", JSON.stringify({ requestId, method, endpoint: path.startsWith("rest/v1/") ? path.split("/").slice(0, 3).join("/") : path.split("/").slice(0, 2).join("/"), backendHost: target.hostname, phase, reason, networkCode: code, elapsedMs: Date.now() - started }));
+    console.error("[site-backend-proxy]", JSON.stringify({ requestId, method, endpoint: path.startsWith("rest/v1/") ? path.split("/").slice(0, 3).join("/") : path.split("/").slice(0, 2).join("/"), backendHost: target.hostname, phase, reason, networkCode: code, elapsedMs: Date.now() - started,
+      ...(isPhotoUpload ? { bucket: "projects", sizeBytes: bodyBytes, mime: headers.get("content-type") ?? "", bodyMs, upstreamMs: Date.now() - started - bodyMs } : {}) }));
     const message = "Сервер данных не ответил. Сохранение не подтверждено. Обновите объект перед повторной попыткой.";
     return Response.json({ code: reason, message, error: `Backend unreachable from the site server (${reason})`, request_id: requestId }, {
       status: 504, headers: { "cache-control": "no-store", "x-request-id": requestId },
     });
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
