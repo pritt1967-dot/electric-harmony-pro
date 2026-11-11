@@ -79,3 +79,37 @@ test("photo Storage rejection keeps real HTTP response and logs diagnostic statu
     assert.match(messages.join(), /400/);
   } finally { globalThis.fetch = original; console.error = log; }
 });
+test("slow browser photo upload does not consume the 15-second backend limit", async () => {
+  const original = globalThis.fetch;
+  const originalTimer = globalThis.setTimeout;
+  const originalInfo = console.info;
+  let bodyDone = false;
+  let timerStartedAfterBody: boolean | undefined;
+  const logs: string[] = [];
+  globalThis.setTimeout = ((callback: () => void, delay: number) => {
+    if (delay === 15_000) timerStartedAfterBody = bodyDone;
+    return originalTimer(() => {}, 0);
+  }) as typeof setTimeout;
+  console.info = (...args) => { logs.push(JSON.stringify(args)); };
+  globalThis.fetch = async (_input, init) => {
+    assert.equal((init?.body as ArrayBuffer).byteLength, 6);
+    return Response.json({ Key: "projects/x" });
+  };
+  const stream = new ReadableStream<Uint8Array>({
+    async start(c) {
+      c.enqueue(new Uint8Array([255, 216, 255]));
+      await new Promise((r) => originalTimer(r, 20));
+      c.enqueue(new Uint8Array([1, 2, 3]));
+      bodyDone = true;
+      c.close();
+    },
+  });
+  try {
+    const request = new Request("https://site.example/api/public/sb/storage/v1/object/projects/p/1.jpg", { method: "POST", headers: { "content-type": "image/jpeg", authorization: "Bearer private-token" }, body: stream, duplex: "half" } as RequestInit);
+    const response = await proxySiteBackend(request, "storage/v1/object/projects/p/1.jpg", config);
+    assert.equal(response.status, 200);
+    assert.equal(timerStartedAfterBody, true);
+    assert.match(logs.join(), /"bucket\\":\\"projects\\".*"sizeBytes\\":6.*"mime\\":\\"image\/jpeg\\".*"status\\":200/);
+    assert.doesNotMatch(logs.join(), /private-token|p\/1\.jpg/);
+  } finally { globalThis.fetch = original; globalThis.setTimeout = originalTimer; console.info = originalInfo; }
+});

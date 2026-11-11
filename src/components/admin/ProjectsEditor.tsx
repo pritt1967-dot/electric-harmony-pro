@@ -323,6 +323,8 @@ function ProjectCard({
     if (!files?.length) return;
     setUploading(true);
     let stage = "prepare";
+    let info: { sizeBytes?: number; mime?: string; elapsedMs?: number } = {};
+    let started = 0;
     try {
       let order = images.reduce((m, im) => Math.max(m, im.sort_order), 0);
       for (const file of Array.from(files)) {
@@ -332,9 +334,12 @@ function ProjectCard({
           .toString(36)
           .slice(2, 8)}.${ext}`;
         stage = "storage-upload";
+        info = { sizeBytes: blob.size, mime };
+        started = Date.now();
         const up = await supabase.storage
           .from("projects")
           .upload(path, blob, { contentType: mime, upsert: false });
+        info.elapsedMs = Date.now() - started;
         if (up.error) throw up.error;
         order += 1;
         const url = `/api/public/photo/${path}`;
@@ -358,7 +363,8 @@ function ProjectCard({
       toast.success("Фото загружены");
       onChanged();
     } catch (e) {
-      toast.error(photoUploadError(e, stage));
+      if (started && info.elapsedMs === undefined) info.elapsedMs = Date.now() - started;
+      toast.error(photoUploadError(e, stage, info));
       onChanged();
     } finally {
       setUploading(false);

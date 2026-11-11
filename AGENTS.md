@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 Tuqo deployment test
-- Project photo uploads preserve byte-derived MIME and extension when browser compression falls back; keep existing upload transport and log Storage HTTP failures only for photo uploads, without changing text saves.
+- Project photo uploads preserve byte-derived MIME and extension when browser compression falls back; keep the existing same-origin upload transport, start the 15-second backend limit only after the browser body is received (slow uplinks are not backend timeouts), and log photo-upload diagnostics (bucket, size, MIME, status, sanitized response, body/upstream ms) without changing text saves.
 - Same-origin backend proxy failures keep the 15-second upstream limit, never retry writes, and log only request ID, phase, sanitized endpoint and network code; project saves require a returned row before reporting success, so ambiguous writes remain unconfirmed.
 - Bulk price changes use admin-authorized transactional database RPCs with immutable price backups, operation IDs and row-version checks; only price_items.price changes so existing calculators and saved documents remain compatible.
 - Client review moderation reuses published_at as the displayed review date (created_at fallback before publication); preserve it on status changes and use shared Moscow calendar-day helpers so no schema change or viewer-timezone shift is needed.
