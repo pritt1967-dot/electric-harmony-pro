@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/browser-client";
 import { checkVideoFile, formatBytes, VIDEO_ACCEPT } from "@/lib/work-videos";
+import { projectRequestError } from "@/lib/project-request-error";
 
 type ProjectVideo = {
   id: string;
@@ -133,7 +134,7 @@ export function ProjectVideos({ projectId, onChanged }: { projectId: string; onC
       }
       toast.success("Видео загружено");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось загрузить видео");
+      toast.error(projectRequestError(e));
     } finally {
       setBusy(null);
       if (addRef.current) addRef.current.value = "";
@@ -161,7 +162,7 @@ export function ProjectVideos({ projectId, onChanged }: { projectId: string; onC
       if (old.poster_path) await supabase.storage.from("projects").remove([old.poster_path]);
       toast.success("Видео заменено");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось заменить видео");
+      toast.error(projectRequestError(e));
     } finally {
       setBusy(null);
       done();
