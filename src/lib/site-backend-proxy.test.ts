@@ -64,3 +64,18 @@ test("proxy denies non-backend paths without outbound calls", async () => {
   assert.equal((await proxySiteBackend(new Request("https://site.example/api/public/sb/private"), "private", config)).status, 404);
   assert.equal((await proxySiteBackend(new Request("https://site.example/api/public/sb/rest/v1/../private"), "rest/v1/../private", config)).status, 404);
 });
+
+test("photo Storage rejection keeps real HTTP response and logs diagnostic status", async () => {
+  const original = globalThis.fetch;
+  const log = console.error;
+  const messages: string[] = [];
+  console.error = (...args) => { messages.push(JSON.stringify(args)); };
+  globalThis.fetch = async () => Response.json({ statusCode: "403", error: "Unauthorized", message: "new row violates row-level security policy" }, { status: 400 });
+  try {
+    const response = await proxySiteBackend(new Request("https://site.example/api/public/sb/storage/v1/object/projects/test/photo.jpg", { method: "POST", body: "bytes" }), "storage/v1/object/projects/test/photo.jpg", config);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).statusCode, "403");
+    assert.match(messages.join(), /row-level security policy/);
+    assert.match(messages.join(), /400/);
+  } finally { globalThis.fetch = original; console.error = log; }
+});
