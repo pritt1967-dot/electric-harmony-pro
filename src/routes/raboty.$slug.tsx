@@ -246,7 +246,7 @@ function WorkPage() {
                           `${project.title} — фото выполненных работ${place ? `, ${place}` : ""}`
                         }
                         loading="lazy"
-                        className={project.images.length === 1 ? "max-h-[75vh] w-full object-contain transition-transform hover:scale-[1.01]" : "h-56 w-full object-cover transition-transform hover:scale-[1.03]"}
+                        className={project.images.length === 1 ? "max-h-[75vh] w-full object-contain transition-transform hover:scale-[1.01]" : project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka" ? "h-80 w-full object-contain" : "h-56 w-full object-cover transition-transform hover:scale-[1.03]"}
                       />
                       {ba && (
                         <span
