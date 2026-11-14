@@ -143,6 +143,7 @@ function ProjectBlock({
     project.slug === "elektromontazhnye-raboty-na-sekretnom-obekte" ||
     project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka";
   const showFullGallery = project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka";
+  const Article = showFullGallery ? "article" : Reveal;
 
   const featured = index === 0;
   const flipped = !featured && index % 2 === 0;
@@ -249,22 +250,22 @@ function ProjectBlock({
 
   if (featured) {
     return (
-      <Reveal as="article">
+      <Article as="article">
         <div className="rounded-2xl border border-border bg-card p-5 sm:p-8">
           {media}
           {body}
         </div>
-      </Reveal>
+      </Article>
     );
   }
 
   return (
-    <Reveal as="article" delay={index * 60}>
+    <Article as="article" delay={index * 60}>
       <div className="grid items-center gap-6 rounded-2xl border border-border bg-card p-5 sm:p-8 lg:grid-cols-2 lg:gap-10">
         <div className={flipped ? "lg:order-2" : ""}>{media}</div>
         <div className={flipped ? "lg:order-1" : ""}>{body}</div>
       </div>
-    </Reveal>
+    </Article>
   );
 }
 
