@@ -94,7 +94,7 @@ function WorksIndex() {
                         alt={`${w.title} — фото объекта, ${w.city || w.location || "Санкт-Петербург"}`}
                         loading="lazy"
                         className={`h-52 w-full transition-transform group-hover:scale-[1.03] ${
-                          w.slug === "elektromontazhnye-raboty-na-sekretnom-obekte"
+                          w.slug === "elektromontazhnye-raboty-na-sekretnom-obekte" || w.slug === "elektromontazh-v-derevyannom-dome-retroprovodka"
                             ? "object-contain bg-muted"
                             : "object-cover"
                         }`}

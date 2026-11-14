@@ -140,7 +140,9 @@ function ProjectBlock({
   const rest = images.filter((_, i) => i !== coverIdx);
   const date = formatWorkDate(project.work_date);
   const showFullCover =
-    project.slug === "elektromontazhnye-raboty-na-sekretnom-obekte";
+    project.slug === "elektromontazhnye-raboty-na-sekretnom-obekte" ||
+    project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka";
+  const showFullGallery = project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka";
 
   const featured = index === 0;
   const flipped = !featured && index % 2 === 0;
@@ -197,7 +199,7 @@ function ProjectBlock({
         )}
       </div>
       {project.description && (
-        <p className="mt-4 max-w-3xl leading-relaxed text-muted-foreground">
+        <p className={`mt-4 max-w-3xl leading-relaxed text-muted-foreground ${showFullGallery ? "whitespace-pre-line" : ""}`}>
           {project.description}
         </p>
       )}
@@ -214,7 +216,7 @@ function ProjectBlock({
 
       {rest.length > 0 && (
         <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
-          {rest.slice(0, featured ? 6 : 3).map((img) => {
+          {rest.slice(0, showFullGallery ? rest.length : featured ? 6 : 3).map((img) => {
             const realIndex = images.findIndex((x) => x.id === img.id);
             return (
               <figure key={img.id} className="flex flex-col">
@@ -228,7 +230,7 @@ function ProjectBlock({
                     src={img.image_url}
                     alt={img.alt || img.caption || `${project.title} — фото ${realIndex + 1}`}
                     loading="lazy"
-                    className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className={`aspect-square w-full transition-transform duration-300 ${showFullGallery ? "object-contain bg-muted" : "object-cover group-hover:scale-105"}`}
                   />
                   <BaBadge
                     caption={img.caption}
@@ -396,7 +398,7 @@ function Lightbox({
                 src={img.image_url}
                 alt=""
                 loading="lazy"
-                className="size-full object-cover"
+                className={`size-full ${project.slug === "elektromontazh-v-derevyannom-dome-retroprovodka" ? "object-contain" : "object-cover"}`}
               />
             </button>
           ))}
