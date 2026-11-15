@@ -37,9 +37,11 @@ export function photoUploadError(error: unknown, stage: string, info: PhotoUploa
   const status = value.statusCode ?? value.status ?? "unknown";
   // Diagnostic fields only: no tokens, file names or object paths.
   console.error("[project-photo-upload]", {
+    event: /TIMEOUT|504|abort/i.test(`${status} ${message}`) ? "REQUEST_TIMEOUT" : stage === "photo-metadata" ? "DB_INSERT_ERROR" : "STORAGE_UPLOAD_ERROR",
     stage, method: stage === "storage-upload" ? "POST" : undefined,
     endpoint: stage === "storage-upload" ? "/api/public/sb/storage/v1/object/projects/<object>" : undefined,
     bucket: "projects", ...info, status, message,
   });
-  return `Фотография не добавлена: ${message}${status === "unknown" ? "" : ` (HTTP ${status})`}`;
+  const label = stage === "storage-upload" ? "загрузка файла" : stage === "photo-metadata" ? "сохранение записи фото" : stage === "cover" ? "сохранение обложки" : stage === "delete" ? "удаление фото" : "подготовка файла";
+  return `Фотография не добавлена (${label}): ${message}${status === "unknown" ? "" : ` (HTTP ${status})`}`;
 }

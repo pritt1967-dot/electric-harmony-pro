@@ -28,3 +28,4 @@ Tuqo deployment test
 - Shield Designer stage 2 shadow check (shields/shadow-check.ts) verifies equipment composition, quantity, width and placement only, runs in dev beside legacy code without UI output, and never prices equipment; the price list holds installation works only.
 - Work videos live in the private `work-videos` bucket with metadata in `project_videos`; public playback goes through /api/public/video/* which 302-redirects to a signed URL (storage policy only signs published works), so the worker never buffers video and Range requests work.
 - Portfolio-specific full-photo presentation stays scoped to its project slug; tall full galleries render without scroll-reveal gating so small viewports cannot leave the work invisible.
+- Project photo saves use a user/project/file-hash scoped pending identity and fixed metadata UUID; recover ambiguous writes by reads, never automatic re-upload, so browser reloads cannot silently duplicate stored photos.

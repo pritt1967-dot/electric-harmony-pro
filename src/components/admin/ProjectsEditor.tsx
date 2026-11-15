@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/browser-client";
 import { ProjectVideos, removeProjectVideoFiles } from "./ProjectVideos";
 import { projectRequestError } from "@/lib/project-request-error";
 import { prepareProjectPhoto, photoUploadError } from "@/lib/project-photo";
+import { saveProjectPhoto, type PendingPhoto } from "@/lib/project-photo-save";
 
 type ProjectImage = {
   id: string;
@@ -261,6 +262,7 @@ function ProjectCard({
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const uploadLock = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const images = useMemo(() => project.project_images, [project.project_images]);
@@ -320,43 +322,74 @@ function ProjectCard({
   };
 
   const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
+    if (!files?.length || uploadLock.current) return;
+    uploadLock.current = true;
     setUploading(true);
     let stage = "prepare";
     let info: { sizeBytes?: number; mime?: string; elapsedMs?: number } = {};
     let started = 0;
+    let stored = false;
     try {
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      if (authError || !auth.user) throw authError ?? new Error("Войдите в аккаунт администратора");
       let order = images.reduce((m, im) => Math.max(m, im.sort_order), 0);
       for (const file of Array.from(files)) {
         stage = "prepare";
+        stored = false;
+        const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())), b => b.toString(16).padStart(2, "0")).join("");
+        const key = `project-photo-pending:${auth.user.id}:${project.id}:${hash}`;
+        const saved = localStorage.getItem(key);
+        const previous: PendingPhoto | undefined = saved ? JSON.parse(saved) : undefined;
         const { blob, mime, ext } = await prepareProjectPhoto(file);
-        const path = `${project.id}/${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}.${ext}`;
-        stage = "storage-upload";
+        const id = crypto.randomUUID();
+        const photo: PendingPhoto = previous ?? {
+          id, project_id: project.id, storage_path: `${project.id}/${id}.${ext}`,
+          image_url: `/api/public/photo/${project.id}/${id}.${ext}`,
+          sort_order: ++order, stored: false, complete: false,
+        };
+        if (photo.project_id !== project.id || !photo.storage_path.startsWith(`${project.id}/`)) throw new Error("Некорректная незавершённая загрузка");
+        const persist = (p: PendingPhoto) => localStorage.setItem(key, JSON.stringify(p));
+        persist(photo); // Save identity before either write; page reload cannot create a duplicate.
         info = { sizeBytes: blob.size, mime };
         started = Date.now();
-        const up = await supabase.storage
-          .from("projects")
-          .upload(path, blob, { contentType: mime, upsert: false });
+        await saveProjectPhoto(photo, {
+          persist,
+          log: event => {
+            stage = event.startsWith("DB_") ? "photo-metadata" : "storage-upload";
+            stored = photo.stored;
+            console.info("[project-photo-upload]", { event, stage, bucket: "projects", endpoint: event.startsWith("DB_") ? "/api/public/sb/rest/v1/project_images" : "/api/public/sb/storage/v1/object/projects/<object>", method: event.endsWith("START") ? "POST" : undefined, ...info, elapsedMs: Date.now() - started });
+          },
+          upload: async () => {
+            const result = await supabase.storage.from("projects").upload(photo.storage_path, blob, { contentType: mime, upsert: false });
+            if (result.error) console.error("[project-photo-upload]", { event: "STORAGE_UPLOAD_ERROR", status: result.error.statusCode, response: photoUploadError(result.error, "storage-upload", info) });
+            return result;
+          },
+          exists: async () => {
+            const result = await supabase.storage.from("projects").info(photo.storage_path);
+            if (result.error) {
+              if (String(result.error.statusCode) === "404" || String(result.error.statusCode) === "400") return false;
+              throw result.error;
+            }
+            return Boolean(result.data);
+          },
+          insert: async () => supabase.from("project_images").insert({
+            id: photo.id, project_id: project.id, image_url: photo.image_url,
+            storage_path: photo.storage_path, sort_order: photo.sort_order,
+          }).select("id").single(),
+          read: async () => {
+            const result = await supabase.from("project_images").select("id").eq("id", photo.id).eq("project_id", project.id).eq("storage_path", photo.storage_path).maybeSingle();
+            if (result.error) throw result.error;
+            return Boolean(result.data);
+          },
+        }, Boolean(previous));
         info.elapsedMs = Date.now() - started;
-        if (up.error) throw up.error;
-        order += 1;
-        const url = `/api/public/photo/${path}`;
-        stage = "photo-metadata";
-        const ins = await supabase.from("project_images").insert({
-          project_id: project.id,
-          image_url: url,
-          storage_path: path,
-          sort_order: order,
-        });
-        if (ins.error) throw ins.error;
-        if (!project.cover_image && order === 1) {
+        order = Math.max(order, photo.sort_order);
+        if (!project.cover_image && photo.sort_order === 1) {
           stage = "cover";
           const cover = await supabase
             .from("projects")
-            .update({ cover_image: url })
-            .eq("id", project.id);
+            .update({ cover_image: photo.image_url })
+            .eq("id", project.id).select("id").single();
           if (cover.error) throw cover.error;
         }
       }
@@ -364,20 +397,24 @@ function ProjectCard({
       onChanged();
     } catch (e) {
       if (started && info.elapsedMs === undefined) info.elapsedMs = Date.now() - started;
-      toast.error(photoUploadError(e, stage, info));
+      toast.error(`${photoUploadError(e, stage, info)}${stored && stage === "photo-metadata" ? " Файл уже в хранилище. Выберите тот же файл, чтобы завершить сохранение без повторной загрузки." : ""}`);
       onChanged();
     } finally {
       setUploading(false);
+      uploadLock.current = false;
       if (fileRef.current) fileRef.current.value = "";
     }
   };
 
   const removeImage = async (img: ProjectImage) => {
     if (!confirm("Удалить фото?")) return;
-    if (img.storage_path)
-      await supabase.storage.from("projects").remove([img.storage_path]);
-    const { error } = await supabase.from("project_images").delete().eq("id", img.id);
-    if (error) return toast.error(error.message);
+    if (uploadLock.current) return;
+    try {
+    // Remove the gallery link first: Storage errors must not leave a broken visible photo.
+    const { error } = await supabase.from("project_images").delete().eq("id", img.id).select("id").single();
+    if (error) throw error;
+    const check = await supabase.from("project_images").select("id").eq("id", img.id).maybeSingle();
+    if (check.error || check.data) throw check.error ?? new Error("Удаление фотографии не подтверждено");
     if (project.cover_image === img.image_url) {
       const next = images.find((x) => x.id !== img.id);
       await supabase
@@ -385,6 +422,17 @@ function ProjectCard({
         .update({ cover_image: next?.image_url ?? "" })
         .eq("id", project.id);
     }
+    if (img.storage_path) {
+      const removed = await supabase.storage.from("projects").remove([img.storage_path]);
+      if (removed.error) throw new Error(`Фото исключено из галереи, но удаление файла не подтверждено: ${removed.error.message}`);
+    }
+    // Clear only this completed operation, so a deliberate later re-add is possible.
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith("project-photo-pending:")) continue;
+      try { if (JSON.parse(localStorage.getItem(key) ?? "null")?.id === img.id) localStorage.removeItem(key); } catch { /* unrelated old entry */ }
+    }
+    toast.success("Фото удалено");
+    } catch (error) { toast.error(photoUploadError(error, "delete")); }
     onChanged();
   };
 
