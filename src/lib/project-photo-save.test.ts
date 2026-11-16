@@ -53,3 +53,19 @@ test("uploaded file with lost response is recovered by storage read", async () =
   assert.equal(photo.complete, true);
   assert.deepEqual(calls, { upload: 1, insert: 1 });
 });
+test("a thrown upload timeout still checks storage before reporting failure", async () => {
+  const { photo, calls, io } = setup();
+  io.upload = async () => { calls.upload++; throw new Error("TIMEOUT"); };
+  io.exists = async () => true;
+  await saveProjectPhoto(photo, io, false);
+  assert.deepEqual(calls, { upload: 1, insert: 1 });
+  assert.equal(photo.complete, true);
+});
+test("a thrown insert timeout recovers committed metadata without another write", async () => {
+  const { photo, calls, io } = setup();
+  io.insert = async () => { calls.insert++; throw new Error("TIMEOUT"); };
+  io.read = async () => true;
+  await saveProjectPhoto(photo, io, false);
+  assert.deepEqual(calls, { upload: 1, insert: 1 });
+  assert.equal(photo.complete, true);
+});

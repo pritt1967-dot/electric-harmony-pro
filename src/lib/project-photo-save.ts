@@ -21,7 +21,7 @@ export async function saveProjectPhoto(photo: PendingPhoto, io: PhotoSaveIO, res
       if (!await io.exists()) throw new Error("Предыдущая загрузка не подтверждена. Файл повторно не отправлен; проверьте журнал сервера.");
     } else {
       io.log("STORAGE_UPLOAD_START");
-      const result = await io.upload();
+      const result = await io.upload().catch(error => ({ error }));
       if (result.error) {
         io.log("STORAGE_UPLOAD_ERROR");
         // An upload can commit before its response is lost.
@@ -35,6 +35,7 @@ export async function saveProjectPhoto(photo: PendingPhoto, io: PhotoSaveIO, res
     io.log("STORAGE_UPLOAD_SUCCESS");
   }
   // A resumed metadata request may have committed despite a lost response.
+  if (resumed) io.log("DB_VERIFY_START");
   if (resumed && await io.read()) {
     photo.complete = true;
     io.persist(photo);
@@ -42,7 +43,7 @@ export async function saveProjectPhoto(photo: PendingPhoto, io: PhotoSaveIO, res
     return;
   }
   io.log("DB_INSERT_START");
-  const result = await io.insert();
+  const result: Result = await io.insert().catch(error => ({ error }));
   if (result.error || !result.data) {
     io.log("DB_INSERT_ERROR");
     let found = false;

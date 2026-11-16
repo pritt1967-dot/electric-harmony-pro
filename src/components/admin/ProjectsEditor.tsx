@@ -437,11 +437,12 @@ function ProjectCard({
   };
 
   const setCover = async (img: ProjectImage) => {
-    const { error } = await supabase
+    if (uploadLock.current) return;
+    const { data, error } = await supabase
       .from("projects")
       .update({ cover_image: img.image_url })
-      .eq("id", project.id);
-    if (error) toast.error(error.message);
+      .eq("id", project.id).select("id").single();
+    if (error || !data) toast.error(projectRequestError(error));
     else {
       toast.success("Главное фото обновлено");
       onChanged();
@@ -449,17 +450,20 @@ function ProjectCard({
   };
 
   const moveImage = async (img: ProjectImage, delta: number) => {
+    if (uploadLock.current) return;
     const idx = images.findIndex((x) => x.id === img.id);
     const next = idx + delta;
     if (next < 0 || next >= images.length) return;
     const copy = [...images];
     const [item] = copy.splice(idx, 1);
     copy.splice(next, 0, item);
-    await Promise.all(
+    const results = await Promise.all(
       copy.map((x, i) =>
-        supabase.from("project_images").update({ sort_order: i + 1 }).eq("id", x.id),
+        supabase.from("project_images").update({ sort_order: i + 1 }).eq("id", x.id).select("id").single(),
       ),
     );
+    const failed = results.find(r => r.error || !r.data);
+    if (failed) toast.error(projectRequestError(failed.error));
     onChanged();
   };
 
