@@ -92,7 +92,9 @@ test("slow browser photo upload does not consume the 15-second backend limit", a
   }) as typeof setTimeout;
   console.info = (...args) => { logs.push(JSON.stringify(args)); };
   globalThis.fetch = async (_input, init) => {
-    assert.equal((init?.body as ArrayBuffer).byteLength, 6);
+    assert.ok(init?.body instanceof ReadableStream, "photo body is streamed, not buffered");
+    assert.equal((init as RequestInit & { duplex?: string }).duplex, "half");
+    assert.equal((await new Response(init?.body as ReadableStream).arrayBuffer()).byteLength, 6);
     return Response.json({ Key: "projects/x" });
   };
   const stream = new ReadableStream<Uint8Array>({
@@ -112,4 +114,25 @@ test("slow browser photo upload does not consume the 15-second backend limit", a
     assert.match(logs.join(), /"bucket\\":\\"projects\\".*"sizeBytes\\":6.*"mime\\":\\"image\/jpeg\\".*"status\\":200/);
     assert.doesNotMatch(logs.join(), /private-token|p\/1\.jpg/);
   } finally { globalThis.fetch = original; globalThis.setTimeout = originalTimer; console.info = originalInfo; }
+});
+
+test("photo upload streams 600 KB intact with declared length; text saves stay buffered", async () => {
+  const original = globalThis.fetch;
+  const info = console.info;
+  console.info = () => {};
+  const bytes = new Uint8Array(600 * 1024).map((_, i) => i % 251);
+  const seen: { stream: boolean; length: string | null; size: number }[] = [];
+  globalThis.fetch = async (_input, init) => {
+    const stream = init?.body instanceof ReadableStream;
+    const size = stream ? (await new Response(init?.body as ReadableStream).arrayBuffer()).byteLength : (init?.body as ArrayBuffer).byteLength;
+    seen.push({ stream, length: new Headers(init?.headers).get("content-length"), size });
+    return Response.json({ ok: true });
+  };
+  try {
+    const photo = await proxySiteBackend(new Request("https://site.example/api/public/sb/storage/v1/object/projects/p/2.jpg", { method: "POST", headers: { "content-type": "image/jpeg", "content-length": String(bytes.byteLength) }, body: bytes }), "storage/v1/object/projects/p/2.jpg", config);
+    const text = await proxySiteBackend(new Request("https://site.example/api/public/sb/rest/v1/projects?id=eq.t", { method: "PATCH", body: '{"title":"t"}' }), "rest/v1/projects", config);
+    assert.equal(photo.status, 200);
+    assert.equal(text.status, 200);
+    assert.deepEqual(seen, [{ stream: true, length: String(600 * 1024), size: 600 * 1024 }, { stream: false, length: null, size: 13 }]);
+  } finally { globalThis.fetch = original; console.info = info; }
 });
