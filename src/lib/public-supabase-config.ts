@@ -1,6 +1,6 @@
-const DEFAULT_SUPABASE_URL = "https://csqqjrbuajcymwhwaxva.supabase.co";
+const DEFAULT_SUPABASE_URL = "https://nppincxonqwajdoxqbla.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_nkgGme_KJeqG3wp-xETjPg_Ppen__qU";
+  "sb_publishable_-SQWM_0x8kxnwjRFDBWTPA_ofvPJgKo";
 
 type RuntimeGlobals = typeof globalThis & {
   Deno?: { env?: { get?: (name: string) => string | undefined } };
