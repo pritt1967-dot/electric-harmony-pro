@@ -11,10 +11,10 @@ import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 // VITE_* значения вшиваются в бандл на этапе `npm run build`.
 // Если на сервере сборки заданы только SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY,
 // подставляем их в VITE_* эквиваленты. Значения по умолчанию — текущий
-// Supabase-проект сайта (csqqjrbuajcymwhwaxva), чтобы сборка не ломалась.
-const DEFAULT_SUPABASE_URL = "https://csqqjrbuajcymwhwaxva.supabase.co";
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_nkgGme_KJeqG3wp-xETjPg_Ppen__qU";
-const DEFAULT_SUPABASE_PROJECT_ID = "csqqjrbuajcymwhwaxva";
+// Supabase-проект сайта (nppincxonqwajdoxqbla), чтобы сборка не ломалась.
+const DEFAULT_SUPABASE_URL = "https://nppincxonqwajdoxqbla.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-SQWM_0x8kxnwjRFDBWTPA_ofvPJgKo";
+const DEFAULT_SUPABASE_PROJECT_ID = "nppincxonqwajdoxqbla";
 
 function clean(value?: string): string | undefined {
   if (typeof value !== "string") return undefined;
