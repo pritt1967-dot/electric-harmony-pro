@@ -3,9 +3,9 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
-const DEFAULT_SUPABASE_URL = "https://csqqjrbuajcymwhwaxva.supabase.co";
+const DEFAULT_SUPABASE_URL = "https://nppincxonqwajdoxqbla.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_nkgGme_KJeqG3wp-xETjPg_Ppen__qU";
+  "sb_publishable_-SQWM_0x8kxnwjRFDBWTPA_ofvPJgKo";
 
 function cleanEnvironmentValue(value: string | undefined): string | undefined {
   if (typeof value !== "string") return undefined;
