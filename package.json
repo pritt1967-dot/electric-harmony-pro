@@ -15,7 +15,6 @@
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.27",
     "@hookform/resolvers": "^5.2.2",
-    "@lovable.dev/mcp-js": "^0.26.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -80,7 +79,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "2.27.1",
     "@types/node": "^22.16.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.0",
