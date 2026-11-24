@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { nitro } from "nitro/vite";
 import viteReact from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 
 const DEFAULT_SUPABASE_URL = "https://nppincxonqwajdoxqbla.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-SQWM_0x8kxnwjRFDBWTPA_ofvPJgKo";
@@ -41,12 +41,15 @@ env.SUPABASE_PUBLISHABLE_KEY =
 env.SUPABASE_PROJECT_ID = pick(env.SUPABASE_PROJECT_ID) ?? env.VITE_SUPABASE_PROJECT_ID;
 
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+  },
   plugins: [
+    tailwindcss(),
     tanstackStart({
-      server: { entry: "server" },
+      server: { entry: "./server.ts" },
     }),
-    nitro({ preset: "node_server" }),
     viteReact(),
-    tsconfigPaths(),
+    nitro({ preset: "node_server" }),
   ],
 });
