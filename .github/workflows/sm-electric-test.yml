@@ -1,0 +1,14 @@
+name: SM Electric Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test runner
+        run: echo "SM ELECTRIC ACTIONS OK"
