@@ -1,17 +1,9 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, nitro (build-only using cloudflare as a default target),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { nitro } from "nitro/vite";
+import viteReact from "@vitejs/plugin-react";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-// --- Supabase build-time env (для self-hosted Node.js, напр. REG.RU) ---
-// VITE_* значения вшиваются в бандл на этапе `npm run build`.
-// Если на сервере сборки заданы только SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY,
-// подставляем их в VITE_* эквиваленты. Значения по умолчанию — текущий
-// Supabase-проект сайта (nppincxonqwajdoxqbla), чтобы сборка не ломалась.
 const DEFAULT_SUPABASE_URL = "https://nppincxonqwajdoxqbla.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-SQWM_0x8kxnwjRFDBWTPA_ofvPJgKo";
 const DEFAULT_SUPABASE_PROJECT_ID = "nppincxonqwajdoxqbla";
@@ -31,7 +23,6 @@ function pick(...values: (string | undefined)[]): string | undefined {
 }
 
 const env = process.env;
-
 env.VITE_SUPABASE_URL =
   pick(env.VITE_SUPABASE_URL, env.SUPABASE_URL) ?? DEFAULT_SUPABASE_URL;
 env.VITE_SUPABASE_PUBLISHABLE_KEY =
@@ -44,30 +35,18 @@ env.VITE_SUPABASE_PUBLISHABLE_KEY =
 env.VITE_SUPABASE_PROJECT_ID =
   pick(env.VITE_SUPABASE_PROJECT_ID, env.SUPABASE_PROJECT_ID) ?? DEFAULT_SUPABASE_PROJECT_ID;
 
-// Обратная подстановка: runtime-модули (auth-middleware) читают имена без VITE_.
 env.SUPABASE_URL = pick(env.SUPABASE_URL) ?? env.VITE_SUPABASE_URL;
 env.SUPABASE_PUBLISHABLE_KEY =
   pick(env.SUPABASE_PUBLISHABLE_KEY) ?? env.VITE_SUPABASE_PUBLISHABLE_KEY;
 env.SUPABASE_PROJECT_ID = pick(env.SUPABASE_PROJECT_ID) ?? env.VITE_SUPABASE_PROJECT_ID;
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
-  nitro: {
-    // Пресет задаётся через env NITRO_PRESET (см. vercel.json → build.env).
-    // По умолчанию — cloudflare-module (Lovable); для VPS: NITRO_PRESET=node-server.
-    // На Vercel (env VERCEL=1 задаётся платформой автоматически) — пресет vercel
-    // → Build Output API v3 в .vercel/output.
-    ...(process.env.NITRO_PRESET
-      ? { preset: process.env.NITRO_PRESET }
-      : process.env.VERCEL
-        ? { preset: "vercel" }
-        : {}),
-  },
-  vite: {
-    plugins: [mcpPlugin()],
-  },
+  plugins: [
+    tanstackStart({
+      server: { entry: "server" },
+    }),
+    nitro({ preset: "node_server" }),
+    viteReact(),
+    tsconfigPaths(),
+  ],
 });
