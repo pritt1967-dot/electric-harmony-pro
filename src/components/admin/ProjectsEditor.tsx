@@ -90,15 +90,33 @@ export function ProjectsEditor() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published, project_images(id, project_id, image_url, storage_path, caption, alt, sort_order)",
+          "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, is_published",
         )
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return (data as Project[]).map((p) => ({
+
+      const rows = (data ?? []) as Omit<Project, "project_images">[];
+      if (rows.length === 0) return [];
+
+      const ids = rows.map((p) => p.id);
+      const { data: imageRows, error: imageError } = await supabase
+        .from("project_images")
+        .select("id, project_id, image_url, storage_path, caption, alt, sort_order")
+        .in("project_id", ids)
+        .order("sort_order", { ascending: true });
+
+      if (imageError) throw imageError;
+
+      const imagesByProject = new Map<string, ProjectImage[]>();
+      for (const image of imageRows ?? []) {
+        const list = imagesByProject.get(image.project_id) ?? [];
+        list.push(image as ProjectImage);
+        imagesByProject.set(image.project_id, list);
+      }
+
+      return rows.map((p) => ({
         ...p,
-        project_images: [...(p.project_images ?? [])].sort(
-          (a, b) => a.sort_order - b.sort_order,
-        ),
+        project_images: imagesByProject.get(p.id) ?? [],
       }));
     },
   });
