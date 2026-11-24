@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.22.0
-          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -36,6 +35,14 @@ jobs:
           test -f .output/nitro.json
           echo "Production build OK"
           du -sh .output
+
+      - name: Check Lovable is absent from production bundle
+        run: |
+          if grep -RniE 'lovable|lovable\.dev' .output --exclude='*.map'; then
+            echo "ERROR: Lovable reference found in production bundle"
+            exit 1
+          fi
+          echo "No Lovable reference in production bundle"
 
       - name: Package production
         run: |
