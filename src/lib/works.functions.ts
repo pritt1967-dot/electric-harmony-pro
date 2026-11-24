@@ -46,29 +46,72 @@ export type WorkVideo = {
   sort_order: number;
 };
 
-const SELECT =
-  "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order, project_images(id, image_url, caption, alt, sort_order), project_videos(id, storage_path, mime_type, poster_url, caption, sort_order)";
+const PROJECT_FIELDS =
+  "id, slug, title, description, location, city, category, customer_name, task, works_done, notes_text, equipment, lights_text, result_text, warranty_text, cost_text, service_slug, seo_title, seo_description, work_date, cover_image, sort_order";
 
 export const getWorks = createServerFn({ method: "GET" }).handler(
   async (): Promise<WorkProject[]> => {
     const supabase = createPublicSupabaseClient();
-    const { data, error } = await supabase
+
+    // Do not use PostgREST embedded relations here. The site must remain
+    // independent from the timing/state of PostgREST's relationship cache.
+    const { data: projects, error: projectsError } = await supabase
       .from("projects")
-      .select(SELECT)
+      .select(PROJECT_FIELDS)
       .eq("is_published", true)
       .order("sort_order", { ascending: true });
 
-    if (error) {
-      throw new Error(`Не удалось загрузить объекты: ${error.message}`);
+    if (projectsError) {
+      throw new Error(`Не удалось загрузить объекты: ${projectsError.message}`);
     }
 
+    const projectRows = (projects ?? []) as unknown as Omit<WorkProject, "images" | "videos">[];
+    if (projectRows.length === 0) return [];
 
-    type Raw = Omit<WorkProject, "images" | "videos"> & { project_images: WorkImage[]; project_videos?: WorkVideo[] };
-    return ((data ?? []) as unknown as Raw[]).map(({ project_images, project_videos, ...p }) => ({
+    const projectIds = projectRows.map((p) => p.id);
+
+    const [{ data: imageRows, error: imagesError }, { data: videoRows, error: videosError }] =
+      await Promise.all([
+        supabase
+          .from("project_images")
+          .select("id, project_id, image_url, caption, alt, sort_order")
+          .in("project_id", projectIds)
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("project_videos")
+          .select("id, project_id, storage_path, mime_type, poster_url, caption, sort_order")
+          .in("project_id", projectIds)
+          .order("sort_order", { ascending: true }),
+      ]);
+
+    if (imagesError) {
+      throw new Error(`Не удалось загрузить фотографии объектов: ${imagesError.message}`);
+    }
+    if (videosError) {
+      throw new Error(`Не удалось загрузить видео объектов: ${videosError.message}`);
+    }
+
+    const imagesByProject = new Map<string, WorkImage[]>();
+    for (const row of imageRows ?? []) {
+      const image = row as WorkImage & { project_id: string };
+      const list = imagesByProject.get(image.project_id) ?? [];
+      list.push(image);
+      imagesByProject.set(image.project_id, list);
+    }
+
+    const videosByProject = new Map<string, WorkVideo[]>();
+    for (const row of videoRows ?? []) {
+      const video = row as WorkVideo & { project_id: string };
+      const list = videosByProject.get(video.project_id) ?? [];
+      list.push(video);
+      videosByProject.set(video.project_id, list);
+    }
+
+    return projectRows.map((p) => ({
       ...p,
       slug: p.slug ?? "",
-      images: [...(project_images ?? [])].sort((a, b) => a.sort_order - b.sort_order),
-      videos: [...(project_videos ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+      images: [...(imagesByProject.get(p.id) ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+      videos: [...(videosByProject.get(p.id) ?? [])].sort((a, b) => a.sort_order - b.sort_order),
     }));
   },
 );
