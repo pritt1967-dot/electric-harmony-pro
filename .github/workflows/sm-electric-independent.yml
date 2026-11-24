@@ -1,0 +1,50 @@
+name: SM Electric Independent Build
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Build Nitro production
+        run: npm run build
+        env:
+          SUPABASE_URL: https://nppincxonqwajdoxqbla.supabase.co
+          SUPABASE_PROJECT_ID: nppincxonqwajdoxqbla
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Verify
+        run: |
+          test -s .output/server/index.mjs
+          test -s .output/nitro.json
+          ! grep -RniE 'lovable|lovable\\.dev' .output --exclude='*.map'
+          echo "OK: independent Nitro production build"
+          du -sh .output
+
+      - name: Package
+        run: tar -czf sm-electric-node-production.tar.gz -C .output .
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: sm-electric-node-production-independent
+          path: sm-electric-node-production.tar.gz
+          retention-days: 7
